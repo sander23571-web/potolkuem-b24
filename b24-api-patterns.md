@@ -387,7 +387,7 @@ POST /crm.contact.userfield.add
 |-----------|----------|
 | AMBASSADOR | Амбассадор |
 | ENTHUSIAST | Энтузиаст / Комьюнити |
-| EDUCATOR | Педагог / Логопед |
+| EDUCATOR | Эксперт по речи и коммуникациям |
 | HR | HR-специалист |
 | JOURNALIST | Журналист / Блогер |
 
