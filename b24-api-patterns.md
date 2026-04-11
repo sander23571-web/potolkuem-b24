@@ -328,6 +328,55 @@ POST /crm.contact.userfield.add
 
 ---
 
+## Смарт-процесс «Разработка игр» (entityTypeId: 1040, categoryId: 17)
+
+### Стадии
+
+| Sort | Стадия | Семантика |
+|------|--------|-----------|
+| 10 | Идея | P |
+| 20 | Контент | P |
+| 30 | Дизайн | P |
+| 40 | Прототип | P |
+| 50 | Тестирование | P |
+| 60 | Производство | P |
+| 70 | Выпуск | P |
+| 90 | Архив | S ✅ |
+| 100 | Заморожено | F ❄️ |
+
+### Пользовательские поля (UF_CRM_*, ENTITY_ID: CRM_1040)
+
+| ID | Поле | Тип | Назначение |
+|----|------|-----|------------|
+| 279 | UF_CRM_GAME_SERIES | enumeration | Серия игры |
+| 281 | UF_CRM_GAME_THEME | enumeration | Тематика |
+| 283 | UF_CRM_GAME_CONCEPT | string | Концепция/описание |
+| 285 | UF_CRM_GAME_CARDS_COUNT | integer | Количество карточек |
+| 287 | UF_CRM_GAME_TARGET | string | Целевая аудитория |
+| 289 | UF_CRM_GAME_RELEASE_PLAN | date | Плановая дата выпуска |
+| 291 | UF_CRM_GAME_RELEASE_FACT | date | Фактическая дата выпуска |
+| 293 | UF_CRM_GAME_EXPERT | string | Эксперт по контенту |
+| 295 | UF_CRM_GAME_CONTRACTOR | string | Подрядчик (производство) |
+| 297 | UF_CRM_BUDGET_CONTENT_PLAN | double | Бюджет контент план |
+| 299 | UF_CRM_BUDGET_CONTENT_FACT | double | Бюджет контент факт |
+| 301 | UF_CRM_BUDGET_DESIGN_PLAN | double | Бюджет дизайн план |
+| 303 | UF_CRM_BUDGET_DESIGN_FACT | double | Бюджет дизайн факт |
+| 305 | UF_CRM_BUDGET_PRODUCTION_PLAN | double | Бюджет производство план |
+| 307 | UF_CRM_BUDGET_PRODUCTION_FACT | double | Бюджет производство факт |
+| 309 | UF_CRM_GAME_CIRCULATION | integer | Тираж (штук) |
+| 311 | UF_CRM_GAME_COST_UNIT_PLAN | double | Себестоимость ед. план |
+| 313 | UF_CRM_GAME_COST_UNIT_FACT | double | Себестоимость ед. факт |
+| 315 | UF_CRM_GAME_PRICE | double | Цена продажи |
+
+### Секции карточки
+- **Об игре** — Название, Серия, Тематика, Аудитория, Карточек, Концепция, Ответственный
+- **Команда** — Эксперт по контенту, Подрядчик
+- **Сроки** — Дата начала, Выпуск план, Выпуск факт
+- **Бюджет** — Контент план/факт, Дизайн план/факт, Производство план/факт
+- **Производство и экономика** — Тираж, Себестоимость план/факт, Цена продажи
+
+---
+
 ## Контакты — Амбассадоры
 
 ### Типы контактов (CONTACT_TYPE)
