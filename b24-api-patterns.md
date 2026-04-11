@@ -281,7 +281,7 @@ POST /crm.contact.userfield.add
 
 1. **`crm.status.add`** не поддерживает `ENTITY_ID = "DYNAMIC_1038"` или `"DYNAMIC_1038_STAGE"` — только полный формат `"DYNAMIC_1038_STAGE_15"` с ID категории.
 
-2. **`userfieldconfig.add`** с `moduleId: "crm"` возвращает ошибку прав — не работает для создания полей CRM сущностей через вебхук.
+2. ~~**`userfieldconfig.add`** с `moduleId: "crm"` возвращает ошибку прав~~ — **ИСПРАВЛЕНО, см. п.8.**
 
 3. **`crm.item.userfield.add`** — метод не существует (ERROR_METHOD_NOT_FOUND).
 
@@ -292,6 +292,46 @@ POST /crm.contact.userfield.add
 6. **Системные стадии** (SYSTEM: "Y") нельзя удалить, но можно переименовать и перекрасить.
 
 7. При создании смарт-процесса автоматически создаётся **дефолтная категория** (Общая воронка) и 5 стадий по умолчанию.
+
+8. **⚠️ Ключевая находка: поля смарт-процессов через `userfieldconfig.add`**
+
+   Долго не работало из-за неверного `entityId`. Суть ошибки и правило:
+
+   ```
+   ❌ Неверно:  entityId = "CRM_1038"  (это entityTypeId — не то!)
+   ✅ Верно:    entityId = "CRM_7"     (это typeId из crm.type.list)
+   ```
+
+   **Как получить правильный typeId:**
+   ```bash
+   GET /crm.type.list
+   # В ответе: type.id = 7 (typeId), type.entityTypeId = 1038
+   # entityId для userfieldconfig = "CRM_" + type.id = "CRM_7"
+   ```
+
+   **Формат имени поля** тоже зависит от typeId:
+   ```
+   fieldName = "UF_CRM_{typeId}_{NAME}"
+   # Пример: "UF_CRM_7_VISITORS"  (не "UF_CRM_1038_VISITORS"!)
+   ```
+
+   **Scope `userfieldconfig` в вебхуке был всегда** — проблема была только в entityId.
+
+   **Последствия ошибки:** при использовании `crm.deal.userfield.add` с `ENTITY_ID: "CRM_1038"` — API молча создавал поля на `CRM_DEAL` (обычные сделки), игнорируя указанный ID. Все 78 таких полей были удалены.
+
+   **Рабочий пример:**
+   ```bash
+   POST /userfieldconfig.add
+   {
+     "moduleId": "crm",
+     "field": {
+       "entityId": "CRM_7",
+       "fieldName": "UF_CRM_7_VISITORS",
+       "userTypeId": "integer",
+       "editFormLabel": {"ru": "Посетителей стенда"}
+     }
+   }
+   ```
 
 ---
 
