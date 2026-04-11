@@ -325,3 +325,51 @@ POST /crm.contact.userfield.add
 | 249 | UF_CRM_WHAT_WORKED | string | Что сработало |
 | 251 | UF_CRM_WHAT_TO_IMPROVE | string | Что улучшить |
 | 253 | UF_CRM_STAND_AREA | double | Площадь стенда |
+
+---
+
+## Контакты — Амбассадоры
+
+### Типы контактов (CONTACT_TYPE)
+
+Добавлены через `crm.status.add` с `ENTITY_ID = "CONTACT_TYPE"`:
+
+| STATUS_ID | Название |
+|-----------|----------|
+| AMBASSADOR | Амбассадор |
+| ENTHUSIAST | Энтузиаст / Комьюнити |
+| EDUCATOR | Педагог / Логопед |
+| HR | HR-специалист |
+| JOURNALIST | Журналист / Блогер |
+
+### Пользовательские поля Контактов (UF_CRM_*)
+
+Добавлены через `crm.contact.userfield.add` с `ENTITY_ID = "CRM_CONTACT"`:
+
+| ID | Поле | Тип | Назначение |
+|----|------|-----|------------|
+| 265 | UF_CRM_IS_AMBASSADOR | boolean | Флаг: является амбассадором |
+| 267 | UF_CRM_AMBASSADOR_SPEC | enumeration (multiple) | Специализация (темы игр) |
+| 269 | UF_CRM_AMBASSADOR_RATE | double | Ставка за выход (руб) |
+| 271 | UF_CRM_AMBASSADOR_COMMISSION | double | % с продаж |
+| 273 | UF_CRM_AMBASSADOR_STATUS | enumeration | Статус: Активен / В резерве / Неактивен |
+| 275 | UF_CRM_AMBASSADOR_CITY | string | Город |
+| 277 | UF_CRM_AMBASSADOR_NOTE | string | Заметки |
+
+### Настройка карточки контакта
+
+```bash
+POST /crm.contact.details.configuration.set
+{
+  "scope": "C",
+  "data": [
+    { "name": "main", "title": "Основная информация", ... },
+    { "name": "ambassador", "title": "Амбассадор", "elements": [
+        {"name": "UF_CRM_IS_AMBASSADOR"},
+        {"name": "UF_CRM_AMBASSADOR_STATUS"},
+        ...
+    ]},
+    { "name": "additional", "title": "Дополнительно", ... }
+  ]
+}
+```
