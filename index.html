@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Потолкуем? — Система управления бизнесом</title>
+  <style>
+    :root {
+      --primary: #2D4A8A;
+      --accent: #E84C3D;
+      --green: #27AE60;
+      --yellow: #F39C12;
+      --light: #F4F6FA;
+      --dark: #1A2340;
+      --text: #2C3E50;
+      --muted: #7F8C8D;
+      --card-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: var(--text);
+      background: var(--light);
+      line-height: 1.6;
+    }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, var(--dark) 0%, var(--primary) 100%);
+      color: white;
+      padding: 80px 24px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at center, rgba(255,255,255,0.05) 0%, transparent 70%);
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 50px;
+      padding: 6px 18px;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: clamp(32px, 6vw, 56px);
+      font-weight: 800;
+      margin-bottom: 16px;
+      letter-spacing: -1px;
+    }
+    .hero h1 span { color: #F4C842; }
+    .hero p {
+      font-size: 18px;
+      opacity: 0.85;
+      max-width: 600px;
+      margin: 0 auto 40px;
+    }
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+    .hero-stat { text-align: center; }
+    .hero-stat .num {
+      font-size: 36px;
+      font-weight: 800;
+      color: #F4C842;
+      display: block;
+    }
+    .hero-stat .label { font-size: 13px; opacity: 0.7; }
+
+    /* CONTAINER */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+    /* SECTIONS */
+    section { padding: 60px 0; }
+    .section-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 8px;
+    }
+    .section-sub {
+      color: var(--muted);
+      font-size: 16px;
+      margin-bottom: 40px;
+    }
+
+    /* BLOCKS GRID */
+    .blocks-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .block-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--card-shadow);
+      border-left: 4px solid var(--primary);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .block-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
+    .block-card.accent { border-left-color: var(--accent); }
+    .block-card.green { border-left-color: var(--green); }
+    .block-card.yellow { border-left-color: var(--yellow); }
+    .block-icon { font-size: 36px; margin-bottom: 14px; }
+    .block-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .block-desc { color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .block-tags { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      background: var(--light);
+      color: var(--primary);
+      border-radius: 50px;
+      padding: 3px 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* FLOW */
+    .flow {
+      background: white;
+      border-radius: var(--radius);
+      padding: 40px;
+      box-shadow: var(--card-shadow);
+    }
+    .flow-steps {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      flex-wrap: wrap;
+      position: relative;
+    }
+    .flow-step {
+      flex: 1;
+      min-width: 140px;
+      text-align: center;
+      padding: 20px 12px;
+      position: relative;
+    }
+    .flow-step:not(:last-child)::after {
+      content: '→';
+      position: absolute;
+      right: -10px;
+      top: 30px;
+      font-size: 20px;
+      color: var(--muted);
+    }
+    .flow-bubble {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin: 0 auto 12px;
+      background: var(--light);
+    }
+    .flow-step.done .flow-bubble { background: #D5F5E3; }
+    .flow-step.active .flow-bubble { background: #D6EAF8; box-shadow: 0 0 0 4px rgba(45,74,138,0.2); }
+    .flow-step-label { font-size: 13px; font-weight: 600; color: var(--dark); }
+    .flow-step-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* FUNNELS */
+    .funnels-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 16px;
+    }
+    .funnel-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: var(--card-shadow);
+      text-align: center;
+    }
+    .funnel-icon { font-size: 28px; margin-bottom: 10px; }
+    .funnel-name { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .funnel-desc { font-size: 12px; color: var(--muted); }
+
+    /* CATALOG */
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .catalog-section {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: var(--card-shadow);
+    }
+    .catalog-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .catalog-games { list-style: none; }
+    .catalog-games li {
+      font-size: 13px;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--light);
+      display: flex;
+      justify-content: space-between;
+    }
+    .catalog-games li:last-child { border-bottom: none; }
+    .price { font-weight: 600; color: var(--primary); }
+
+    /* EXTERNAL */
+    .external-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 600px) { .external-grid { grid-template-columns: 1fr; } }
+    .external-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--card-shadow);
+    }
+    .external-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+    .form-list { list-style: none; }
+    .form-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--light);
+      font-size: 14px;
+    }
+    .form-list li:last-child { border-bottom: none; }
+    .form-icon { font-size: 20px; flex-shrink: 0; }
+    .form-name { font-weight: 600; margin-bottom: 2px; }
+    .form-result { font-size: 12px; color: var(--muted); }
+
+    /* ROLES */
+    .roles-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+    }
+    .roles-table th {
+      background: var(--primary);
+      color: white;
+      padding: 14px 20px;
+      text-align: left;
+      font-size: 13px;
+      letter-spacing: 0.3px;
+    }
+    .roles-table td {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--light);
+      font-size: 14px;
+    }
+    .roles-table tr:last-child td { border-bottom: none; }
+    .roles-table tr:hover td { background: var(--light); }
+    .role-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .role-admin { background: #FADBD8; color: var(--accent); }
+    .role-manager { background: #D6EAF8; color: var(--primary); }
+    .role-external { background: #D5F5E3; color: var(--green); }
+
+    /* ROADMAP */
+    .roadmap { display: flex; flex-direction: column; gap: 16px; }
+    .roadmap-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      background: white;
+      border-radius: 12px;
+      padding: 20px 24px;
+      box-shadow: var(--card-shadow);
+    }
+    .roadmap-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+    .roadmap-dot.done { background: var(--green); }
+    .roadmap-dot.next { background: var(--yellow); }
+    .roadmap-dot.future { background: #BDC3C7; }
+    .roadmap-label { font-weight: 600; font-size: 15px; }
+    .roadmap-desc { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    /* FOOTER */
+    footer {
+      background: var(--dark);
+      color: rgba(255,255,255,0.6);
+      padding: 32px 24px;
+      text-align: center;
+      font-size: 13px;
+    }
+    footer a { color: rgba(255,255,255,0.8); text-decoration: none; }
+    footer a:hover { color: white; }
+
+    /* UTILS */
+    .divider { height: 1px; background: #E8EDF5; margin: 0; }
+    .bg-white { background: white; }
+
+    @media (max-width: 600px) {
+      .hero-stats { gap: 24px; }
+      .flow-steps { flex-direction: column; }
+      .flow-step:not(:last-child)::after { content: '↓'; right: auto; left: 50%; top: auto; bottom: -14px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">🎲 Битрикс24 · Профессиональный тариф</div>
+  <h1>Система управления<br><span>«Потолкуем?»</span></h1>
+  <p>Единое пространство для мероприятий, продаж, амбассадоров, маркетплейсов и производства игр</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><span class="num">20</span><span class="label">игр в каталоге</span></div>
+    <div class="hero-stat"><span class="num">7</span><span class="label">блоков системы</span></div>
+    <div class="hero-stat"><span class="num">13</span><span class="label">выставок в 2026</span></div>
+    <div class="hero-stat"><span class="num">5</span><span class="label">воронок продаж</span></div>
+  </div>
+</div>
+
+<!-- BLOCKS -->
+<section>
+  <div class="container">
+    <div class="section-title">Блоки системы</div>
+    <div class="section-sub">Каждый блок — отдельный инструмент, все связаны между собой</div>
+    <div class="blocks-grid">
+
+      <div class="block-card">
+        <div class="block-icon">🎡</div>
+        <div class="block-title">Мероприятия</div>
+        <div class="block-desc">Реестр всех выставок, акций и открытых игр. Фиксирует план и факт: трафик, продажи, расходы, оценку. Связан с амбассадорами и воронкой продаж.</div>
+        <div class="block-tags">
+          <span class="tag">13 выставок/год</span>
+          <span class="tag">Форма отчёта</span>
+          <span class="tag">Гонорары</span>
+        </div>
+      </div>
+
+      <div class="block-card green">
+        <div class="block-icon">🤝</div>
+        <div class="block-title">Амбассадоры</div>
+        <div class="block-desc">Профили внешних представителей: логопеды, педагоги, блогеры. Ставка за выход, % с продаж, специализация по играм. Доступ через Коллаб.</div>
+        <div class="block-tags">
+          <span class="tag">Коллаб</span>
+          <span class="tag">Без лицензий</span>
+          <span class="tag">История участий</span>
+        </div>
+      </div>
+
+      <div class="block-card accent">
+        <div class="block-icon">💰</div>
+        <div class="block-title">Воронки продаж</div>
+        <div class="block-desc">Пять отдельных воронок под каждый канал: розница, корпоратив, образование, опт и кастомные игры. Лиды со стендов попадают напрямую.</div>
+        <div class="block-tags">
+          <span class="tag">B2C</span>
+          <span class="tag">B2B Корп</span>
+          <span class="tag">B2B Образование</span>
+          <span class="tag">Опт</span>
+          <span class="tag">Кастом</span>
+        </div>
+      </div>
+
+      <div class="block-card yellow">
+        <div class="block-icon">🛒</div>
+        <div class="block-title">Маркетплейсы</div>
+        <div class="block-desc">Мониторинг каждой игры на каждой платформе: рейтинг, позиция в поиске, остатки, выручка за месяц, отзывы без ответа. Карточка = игра × платформа.</div>
+        <div class="block-tags">
+          <span class="tag">Wildberries</span>
+          <span class="tag">Ozon</span>
+          <span class="tag">ЯМ</span>
+          <span class="tag">Детский Мир</span>
+        </div>
+      </div>
+
+      <div class="block-card">
+        <div class="block-icon">📍</div>
+        <div class="block-title">Точки продаж</div>
+        <div class="block-desc">Офлайн-партнёры: книжные, кафе, коворкинги, музеи. Условия работы, остаток на точке, план/факт продаж, история визитов.</div>
+        <div class="block-tags">
+          <span class="tag">Реализация</span>
+          <span class="tag">Закупка</span>
+          <span class="tag">Остатки</span>
+        </div>
+      </div>
+
+      <div class="block-card green">
+        <div class="block-icon">📦</div>
+        <div class="block-title">Поставки</div>
+        <div class="block-desc">Учёт тиражей от заказа до склада. Производитель, плановые и фактические даты, себестоимость, брак. Прикидочный учёт без сложности 1С.</div>
+        <div class="block-tags">
+          <span class="tag">Тираж</span>
+          <span class="tag">Себестоимость</span>
+          <span class="tag">Брак</span>
+        </div>
+      </div>
+
+      <div class="block-card accent">
+        <div class="block-icon">🔧</div>
+        <div class="block-title">Разработка игр</div>
+        <div class="block-desc">Жизненный цикл новой игры от идеи до выпуска. Эксперт по контенту, дизайнер, подрядчик. Бюджеты по этапам, тираж, цена продажи.</div>
+        <div class="block-tags">
+          <span class="tag">7 стадий</span>
+          <span class="tag">Бюджет</span>
+          <span class="tag">Команда</span>
+        </div>
+      </div>
+
+      <div class="block-card yellow">
+        <div class="block-icon">📚</div>
+        <div class="block-title">Каталог игр</div>
+        <div class="block-desc">Единый справочник всех 20 игр. Источник истины для воронок, маркетплейсов и поставок. Серия, статус, карточки, остаток на складе.</div>
+        <div class="block-tags">
+          <span class="tag">20 игр</span>
+          <span class="tag">4 серии</span>
+          <span class="tag">Остатки</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- EXHIBITION FLOW -->
+<section class="bg-white">
+  <div class="container">
+    <div class="section-title">Жизненный цикл мероприятия</div>
+    <div class="section-sub">От идеи до архива — все данные в одном месте</div>
+    <div class="flow">
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-bubble">💡</div>
+          <div class="flow-step-label">Идея / План</div>
+          <div class="flow-step-sub">Выставка найдена, рассматриваем</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-bubble">📋</div>
+          <div class="flow-step-label">Подготовка</div>
+          <div class="flow-step-sub">Заявка, стенд, материалы, амбассадоры</div>
+        </div>
+        <div class="flow-step active">
+          <div class="flow-bubble">✅</div>
+          <div class="flow-step-label">Готово к старту</div>
+          <div class="flow-step-sub">Всё подтверждено</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-bubble">🎡</div>
+          <div class="flow-step-label">Проведение</div>
+          <div class="flow-step-sub">Идёт, собираем лиды</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-bubble">📊</div>
+          <div class="flow-step-label">Закрытие</div>
+          <div class="flow-step-sub">Отчёт, выплаты, итоги</div>
+        </div>
+        <div class="flow-step done">
+          <div class="flow-bubble">🗂️</div>
+          <div class="flow-step-label">Архив</div>
+          <div class="flow-step-sub">Данные сохранены</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FUNNELS -->
+<section>
+  <div class="container">
+    <div class="section-title">Воронки продаж</div>
+    <div class="section-sub">Каждый канал — своя логика работы</div>
+    <div class="funnels-grid">
+      <div class="funnel-card">
+        <div class="funnel-icon">👤</div>
+        <div class="funnel-name">B2C Розница</div>
+        <div class="funnel-desc">Частные покупатели. Лиды с выставок и соцсетей.</div>
+      </div>
+      <div class="funnel-card">
+        <div class="funnel-icon">🏢</div>
+        <div class="funnel-name">B2B Корпоратив</div>
+        <div class="funnel-desc">Командные мероприятия, тимбилдинг, подарки.</div>
+      </div>
+      <div class="funnel-card">
+        <div class="funnel-icon">🎓</div>
+        <div class="funnel-name">B2B Образование</div>
+        <div class="funnel-desc">Школы, вузы, логопеды, кружки развития.</div>
+      </div>
+      <div class="funnel-card">
+        <div class="funnel-icon">🏪</div>
+        <div class="funnel-name">Опт / Ретейл</div>
+        <div class="funnel-desc">Магазины и кафе. → Точка продаж при закрытии.</div>
+      </div>
+      <div class="funnel-card">
+        <div class="funnel-icon">🎨</div>
+        <div class="funnel-name">Кастомная игра</div>
+        <div class="funnel-desc">Уникальный продукт под бренд. → Разработка игр.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CATALOG -->
+<section class="bg-white">
+  <div class="container">
+    <div class="section-title">Каталог игр</div>
+    <div class="section-sub">20 игр в четырёх сериях — единый справочник для всей системы</div>
+    <div class="catalog-grid">
+      <div class="catalog-section">
+        <div class="catalog-label">🟦 Универсальные · от 6 800 ₽</div>
+        <ul class="catalog-games">
+          <li><span>Классика</span><span class="price">6 800 ₽</span></li>
+          <li><span>Красноречие</span><span class="price">6 800 ₽</span></li>
+          <li><span>Дипломатия</span><span class="price">6 800 ₽</span></li>
+          <li><span>Рекламная пауза</span><span class="price">6 800 ₽</span></li>
+        </ul>
+      </div>
+      <div class="catalog-section">
+        <div class="catalog-label">🟩 Тематические · от 7 200 ₽</div>
+        <ul class="catalog-games">
+          <li><span>Гастрономия</span><span class="price">7 200 ₽</span></li>
+          <li><span>Сомелье</span><span class="price">7 200 ₽</span></li>
+          <li><span>Живопись</span><span class="price">7 200 ₽</span></li>
+          <li><span>Архитектура</span><span class="price">7 200 ₽</span></li>
+          <li><span>Музыка</span><span class="price">7 200 ₽</span></li>
+          <li><span>Мода</span><span class="price">7 200 ₽</span></li>
+          <li><span>Кинематограф</span><span class="price">7 200 ₽</span></li>
+          <li><span>Дизайн и ремёсла</span><span class="price">7 200 ₽</span></li>
+        </ul>
+      </div>
+      <div class="catalog-section">
+        <div class="catalog-label">🟨 Региональные · от 7 500 ₽</div>
+        <ul class="catalog-games">
+          <li><span>Урал</span><span class="price">7 500 ₽</span></li>
+          <li><span>Сибирь</span><span class="price">7 500 ₽</span></li>
+          <li><span>Дальний Восток</span><span class="price">7 500 ₽</span></li>
+          <li><span>Поморье</span><span class="price">7 500 ₽</span></li>
+          <li><span>Юг</span><span class="price">7 500 ₽</span></li>
+        </ul>
+      </div>
+      <div class="catalog-section">
+        <div class="catalog-label">🔧 В разработке</div>
+        <ul class="catalog-games">
+          <li><span>Мировая литература</span><span class="price">—</span></li>
+          <li><span>Универсальные 2.0</span><span class="price">—</span></li>
+          <li><span>Наука</span><span class="price">—</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- EXTERNAL -->
+<section>
+  <div class="container">
+    <div class="section-title">Внешнее взаимодействие</div>
+    <div class="section-sub">Амбассадоры и партнёры работают без лицензий и без лишнего доступа</div>
+    <div class="external-grid">
+
+      <div class="external-card">
+        <div class="external-title">🤝 Коллаб для амбассадоров</div>
+        <p style="font-size:14px; color:var(--muted); margin-bottom:16px;">
+          Закрытое рабочее пространство в Битрикс24. Гости не занимают лицензий — любое количество бесплатно на тарифе «Профессиональный».
+        </p>
+        <ul class="form-list">
+          <li>
+            <span class="form-icon">💬</span>
+            <div><div class="form-name">Чат с командой</div><div class="form-result">Оперативная связь без WhatsApp-групп</div></div>
+          </li>
+          <li>
+            <span class="form-icon">✅</span>
+            <div><div class="form-name">Задания на мероприятие</div><div class="form-result">Чеклист + инструкция на каждый выход</div></div>
+          </li>
+          <li>
+            <span class="form-icon">📁</span>
+            <div><div class="form-name">Материалы</div><div class="form-result">Скрипты, медиа, правила игры</div></div>
+          </li>
+          <li>
+            <span class="form-icon">📋</span>
+            <div><div class="form-name">Форма отчёта</div><div class="form-result">Ссылка в задании → результат в CRM</div></div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="external-card">
+        <div class="external-title">📋 Формы (без логина)</div>
+        <p style="font-size:14px; color:var(--muted); margin-bottom:16px;">
+          Публичные ссылки — заполняются в браузере. Данные автоматически создают нужные записи в CRM.
+        </p>
+        <ul class="form-list">
+          <li>
+            <span class="form-icon">📊</span>
+            <div>
+              <div class="form-name">Отчёт амбассадора</div>
+              <div class="form-result">→ Карточка в «Мероприятиях»</div>
+            </div>
+          </li>
+          <li>
+            <span class="form-icon">🎟️</span>
+            <div>
+              <div class="form-name">Первый контакт на стенде</div>
+              <div class="form-result">→ Лид в B2C воронке</div>
+            </div>
+          </li>
+          <li>
+            <span class="form-icon">🏢</span>
+            <div>
+              <div class="form-name">B2B-заявка</div>
+              <div class="form-result">→ Лид в B2B воронке</div>
+            </div>
+          </li>
+          <li>
+            <span class="form-icon">🏪</span>
+            <div>
+              <div class="form-name">Анкета новой точки</div>
+              <div class="form-result">→ Карточка в «Точках продаж»</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ROLES -->
+<section class="bg-white">
+  <div class="container">
+    <div class="section-title">Роли и доступы</div>
+    <div class="section-sub">Каждый видит только то, что нужно для работы</div>
+    <table class="roles-table">
+      <thead>
+        <tr>
+          <th>Роль</th>
+          <th>Тип доступа</th>
+          <th>Что видит и делает</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Директор</strong></td>
+          <td><span class="role-badge role-admin">Полный</span></td>
+          <td>Все блоки системы, дашборды, аналитика, утверждение решений</td>
+        </tr>
+        <tr>
+          <td><strong>Менеджер продаж</strong></td>
+          <td><span class="role-badge role-manager">Рабочий</span></td>
+          <td>Воронки продаж, контакты, сделки, лиды с выставок</td>
+        </tr>
+        <tr>
+          <td><strong>Маркетолог</strong></td>
+          <td><span class="role-badge role-manager">Рабочий</span></td>
+          <td>Мероприятия, амбассадоры, маркетплейсы, каталог</td>
+        </tr>
+        <tr>
+          <td><strong>Производство</strong></td>
+          <td><span class="role-badge role-manager">Рабочий</span></td>
+          <td>Каталог, поставки, разработка игр, точки продаж</td>
+        </tr>
+        <tr>
+          <td><strong>Амбассадор</strong></td>
+          <td><span class="role-badge role-external">Коллаб</span></td>
+          <td>Только свой коллаб: задания, чат, файлы, форма отчёта</td>
+        </tr>
+        <tr>
+          <td><strong>Партнёр / Клиент</strong></td>
+          <td><span class="role-badge role-external">Форма</span></td>
+          <td>Только публичная форма по ссылке, без входа в систему</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ROADMAP -->
+<section>
+  <div class="container">
+    <div class="section-title">Дорожная карта</div>
+    <div class="section-sub">Текущий статус развития системы</div>
+    <div class="roadmap">
+      <div class="roadmap-item">
+        <div class="roadmap-dot done"></div>
+        <div>
+          <div class="roadmap-label">✅ Структура системы — готово</div>
+          <div class="roadmap-desc">7 блоков, 5 воронок, каталог из 20 игр, тестовые данные заведены</div>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-dot done"></div>
+        <div>
+          <div class="roadmap-label">✅ Внешние пользователи — готово</div>
+          <div class="roadmap-desc">Коллаб для амбассадоров настроен, формы спроектированы</div>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-dot next"></div>
+        <div>
+          <div class="roadmap-label">⏳ Формы — следующий шаг</div>
+          <div class="roadmap-desc">Создание 4 публичных форм в UI Битрикс24 для амбассадоров, партнёров и клиентов</div>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-dot future"></div>
+        <div>
+          <div class="roadmap-label">🔮 Автоматизация — следующий этап</div>
+          <div class="roadmap-desc">Роботы и бизнес-процессы: уведомления, расчёт гонораров, синхронизация между блоками</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>Система управления «Потолкуем?» · Битрикс24 Профессиональный</div>
+  <div style="margin-top:8px">
+    <a href="https://github.com/sander23571-web/potolkuem-b24">GitHub: документация и API-паттерны</a>
+    &nbsp;·&nbsp;
+    <a href="system-overview.md">Markdown-версия</a>
+  </div>
+</footer>
+
+</body>
+</html>
