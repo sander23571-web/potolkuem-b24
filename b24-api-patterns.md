@@ -302,29 +302,36 @@ POST /crm.contact.userfield.add
 
 ### Созданные сущности
 
-| Сущность | entityTypeId | categoryId | Стадий | Полей UF |
-|----------|-------------|------------|--------|----------|
-| Мероприятия | 1038 | 15 | 7 | 15 |
+| Сущность | typeId | entityTypeId | categoryId | entityId (userfieldconfig) |
+|----------|--------|-------------|------------|---------------------------|
+| Мероприятия | 7 | 1038 | 15 | CRM_7 |
+| Разработка игр | 9 | 1040 | 17 | CRM_9 |
+| Точки продаж | 11 | 1042 | 19 | CRM_11 |
+| Маркетплейсы | 13 | 1044 | 21 | CRM_13 |
+| Поставки | 15 | 1046 | 23 | CRM_15 |
 
-### Поля смарт-процесса Мероприятия (UF_CRM_*)
+> **Критически важно:** для `userfieldconfig.add` нужен `entityId = CRM_{typeId}` (не entityTypeId!).
+> Поля должны называться `UF_CRM_{typeId}_{NAME}`, например `UF_CRM_7_VISITORS`.
+
+### Поля смарт-процесса Мероприятия (typeId=7, entityId=CRM_7)
 
 | ID | Поле | Тип | Назначение |
 |----|------|-----|------------|
-| 225 | UF_CRM_EVENT_TYPE | enumeration | Тип мероприятия |
-| 227 | UF_CRM_LOCATION | string | Место проведения |
-| 229 | UF_CRM_THEME | enumeration | Тематика игр |
-| 231 | UF_CRM_ORG_FEE_PLAN | double | Оргвзнос план |
-| 233 | UF_CRM_ORG_FEE_FACT | double | Оргвзнос факт |
-| 235 | UF_CRM_BUDGET_PLAN | double | Бюджет план |
-| 237 | UF_CRM_EXPENSES_FACT | double | Расходы факт |
-| 239 | UF_CRM_REVENUE | double | Выручка |
-| 241 | UF_CRM_VISITORS | integer | Посетителей стенда |
-| 243 | UF_CRM_CONTACTS_COLLECTED | integer | Контактов собрано |
-| 245 | UF_CRM_SALES_COUNT | integer | Продано экземпляров |
-| 247 | UF_CRM_RATING | enumeration | Оценка 1-5 |
-| 249 | UF_CRM_WHAT_WORKED | string | Что сработало |
-| 251 | UF_CRM_WHAT_TO_IMPROVE | string | Что улучшить |
-| 253 | UF_CRM_STAND_AREA | double | Площадь стенда |
+| 407 | UF_CRM_7_VISITORS | integer | Посетителей стенда |
+| 409 | UF_CRM_7_EVENT_TYPE | enumeration | Тип мероприятия |
+| 411 | UF_CRM_7_LOCATION | string | Место проведения |
+| 413 | UF_CRM_7_CONTACTS_COLLECTED | integer | Контактов собрано |
+| 415 | UF_CRM_7_SALES_COUNT | integer | Продано экземпляров |
+| 417 | UF_CRM_7_AMB_COUNT | integer | Амбассадоров на мероприятии |
+| 419 | UF_CRM_7_AMB_SESSIONS | integer | Игровых сессий проведено |
+| 421 | UF_CRM_7_AMB_FEE_PLAN | double | Гонорар амбассадорам — план |
+| 423 | UF_CRM_7_AMB_FEE_FACT | double | Гонорар амбассадорам — факт |
+| 425 | UF_CRM_7_BUDGET_PLAN | double | Бюджет — план |
+| 427 | UF_CRM_7_EXPENSES_FACT | double | Расходы — факт |
+| 429 | UF_CRM_7_REVENUE | double | Выручка |
+| 431 | UF_CRM_7_RATING | enumeration | Оценка мероприятия |
+| 433 | UF_CRM_7_WHAT_WORKED | string | Что сработало |
+| 435 | UF_CRM_7_WHAT_TO_IMPROVE | string | Что улучшить |
 
 ---
 
@@ -344,29 +351,28 @@ POST /crm.contact.userfield.add
 | 90 | Архив | S ✅ |
 | 100 | Заморожено | F ❄️ |
 
-### Пользовательские поля (UF_CRM_*, ENTITY_ID: CRM_1040)
+### Пользовательские поля (typeId=9, entityId=CRM_9)
 
 | ID | Поле | Тип | Назначение |
 |----|------|-----|------------|
-| 279 | UF_CRM_GAME_SERIES | enumeration | Серия игры |
-| 281 | UF_CRM_GAME_THEME | enumeration | Тематика |
-| 283 | UF_CRM_GAME_CONCEPT | string | Концепция/описание |
-| 285 | UF_CRM_GAME_CARDS_COUNT | integer | Количество карточек |
-| 287 | UF_CRM_GAME_TARGET | string | Целевая аудитория |
-| 289 | UF_CRM_GAME_RELEASE_PLAN | date | Плановая дата выпуска |
-| 291 | UF_CRM_GAME_RELEASE_FACT | date | Фактическая дата выпуска |
-| 293 | UF_CRM_GAME_EXPERT | string | Эксперт по контенту |
-| 295 | UF_CRM_GAME_CONTRACTOR | string | Подрядчик (производство) |
-| 297 | UF_CRM_BUDGET_CONTENT_PLAN | double | Бюджет контент план |
-| 299 | UF_CRM_BUDGET_CONTENT_FACT | double | Бюджет контент факт |
-| 301 | UF_CRM_BUDGET_DESIGN_PLAN | double | Бюджет дизайн план |
-| 303 | UF_CRM_BUDGET_DESIGN_FACT | double | Бюджет дизайн факт |
-| 305 | UF_CRM_BUDGET_PRODUCTION_PLAN | double | Бюджет производство план |
-| 307 | UF_CRM_BUDGET_PRODUCTION_FACT | double | Бюджет производство факт |
-| 309 | UF_CRM_GAME_CIRCULATION | integer | Тираж (штук) |
-| 311 | UF_CRM_GAME_COST_UNIT_PLAN | double | Себестоимость ед. план |
-| 313 | UF_CRM_GAME_COST_UNIT_FACT | double | Себестоимость ед. факт |
-| 315 | UF_CRM_GAME_PRICE | double | Цена продажи |
+| 437 | UF_CRM_9_GAME_SERIES | enumeration | Серия игры |
+| 439 | UF_CRM_9_GAME_CONCEPT | string | Концепция/описание |
+| 441 | UF_CRM_9_GAME_TARGET | string | Целевая аудитория |
+| 443 | UF_CRM_9_GAME_CARDS_COUNT | integer | Количество карточек |
+| 445 | UF_CRM_9_GAME_EXPERT | string | Эксперт по контенту |
+| 447 | UF_CRM_9_GAME_CONTRACTOR | string | Подрядчик |
+| 449 | UF_CRM_9_GAME_RELEASE_PLAN | date | Плановая дата выпуска |
+| 451 | UF_CRM_9_GAME_RELEASE_FACT | date | Фактическая дата выпуска |
+| 453 | UF_CRM_9_BUDGET_CONTENT_PLAN | double | Контент план |
+| 455 | UF_CRM_9_BUDGET_CONTENT_FACT | double | Контент факт |
+| 457 | UF_CRM_9_BUDGET_DESIGN_PLAN | double | Дизайн план |
+| 459 | UF_CRM_9_BUDGET_DESIGN_FACT | double | Дизайн факт |
+| 461 | UF_CRM_9_BUDGET_PRODUCTION_PLAN | double | Производство план |
+| 463 | UF_CRM_9_BUDGET_PRODUCTION_FACT | double | Производство факт |
+| 465 | UF_CRM_9_GAME_CIRCULATION | integer | Тираж (штук) |
+| 467 | UF_CRM_9_GAME_COST_UNIT_PLAN | double | Себестоимость ед. план |
+| 469 | UF_CRM_9_GAME_COST_UNIT_FACT | double | Себестоимость ед. факт |
+| 471 | UF_CRM_9_GAME_PRICE | double | Цена продажи |
 
 ### Секции карточки
 - **Об игре** — Название, Серия, Тематика, Аудитория, Карточек, Концепция, Ответственный
@@ -483,21 +489,20 @@ POST /crm.contact.details.configuration.set
 | 90 | Закрыта | S ✅ |
 | 100 | Отказ | F ❌ |
 
-### Пользовательские поля (UF_CRM_*, ENTITY_ID: CRM_1042)
+### Пользовательские поля (typeId=11, entityId=CRM_11)
 
 | ID | Поле | Тип | Назначение |
 |----|------|-----|------------|
-| 327 | UF_CRM_LOCATION_TYPE | enumeration | Тип локации |
-| 329 | UF_CRM_LOCATION_ADDRESS | string | Адрес |
-| 331 | UF_CRM_DEAL_TERMS | enumeration | Условия (реализация/закупка/депозит) |
-| 333 | UF_CRM_COMMISSION_PCT | double | Комиссия % |
-| 335 | UF_CRM_ASSORTMENT | enumeration (multiple) | Ассортимент игр |
-| 337 | UF_CRM_STOCK_CURRENT | integer | Остаток на точке |
-| 339 | UF_CRM_SALES_PLAN_MONTH | integer | План продаж / мес |
-| 341 | UF_CRM_SALES_LAST_MONTH | integer | Продажи последний месяц |
-| 343 | UF_CRM_LAST_SUPPLY_DATE | date | Дата последней поставки |
-| 345 | UF_CRM_LAST_VISIT_DATE | date | Дата последнего визита |
-| 347 | UF_CRM_LOCATION_NOTE | string | Примечания |
+| 473 | UF_CRM_11_LOCATION_TYPE | enumeration | Тип локации |
+| 475 | UF_CRM_11_LOCATION_ADDRESS | string | Адрес |
+| 477 | UF_CRM_11_DEAL_TERMS | enumeration | Условия (реализация/закупка/депозит) |
+| 479 | UF_CRM_11_COMMISSION_PCT | double | Комиссия % |
+| 481 | UF_CRM_11_STOCK_CURRENT | integer | Остаток на точке |
+| 483 | UF_CRM_11_SALES_PLAN_MONTH | integer | План продаж / мес |
+| 485 | UF_CRM_11_SALES_LAST_MONTH | integer | Продажи последний месяц |
+| 487 | UF_CRM_11_LAST_SUPPLY_DATE | date | Дата последней поставки |
+| 489 | UF_CRM_11_LAST_VISIT_DATE | date | Дата последнего визита |
+| 491 | UF_CRM_11_LOCATION_NOTE | string | Примечания |
 
 ---
 
@@ -516,23 +521,23 @@ POST /crm.contact.details.configuration.set
 | 80 | Архив | S |
 | 90 | Приостановлено | F |
 
-### Пользовательские поля (UF_CRM_*, ENTITY_ID: CRM_1044)
+### Пользовательские поля (typeId=13, entityId=CRM_13)
 
 | ID | Поле | Тип | Назначение |
 |----|------|-----|------------|
-| 349 | UF_CRM_MP_PLATFORM | enumeration | Платформа (WB/Ozon/ЯМ...) |
-| 351 | UF_CRM_MP_URL | string | Ссылка на магазин |
-| 353 | UF_CRM_MP_ACTIVE_SKU | integer | Активных карточек |
-| 355 | UF_CRM_MP_RATING | double | Средний рейтинг |
-| 357 | UF_CRM_MP_REVIEWS_TOTAL | integer | Всего отзывов |
-| 359 | UF_CRM_MP_REVIEWS_PENDING | integer | Отзывов без ответа |
-| 361 | UF_CRM_MP_STOCK | integer | Общий остаток |
-| 363 | UF_CRM_MP_REVENUE_MONTH | double | Выручка за месяц |
-| 365 | UF_CRM_MP_PROMO_ACTIVE | boolean | Активная акция |
-| 367 | UF_CRM_MP_PROMO_DISCOUNT | double | Скидка % |
-| 369 | UF_CRM_MP_PROMO_END | date | Дата окончания акции |
-| 371 | UF_CRM_MP_CARDS_UPDATED | date | Дата обновления карточек |
-| 373 | UF_CRM_MP_NOTES | string | Задачи / Примечания |
+| 493 | UF_CRM_13_MP_PLATFORM | enumeration | Платформа (WB/Ozon/ЯМ...) |
+| 495 | UF_CRM_13_MP_GAME | string | Игра (название) |
+| 497 | UF_CRM_13_MP_URL | url | Ссылка на страницу товара |
+| 499 | UF_CRM_13_MP_RATING | double | Рейтинг |
+| 501 | UF_CRM_13_MP_POSITION | integer | Позиция в поиске |
+| 503 | UF_CRM_13_MP_REVIEWS_TOTAL | integer | Всего отзывов |
+| 505 | UF_CRM_13_MP_REVIEWS_PENDING | integer | Отзывов без ответа |
+| 507 | UF_CRM_13_MP_STOCK | integer | Остаток на складе MP |
+| 509 | UF_CRM_13_MP_REVENUE_MONTH | double | Выручка за месяц |
+| 511 | UF_CRM_13_MP_PROMO_ACTIVE | boolean | Активная акция |
+| 513 | UF_CRM_13_MP_PROMO_DISCOUNT | double | Скидка % |
+| 515 | UF_CRM_13_MP_PROMO_END | date | Дата окончания акции |
+| 517 | UF_CRM_13_MP_NOTES | string | Задачи / Примечания |
 
 ### Секции карточки
 - **Платформа** — название, ссылка, SKU, дата обновления, ответственный
@@ -639,20 +644,20 @@ POST /crm.product.add
 | 90 | Распределено | S ✅ |
 | 100 | Брак / Списано | F ❌ |
 
-### Пользовательские поля (UF_CRM_*, ENTITY_ID: CRM_1046)
+### Пользовательские поля (typeId=15, entityId=CRM_15)
 
 | ID | Поле | Тип | Назначение |
 |----|------|-----|------------|
-| 379 | UF_CRM_SUPPLY_GAME | enumeration | Игра (название) |
-| 381 | UF_CRM_SUPPLY_QTY | integer | Тираж (шт) |
-| 383 | UF_CRM_SUPPLY_COST_PLAN | double | Себестоимость план (руб/шт) |
-| 385 | UF_CRM_SUPPLY_COST_FACT | double | Себестоимость факт (руб/шт) |
-| 387 | UF_CRM_SUPPLY_TOTAL_PLAN | double | Сумма заказа план |
-| 389 | UF_CRM_SUPPLY_CONTRACTOR | string | Производитель |
-| 391 | UF_CRM_SUPPLY_DATE_PLAN | date | Плановая дата готовности |
-| 393 | UF_CRM_SUPPLY_DATE_FACT | date | Фактическая дата получения |
-| 395 | UF_CRM_SUPPLY_QTY_DEFECT | integer | Брак (шт) |
-| 397 | UF_CRM_SUPPLY_NOTE | string | Примечания |
+| 519 | UF_CRM_15_SUPPLY_GAME | string | Игра (название) |
+| 521 | UF_CRM_15_SUPPLY_QTY | integer | Тираж (шт) |
+| 523 | UF_CRM_15_SUPPLY_CONTRACTOR | string | Производитель |
+| 525 | UF_CRM_15_SUPPLY_COST_PLAN | double | Себестоимость план (руб/шт) |
+| 527 | UF_CRM_15_SUPPLY_COST_FACT | double | Себестоимость факт (руб/шт) |
+| 529 | UF_CRM_15_SUPPLY_TOTAL_PLAN | double | Сумма заказа план |
+| 531 | UF_CRM_15_SUPPLY_DATE_PLAN | date | Плановая дата готовности |
+| 533 | UF_CRM_15_SUPPLY_DATE_FACT | date | Фактическая дата получения |
+| 535 | UF_CRM_15_SUPPLY_QTY_DEFECT | integer | Брак (шт) |
+| 537 | UF_CRM_15_SUPPLY_NOTE | string | Примечания |
 
 ---
 
