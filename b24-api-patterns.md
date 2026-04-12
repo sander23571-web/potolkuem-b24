@@ -123,26 +123,25 @@ GET /crm.status.list?filter[ENTITY_ID]=DYNAMIC_1038_STAGE_15
 
 ### 7. Добавление поля
 
-**Ключевое открытие:** для смарт-процессов нет отдельного метода.
-Используется `crm.deal.userfield.add` с `ENTITY_ID = "CRM_{entityTypeId}"`.
+**Единственный рабочий метод:** `userfieldconfig.add` с `moduleId: "crm"`.
+Подробности и история ошибки — в п.8 раздела «Важные находки».
 
 ```bash
-POST /crm.deal.userfield.add
+POST /userfieldconfig.add
 {
-  "fields": {
-    "ENTITY_ID": "CRM_1038",          # CRM_ + entityTypeId
-    "FIELD_NAME": "MY_FIELD",         # без префикса UF_CRM_ (добавляется автоматом)
-    "USER_TYPE_ID": "string",         # тип поля
-    "EDIT_FORM_LABEL": "Название",
-    "LIST_COLUMN_LABEL": "Колонка",
-    "IS_REQUIRED": "N",
-    "MULTIPLE": "N"
+  "moduleId": "crm",
+  "field": {
+    "entityId": "CRM_7",             # CRM_ + typeId (НЕ entityTypeId!)
+    "fieldName": "UF_CRM_7_MY_FIELD", # полное имя с префиксом
+    "userTypeId": "string",
+    "editFormLabel": {"ru": "Название"},
+    "mandatory": "N",
+    "multiple": "N"
   }
 }
-# Поле получит имя UF_CRM_MY_FIELD
 ```
 
-### 8. Типы полей (USER_TYPE_ID)
+### 8. Типы полей (userTypeId)
 
 | Тип | Описание |
 |-----|----------|
@@ -160,29 +159,36 @@ POST /crm.deal.userfield.add
 ### 9. Поле типа "Список" (enumeration) со значениями
 
 ```bash
-POST /crm.deal.userfield.add
+POST /userfieldconfig.add
 {
-  "fields": {
-    "ENTITY_ID": "CRM_1038",
-    "FIELD_NAME": "EVENT_TYPE",
-    "USER_TYPE_ID": "enumeration",
-    "EDIT_FORM_LABEL": "Тип мероприятия",
-    "IS_REQUIRED": "Y",
-    "MULTIPLE": "N",
-    "SETTINGS": {"DISPLAY": "UI", "LIST_HEIGHT": 3},
-    "LIST": [
-      {"VALUE": "Выставка", "SORT": 10},
-      {"VALUE": "Акция на локации", "SORT": 20},
-      {"VALUE": "Открытая игра", "SORT": 30}
+  "moduleId": "crm",
+  "field": {
+    "entityId": "CRM_7",
+    "fieldName": "UF_CRM_7_EVENT_TYPE",
+    "userTypeId": "enumeration",
+    "editFormLabel": {"ru": "Тип мероприятия"},
+    "mandatory": "N",
+    "multiple": "N",
+    "settings": {"DISPLAY": "UI", "LIST_HEIGHT": 3},
+    "enum": [
+      {"value": "Выставка", "def": "N", "sort": 10},
+      {"value": "Акция на локации", "def": "N", "sort": 20},
+      {"value": "Открытая игра", "def": "N", "sort": 30}
     ]
   }
 }
 ```
 
+> Ключи в `enum`: `value`, `def`, `sort` (строчные) — не `VALUE`/`SORT` как в других методах.
+
 ### 10. Список полей смарт-процесса
 
 ```bash
-GET /crm.deal.userfield.list?filter[ENTITY_ID]=CRM_1038&order[ID]=ASC
+POST /userfieldconfig.list
+{
+  "moduleId": "crm",
+  "filter": {"ENTITY_ID": "CRM_7"}
+}
 ```
 
 ### 11. Стандартные поля (из crm.item.fields)
@@ -213,7 +219,7 @@ POST /crm.item.details.configuration.set
       "type": "section",
       "elements": [
         {"name": "title"},
-        {"name": "UF_CRM_EVENT_TYPE"},
+        {"name": "UF_CRM_7_EVENT_TYPE"},
         {"name": "begindate"},
         {"name": "closedate"},
         {"name": "assignedById"}
@@ -224,8 +230,8 @@ POST /crm.item.details.configuration.set
       "title": "Финансы",
       "type": "section",
       "elements": [
-        {"name": "UF_CRM_BUDGET_PLAN"},
-        {"name": "UF_CRM_REVENUE"}
+        {"name": "UF_CRM_7_BUDGET_PLAN"},
+        {"name": "UF_CRM_7_REVENUE"}
       ]
     }
   ]
@@ -249,8 +255,8 @@ GET /crm.status.entity.types
 # Стандартные поля смарт-процесса
 GET /crm.item.fields?entityTypeId=1038
 
-# Пользовательские поля
-GET /crm.deal.userfield.list?filter[ENTITY_ID]=CRM_1038
+# Пользовательские поля смарт-процесса
+POST /userfieldconfig.list  {"moduleId": "crm", "filter": {"ENTITY_ID": "CRM_7"}}
 
 # Методы API на портале
 GET /methods?full=1
@@ -655,6 +661,7 @@ POST /crm.product.add
     "PROPERTY_113": {"value": 2023}    # Год выпуска
   }
 }
+```
 
 ---
 
