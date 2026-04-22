@@ -5,26 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Схема данных · Хаб «Выставка» · Потолкуем?</title>
   <style>
-    @page {
-      size: A3 landscape;
-      margin: 14mm;
-    }
+    @page { size: A3 landscape; margin: 14mm; }
 
     :root {
-      --ink:      #1a1d21;
-      --muted:    #5c6370;
-      --line:     #c8cdd5;
-
-      /* entity colours */
-      --hub:      #1e5a8e;   /* Выставка */
-      --host:     #2d6a4f;   /* Ведущий */
-      --shift:    #3a7d44;   /* Выход ведущего */
-      --sale:     #9b2226;   /* Продажа */
-      --contact:  #7b2cbf;   /* Контакт/Лид */
-      --prep:     #bc6c25;   /* Подготовка */
-      --org:      #0077b6;   /* Договор + Логистика */
-      --ref:      #606c38;   /* Справочник */
-      --session:  #6d597a;   /* Игровая сессия */
+      --ink:     #1a1d21;
+      --muted:   #5c6370;
+      --line:    #c8cdd5;
+      --hub:     #1e5a8e;
+      --host:    #2d6a4f;
+      --shift:   #3a7d44;
+      --sale:    #9b2226;
+      --contact: #7b2cbf;
+      --prep:    #bc6c25;
+      --org:     #0077b6;
+      --ref:     #606c38;
+      --session: #6d597a;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -39,7 +34,7 @@
       print-color-adjust: exact;
     }
 
-    /* ── SHEET ─────────────────────────────────── */
+    /* ── SHEET ─────────────────────────────── */
     .sheet {
       width: 420mm;
       min-height: 297mm;
@@ -49,14 +44,13 @@
       padding: 12mm 14mm 14mm;
       box-shadow: 0 4px 24px rgba(0,0,0,.10);
     }
-
     @media print {
       body { background: #fff; }
       .sheet { box-shadow: none; margin: 0; page-break-after: always; }
       .sheet:last-child { page-break-after: auto; }
     }
 
-    /* ── HEADER ───────────────────────────────── */
+    /* ── HEADER ─────────────────────────────── */
     .page-header {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -64,102 +58,123 @@
       align-items: end;
       border-bottom: 2.5px solid var(--hub);
       padding-bottom: 5mm;
-      margin-bottom: 7mm;
+      margin-bottom: 6mm;
     }
-    .page-header h1 {
-      font-size: 18pt;
-      font-weight: 700;
-      color: var(--hub);
-      letter-spacing: -0.02em;
-    }
-    .page-header .sub {
-      font-size: 9.5pt;
-      color: var(--muted);
-      margin-top: 2mm;
-    }
-    .badge {
-      font-size: 8pt;
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      padding: 3px 8px;
-      color: var(--muted);
-      white-space: nowrap;
-    }
+    .page-header h1 { font-size: 17pt; font-weight: 700; color: var(--hub); letter-spacing: -0.02em; }
+    .page-header .sub { font-size: 9pt; color: var(--muted); margin-top: 2mm; }
+    .badge { font-size: 8pt; border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px; color: var(--muted); white-space: nowrap; }
 
-    /* ── HUB DIAGRAM ─────────────────────────── */
-    .hub-area {
-      position: relative;
-      width: 100%;
-      height: 158mm;
-    }
-
-    .hub-area svg.lines {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      overflow: visible;
-    }
-
-    /* entity card */
+    /* ── ENTITY CARD ─────────────────────────── */
     .ent {
-      position: absolute;
-      border-radius: 7px;
-      padding: 5px 8px 6px;
+      border-radius: 6px;
       border-top: 3.5px solid;
+      padding: 5px 8px 6px;
+      background: #fff;
     }
     .ent-name {
       font-weight: 700;
-      font-size: 9.5pt;
+      font-size: 9pt;
+      margin-bottom: 4px;
       letter-spacing: 0.01em;
-      margin-bottom: 3px;
     }
     .ent-fields {
       font-size: 7.5pt;
       color: var(--muted);
-      line-height: 1.55;
+      line-height: 1.65;
     }
-    .ent-fields span.fk  { color: #9b2226; }
-    .ent-fields span.pk  { color: var(--hub); font-weight: 600; }
-    .ent-fields span.typ { color: #606c38; font-style: italic; }
+    .fk  { color: #9b2226; }
+    .pk  { color: var(--hub); font-weight: 600; }
+    .typ { color: #606c38; font-style: italic; }
+    .dim { color: #aaa; font-size: 7pt; }
 
-    /* center entity */
-    .ent.hub {
-      border-color: var(--hub);
-      background: #edf4fb;
-      left: 50%; transform: translateX(-50%);
-      top: 38mm;
-      width: 72mm;
+    /* colour map */
+    .c-hub     { color: var(--hub); }
+    .c-host    { color: var(--host); }
+    .c-shift   { color: var(--shift); }
+    .c-sale    { color: var(--sale); }
+    .c-contact { color: var(--contact); }
+    .c-prep    { color: var(--prep); }
+    .c-org     { color: var(--org); }
+    .c-ref     { color: var(--ref); }
+    .c-session { color: var(--session); }
+
+    .b-hub     { border-color: var(--hub); background: #edf4fb; }
+    .b-host    { border-color: var(--host); background: #edf6f0; }
+    .b-shift   { border-color: var(--shift); background: #eef6ef; }
+    .b-sale    { border-color: var(--sale); background: #faeaeb; }
+    .b-contact { border-color: var(--contact); background: #f5f0fd; }
+    .b-prep    { border-color: var(--prep); background: #fdf4ec; }
+    .b-org     { border-color: var(--org); background: #eaf4fb; }
+    .b-ref     { border-color: var(--ref); background: #f4f5ee; }
+    .b-session { border-color: var(--session); background: #f3eff6; }
+
+    /* ── DIAGRAM GRID ────────────────────────── */
+    /*
+      4 columns  × 3 rows
+      Col1: Orgs (Тип / Договор / Логистика)
+      Col2: Center (Подготовка / ВЫСТАВКА spanning rows 2-3)
+      Col3: CRM (empty / Контакт spanning rows 2-3)
+      Col4: Chain (Ведущий / Выход / Sale+Session pair)
+    */
+    .hub-grid {
+      display: grid;
+      grid-template-columns: 0.85fr 1.35fr 1.05fr 1.0fr;
+      grid-template-rows: auto auto auto;
+      gap: 4mm;
+      align-items: start;
     }
-    .ent.hub .ent-name { color: var(--hub); font-size: 11pt; }
 
-    .ent.e-type   { border-color: var(--ref);     background: #f4f5ee; left:  0mm;   top:  0mm;  width: 60mm; }
-    .ent.e-prep   { border-color: var(--prep);    background: #fdf4ec; left: 36mm;   top:  0mm;  width: 68mm; }
-    .ent.e-host   { border-color: var(--host);    background: #edf6f0; left: 116mm;  top:  0mm;  width: 64mm; }
-    .ent.e-shift  { border-color: var(--shift);   background: #eef6ef; left: 116mm;  top: 52mm;  width: 64mm; }
-    .ent.e-sale   { border-color: var(--sale);    background: #faeaeb; left: 116mm;  top: 108mm; width: 64mm; }
-    .ent.e-session{ border-color: var(--session); background: #f3eff6; left: 188mm;  top: 77mm;  width: 56mm; }
-    .ent.e-contact{ border-color: var(--contact); background: #f5f0fd; left:  0mm;   top: 97mm;  width: 68mm; }
-    .ent.e-contract{border-color: var(--org);     background: #eaf4fb; left:  0mm;   top: 52mm;  width: 55mm; }
-    .ent.e-logist { border-color: var(--org);     background: #eaf4fb; left: 57mm;   top: 108mm; width: 53mm; }
+    /* spanning items */
+    .span-rows-23 { grid-row: 2 / 4; }
+
+    /* nested pair for Продажа + Сессия */
+    .sub-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3mm;
+      align-items: start;
+    }
+
+    /* arrow row between grid rows */
+    .arrow-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      color: var(--line);
+      font-size: 11pt;
+      padding-top: 2mm;
+    }
+    .arrow-col span { font-size: 7pt; color: var(--muted); }
+
+    /* empty placeholder cell */
+    .cell-empty { /* just occupies grid space */ }
+
+    /* connection label strip at card bottom */
+    .conn-strip {
+      margin-top: 5px;
+      padding-top: 4px;
+      border-top: 1px dashed var(--line);
+      font-size: 7pt;
+      color: var(--muted);
+    }
 
     /* ── RELATION TABLE ──────────────────────── */
     .section-title {
-      font-size: 9pt;
+      font-size: 8.5pt;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--muted);
       margin-bottom: 4px;
-      padding-top: 6mm;
+      padding-top: 5mm;
       border-top: 1px solid var(--line);
     }
-
     table.rel {
       width: 100%;
       border-collapse: collapse;
-      font-size: 8.5pt;
+      font-size: 8pt;
       margin-top: 4px;
     }
     table.rel th {
@@ -170,7 +185,7 @@
       border: 1px solid var(--line);
     }
     table.rel td {
-      padding: 3.5px 8px;
+      padding: 3px 8px;
       border: 1px solid var(--line);
       vertical-align: top;
     }
@@ -185,19 +200,21 @@
       color: var(--hub);
     }
 
-    /* ── PAGE 2 — ENTITY TABLES ──────────────── */
-    .ent-section {
-      margin-bottom: 7mm;
+    /* ── PAGE 2 — ENTITY FIELD TABLES ───────── */
+    .ent-grid-p2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 5mm;
     }
     .ent-section h2 {
-      font-size: 11pt;
+      font-size: 10.5pt;
       font-weight: 700;
       margin-bottom: 3px;
       padding-left: 6px;
       border-left: 4px solid;
     }
     .ent-section .ent-desc {
-      font-size: 8.5pt;
+      font-size: 8pt;
       color: var(--muted);
       margin-bottom: 4px;
       padding-left: 10px;
@@ -205,54 +222,24 @@
     table.fields {
       width: 100%;
       border-collapse: collapse;
-      font-size: 8pt;
+      font-size: 7.5pt;
     }
     table.fields th {
       background: #f4f5f7;
       font-weight: 600;
       text-align: left;
-      padding: 4px 7px;
+      padding: 3px 6px;
       border: 1px solid var(--line);
-      font-size: 7.5pt;
     }
     table.fields td {
-      padding: 3px 7px;
+      padding: 3px 6px;
       border: 1px solid var(--line);
       vertical-align: top;
     }
     table.fields tr:nth-child(even) td { background: #fafafa; }
-    table.fields td.fname { font-weight: 600; color: var(--ink); font-family: monospace; font-size: 8.5pt; }
-    table.fields td.ftype { color: var(--ref); font-family: monospace; font-size: 7.5pt; white-space: nowrap; }
-    table.fields td.ffk   { color: var(--sale); font-size: 7.5pt; }
-
-    /* 3-column grid for page 2 */
-    .ent-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 5mm;
-    }
-    .ent-grid .ent-section { margin-bottom: 0; }
-
-    /* color map */
-    .c-hub     { color: var(--hub); }
-    .c-host    { color: var(--host); }
-    .c-shift   { color: var(--shift); }
-    .c-sale    { color: var(--sale); }
-    .c-contact { color: var(--contact); }
-    .c-prep    { color: var(--prep); }
-    .c-org     { color: var(--org); }
-    .c-ref     { color: var(--ref); }
-    .c-session { color: var(--session); }
-
-    .b-hub     { border-color: var(--hub); }
-    .b-host    { border-color: var(--host); }
-    .b-shift   { border-color: var(--shift); }
-    .b-sale    { border-color: var(--sale); }
-    .b-contact { border-color: var(--contact); }
-    .b-prep    { border-color: var(--prep); }
-    .b-org     { border-color: var(--org); }
-    .b-ref     { border-color: var(--ref); }
-    .b-session { border-color: var(--session); }
+    table.fields td.fname { font-weight: 600; font-family: monospace; font-size: 8pt; }
+    table.fields td.ftype { color: var(--ref); font-family: monospace; white-space: nowrap; }
+    table.fields td.ffk   { color: var(--sale); }
 
     .footer-note {
       font-size: 7.5pt;
@@ -266,9 +253,9 @@
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════
-     СТРАНИЦА 1 — визуальная схема + связи
-═══════════════════════════════════════════ -->
+<!-- ═══════════════════════════════
+     СТРАНИЦА 1 — визуальная схема
+═══════════════════════════════ -->
 <div class="sheet">
 
   <div class="page-header">
@@ -279,117 +266,59 @@
     <div class="badge">Битрикс24 · Смарт-процессы · Для согласования</div>
   </div>
 
-  <!-- HUB DIAGRAM -->
-  <div class="hub-area">
+  <!-- DIAGRAM GRID -->
+  <div class="hub-grid">
 
-    <!-- SVG connection lines -->
-    <svg class="lines" viewBox="0 0 793 600" preserveAspectRatio="none">
-      <defs>
-        <marker id="arr" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto">
-          <path d="M0,0 L0,6 L7,3 z" fill="#c8cdd5"/>
-        </marker>
-      </defs>
-      <g stroke="#c8cdd5" stroke-width="1.5" fill="none" marker-end="url(#arr)">
-        <!-- Тип выставки → Выставка -->
-        <path d="M 227,60 Q 310,60 320,143"/>
-        <!-- Подготовка → Выставка -->
-        <path d="M 390,100 L 390,143"/>
-        <!-- Ведущий → Выход ведущего -->
-        <path d="M 555,100 L 555,197"/>
-        <!-- Выставка → Выход ведущего -->
-        <path d="M 470,175 Q 510,175 518,200"/>
-        <!-- Выход → Продажа -->
-        <path d="M 555,300 L 555,408"/>
-        <!-- Выход → Сессия -->
-        <path d="M 602,250 Q 640,260 710,290"/>
-        <!-- Выставка → Контакт -->
-        <path d="M 330,250 Q 260,280 255,365"/>
-        <!-- Выставка → Договор -->
-        <path d="M 310,190 Q 240,190 208,195"/>
-        <!-- Выставка → Логистика -->
-        <path d="M 320,230 Q 270,260 270,410"/>
-      </g>
-      <!-- cardinality labels -->
-      <g font-size="8" fill="#9b2226" font-weight="600" font-family="'Segoe UI',sans-serif">
-        <text x="247" y="56">1</text>
-        <text x="305" y="130">N</text>
-        <text x="375" y="96">1</text>
-        <text x="375" y="150">N</text>
-        <text x="540" y="96">1</text>
-        <text x="540" y="200">N</text>
-        <text x="475" y="170">1</text>
-        <text x="515" y="210">N</text>
-        <text x="540" y="350">1</text>
-        <text x="540" y="415">N</text>
-        <text x="605" y="248">1</text>
-        <text x="718" y="288">N</text>
-        <text x="316" y="256">1</text>
-        <text x="243" y="370">N</text>
-        <text x="297" y="185">1</text>
-        <text x="197" y="192">N</text>
-        <text x="306" y="238">1</text>
-        <text x="259" y="415">N</text>
-      </g>
-    </svg>
+    <!-- ═══ ROW 1 ════════════════════════════════════ -->
 
-    <!-- ENTITIES -->
-
-    <!-- Тип выставки (справочник) -->
-    <div class="ent e-type">
+    <!-- Col 1 · Row 1: Тип выставки -->
+    <div class="ent b-ref">
       <div class="ent-name c-ref">Тип выставки</div>
       <div class="ent-fields">
         <span class="pk">id</span> · <span class="typ">int PK</span><br>
         name · <span class="typ">string</span><br>
-        <span style="color:#888;font-size:7pt">Флагманская / Специализир. / Имиджевая</span>
+        <span class="dim">Флагманская / Специализированная / Имиджевая</span>
       </div>
+      <div class="conn-strip">→ Выставка (справочник)</div>
     </div>
 
-    <!-- Подготовка -->
-    <div class="ent e-prep">
+    <!-- Col 2 · Row 1: Подготовка -->
+    <div class="ent b-prep">
       <div class="ent-name c-prep">Этап подготовки</div>
       <div class="ent-fields">
         <span class="pk">id</span> · <span class="typ">int PK</span><br>
         <span class="fk">exhibition_id</span> · <span class="typ">FK → Выставка</span><br>
         step_order · <span class="typ">int</span><br>
-        name · <span class="typ">string</span> — название этапа<br>
+        name · <span class="typ">string</span> — название шага<br>
         status · <span class="typ">enum</span> — Не начат / В работе / Готово<br>
         responsible · <span class="typ">string</span><br>
         deadline · <span class="typ">date</span>
       </div>
+      <div class="conn-strip">→ Выставка (дочерний чеклист)</div>
     </div>
 
-    <!-- Ведущий -->
-    <div class="ent e-host">
+    <!-- Col 3 · Row 1: пусто -->
+    <div class="cell-empty"></div>
+
+    <!-- Col 4 · Row 1: Ведущий -->
+    <div class="ent b-host">
       <div class="ent-name c-host">Ведущий</div>
       <div class="ent-fields">
         <span class="pk">id</span> · <span class="typ">int PK</span><br>
         name · <span class="typ">string</span><br>
-        phone · <span class="typ">string</span><br>
-        specialization · <span class="typ">string</span> — тематика игр<br>
+        phone / email · <span class="typ">string</span><br>
+        specialization · <span class="typ">string</span><br>
         rate_per_shift · <span class="typ">decimal ₽</span><br>
-        kpi_sales_pct · <span class="typ">decimal %</span><br>
-        status · <span class="typ">enum</span> — Активный / На обучении
+        kpi_sales_pct / kpi_leads_pct · <span class="typ">%</span><br>
+        status · <span class="typ">enum</span>
       </div>
+      <div class="conn-strip">→ Выход ведущего (история выходов)</div>
     </div>
 
-    <!-- ВЫСТАВКА — центр -->
-    <div class="ent hub">
-      <div class="ent-name">Выставка</div>
-      <div class="ent-fields">
-        <span class="pk">id</span> · <span class="typ">int PK</span><br>
-        <span class="fk">type_id</span> · <span class="typ">FK → Тип</span><br>
-        name · <span class="typ">string</span><br>
-        location · <span class="typ">string</span><br>
-        start_date / end_date · <span class="typ">date</span><br>
-        goal · <span class="typ">enum</span> — Промо/Продажи/Имидж<br>
-        status · <span class="typ">enum</span> — стадия воронки<br>
-        budget_plan / budget_fact · <span class="typ">decimal ₽</span><br>
-        traffic_count · <span class="typ">int</span>
-      </div>
-    </div>
+    <!-- ═══ ROW 2 ════════════════════════════════════ -->
 
-    <!-- Договор -->
-    <div class="ent e-contract">
+    <!-- Col 1 · Row 2: Договор -->
+    <div class="ent b-org">
       <div class="ent-name c-org">Договор</div>
       <div class="ent-fields">
         <span class="pk">id</span> · <span class="typ">int PK</span><br>
@@ -397,12 +326,55 @@
         type · <span class="typ">enum</span> — Организатор / Застройка<br>
         counterparty · <span class="typ">string</span><br>
         amount · <span class="typ">decimal ₽</span><br>
+        signed_date · <span class="typ">date</span><br>
         status · <span class="typ">enum</span>
+      </div>
+      <div class="conn-strip">← Выставка (1:N)</div>
+    </div>
+
+    <!-- Col 2 · Rows 2-3: ВЫСТАВКА (центр) -->
+    <div class="ent b-hub span-rows-23">
+      <div class="ent-name c-hub" style="font-size:11pt;">Выставка</div>
+      <div class="ent-fields">
+        <span class="pk">id</span> · <span class="typ">int PK</span><br>
+        <span class="fk">type_id</span> · <span class="typ">FK → Тип выставки</span><br>
+        name · <span class="typ">string</span> — название<br>
+        location · <span class="typ">string</span> — место проведения<br>
+        start_date / end_date · <span class="typ">date</span><br>
+        goal · <span class="typ">enum</span> — Промо / Продажи / Имидж<br>
+        status · <span class="typ">enum</span> — стадия воронки<br>
+        budget_plan / budget_fact · <span class="typ">decimal ₽</span><br>
+        revenue_fact · <span class="typ">decimal ₽</span><br>
+        traffic_count · <span class="typ">int</span> — трафик стенда<br>
+        notes · <span class="typ">text</span>
+      </div>
+      <div class="conn-strip" style="margin-top:6px;">
+        ↓ Этапы · Договоры · Логистика · Выходы · Контакты
       </div>
     </div>
 
-    <!-- Выход ведущего -->
-    <div class="ent e-shift">
+    <!-- Col 3 · Rows 2-3: Контакт/Лид -->
+    <div class="ent b-contact span-rows-23">
+      <div class="ent-name c-contact">Контакт / Лид</div>
+      <div class="ent-fields">
+        <span class="pk">id</span> · <span class="typ">int PK</span><br>
+        <span class="fk">exhibition_id</span> · <span class="typ">FK → Выставка</span><br>
+        <span class="fk">host_shift_id</span> · <span class="typ">FK (необяз.)</span><br>
+        name · <span class="typ">string</span><br>
+        phone / email · <span class="typ">string</span><br>
+        type · <span class="typ">enum</span> — B2C / B2B<br>
+        is_subscriber · <span class="typ">boolean</span><br>
+        source · <span class="typ">enum</span> — Стенд/Форма/Ведущий<br>
+        b2b_potential · <span class="typ">decimal ₽</span><br>
+        status · <span class="typ">enum</span>
+      </div>
+      <div class="conn-strip" style="margin-top:6px;">
+        ← Выставка (1:N) · поступает в воронку CRM
+      </div>
+    </div>
+
+    <!-- Col 4 · Row 2: Выход ведущего -->
+    <div class="ent b-shift">
       <div class="ent-name c-shift">Выход ведущего</div>
       <div class="ent-fields">
         <span class="pk">id</span> · <span class="typ">int PK</span><br>
@@ -413,93 +385,88 @@
         sales_count · <span class="typ">int</span> — агрегат<br>
         leads_count · <span class="typ">int</span> — агрегат<br>
         subscribers_count · <span class="typ">int</span><br>
-        accrual · <span class="typ">decimal ₽</span> — начислено
+        accrual · <span class="typ">decimal ₽</span>
       </div>
+      <div class="conn-strip">← Ведущий + Выставка · → Продажи, Сессии</div>
     </div>
 
-    <!-- Контакт/Лид -->
-    <div class="ent e-contact">
-      <div class="ent-name c-contact">Контакт / Лид</div>
-      <div class="ent-fields">
-        <span class="pk">id</span> · <span class="typ">int PK</span><br>
-        <span class="fk">exhibition_id</span> · <span class="typ">FK → Выставка</span><br>
-        <span class="fk">host_shift_id</span> · <span class="typ">FK (необяз.)</span><br>
-        name / phone / email · <span class="typ">string</span><br>
-        type · <span class="typ">enum</span> — B2C / B2B<br>
-        is_subscriber · <span class="typ">boolean</span><br>
-        source · <span class="typ">enum</span> — Стенд/Форма/Ведущий<br>
-        b2b_potential · <span class="typ">decimal ₽</span><br>
-        status · <span class="typ">enum</span>
-      </div>
-    </div>
+    <!-- ═══ ROW 3 ════════════════════════════════════ -->
 
-    <!-- Логистика -->
-    <div class="ent e-logist">
+    <!-- Col 1 · Row 3: Логистика -->
+    <div class="ent b-org">
       <div class="ent-name c-org">Логистика</div>
       <div class="ent-fields">
         <span class="pk">id</span> · <span class="typ">int PK</span><br>
         <span class="fk">exhibition_id</span> · <span class="typ">FK → Выставка</span><br>
         type · <span class="typ">enum</span> — Доставка/Застройка/Документы<br>
         contractor · <span class="typ">string</span><br>
-        status · <span class="typ">enum</span>
+        status · <span class="typ">enum</span><br>
+        notes · <span class="typ">text</span>
+      </div>
+      <div class="conn-strip">← Выставка (1:N)</div>
+    </div>
+
+    <!-- Col 2 · Row 3: spans (ВЫСТАВКА) -->
+    <!-- Col 3 · Row 3: spans (Контакт) -->
+
+    <!-- Col 4 · Row 3: Продажа + Игровая сессия (side by side) -->
+    <div class="sub-pair">
+      <div class="ent b-sale">
+        <div class="ent-name c-sale">Продажа</div>
+        <div class="ent-fields">
+          <span class="pk">id</span> · <span class="typ">int PK</span><br>
+          <span class="fk">host_shift_id</span> · <span class="typ">FK → Выход</span><br>
+          <span class="fk">product_id</span> · <span class="typ">FK → Игра</span><br>
+          quantity · <span class="typ">int</span><br>
+          unit_price · <span class="typ">decimal ₽</span><br>
+          <span class="fk">buyer_contact_id</span> · <span class="typ">FK (необяз.)</span><br>
+          sold_at · <span class="typ">datetime</span>
+        </div>
+        <div class="conn-strip">← Выход (1:N)</div>
+      </div>
+      <div class="ent b-session">
+        <div class="ent-name c-session">Игровая сессия</div>
+        <div class="ent-fields">
+          <span class="pk">id</span> · <span class="typ">int PK</span><br>
+          <span class="fk">host_shift_id</span> · <span class="typ">FK → Выход</span><br>
+          <span class="fk">product_id</span> · <span class="typ">FK → Игра</span><br>
+          participants_count · <span class="typ">int</span><br>
+          started_at · <span class="typ">datetime</span><br>
+          ended_at · <span class="typ">datetime</span>
+        </div>
+        <div class="conn-strip">← Выход (1:N)</div>
       </div>
     </div>
 
-    <!-- Продажа -->
-    <div class="ent e-sale">
-      <div class="ent-name c-sale">Продажа</div>
-      <div class="ent-fields">
-        <span class="pk">id</span> · <span class="typ">int PK</span><br>
-        <span class="fk">host_shift_id</span> · <span class="typ">FK → Выход</span><br>
-        <span class="fk">product_id</span> · <span class="typ">FK → Игра (каталог)</span><br>
-        quantity · <span class="typ">int</span><br>
-        unit_price · <span class="typ">decimal ₽</span><br>
-        <span class="fk">buyer_contact_id</span> · <span class="typ">FK (необяз.)</span><br>
-        sold_at · <span class="typ">datetime</span>
-      </div>
-    </div>
+  </div><!-- /hub-grid -->
 
-    <!-- Игровая сессия -->
-    <div class="ent e-session">
-      <div class="ent-name c-session">Игровая сессия</div>
-      <div class="ent-fields">
-        <span class="pk">id</span> · <span class="typ">int PK</span><br>
-        <span class="fk">host_shift_id</span> · <span class="typ">FK → Выход</span><br>
-        <span class="fk">product_id</span> · <span class="typ">FK → Игра (каталог)</span><br>
-        participants_count · <span class="typ">int</span><br>
-        started_at / ended_at · <span class="typ">datetime</span>
-      </div>
-    </div>
-
-  </div><!-- /hub-area -->
-
-  <!-- RELATION TABLE -->
+  <!-- LEGEND & RELATIONS -->
   <p class="section-title">Ключевые связи</p>
   <table class="rel">
     <thead>
       <tr>
-        <th style="width:20%">От</th>
-        <th style="width:20%">К</th>
-        <th style="width:14%">Тип связи</th>
+        <th style="width:18%">От</th>
+        <th style="width:18%">К</th>
+        <th style="width:12%">Тип</th>
         <th>Назначение</th>
       </tr>
     </thead>
     <tbody>
-      <tr><td>Тип выставки</td><td>Выставка</td><td><span class="pill">1 → N</span></td><td>Классификация: Флагманская, Специализированная, Имиджевая — фильтры и аналитика по типу</td></tr>
-      <tr><td>Выставка</td><td>Этап подготовки</td><td><span class="pill">1 → N</span></td><td>Пять шагов организации — контроль дедлайнов и ответственных по каждому событию</td></tr>
-      <tr><td>Выставка</td><td>Договор</td><td><span class="pill">1 → N</span></td><td>Договор с организатором и договор на застройку — разные типы, одна выставка</td></tr>
-      <tr><td>Выставка</td><td>Логистика</td><td><span class="pill">1 → N</span></td><td>Доставка товара, застройка, разрешительные документы — отдельные задачи</td></tr>
-      <tr><td>Выставка</td><td>Выход ведущего</td><td><span class="pill">1 → N</span></td><td>Несколько ведущих, каждый — отдельная запись с датой и KPI</td></tr>
-      <tr><td>Ведущий</td><td>Выход ведущего</td><td><span class="pill">1 → N</span></td><td>История всех выходов ведущего: часы, продажи, начисления — база для расчётов</td></tr>
-      <tr><td>Выход ведущего</td><td>Продажа</td><td><span class="pill">1 → N</span></td><td>Чековые строки: что, сколько, по какой цене, кому — детализация KPI ведущего</td></tr>
-      <tr><td>Выход ведущего</td><td>Игровая сессия</td><td><span class="pill">1 → N</span></td><td>Открытые игровые сессии на стенде — какая игра, участники, длительность</td></tr>
-      <tr><td>Выставка</td><td>Контакт / Лид</td><td><span class="pill">1 → N</span></td><td>Контакты, собранные на выставке → попадают в воронку продаж как лиды</td></tr>
-      <tr><td>Продажа</td><td>Контакт</td><td><span class="pill">N → 1 (необяз.)</span></td><td>Если покупатель назван — привязка к контакту. Анонимные продажи допускаются.</td></tr>
+      <tr><td>Тип выставки</td><td>Выставка</td><td><span class="pill">1 → N</span></td><td>Справочник: Флагманская, Специализированная, Имиджевая — фильтры и аналитика</td></tr>
+      <tr><td>Выставка</td><td>Этап подготовки</td><td><span class="pill">1 → N</span></td><td>Пять шагов организации — чеклист с ответственными и дедлайнами</td></tr>
+      <tr><td>Выставка</td><td>Договор</td><td><span class="pill">1 → N</span></td><td>Договор с организатором и на застройку — разные типы, одна выставка</td></tr>
+      <tr><td>Выставка</td><td>Логистика</td><td><span class="pill">1 → N</span></td><td>Доставка, застройка, разрешительные документы — отдельные задачи</td></tr>
+      <tr><td>Выставка</td><td>Выход ведущего</td><td><span class="pill">1 → N</span></td><td>Несколько ведущих, каждый день — отдельная запись с KPI</td></tr>
+      <tr><td>Ведущий</td><td>Выход ведущего</td><td><span class="pill">1 → N</span></td><td>История всех выходов ведущего — база для расчёта гонораров</td></tr>
+      <tr><td>Выход ведущего</td><td>Продажа</td><td><span class="pill">1 → N</span></td><td>Строки чека: что / сколько / по какой цене / кому — детализация KPI</td></tr>
+      <tr><td>Выход ведущего</td><td>Игровая сессия</td><td><span class="pill">1 → N</span></td><td>Открытые игры на стенде — какая игра, сколько участников</td></tr>
+      <tr><td>Выставка</td><td>Контакт / Лид</td><td><span class="pill">1 → N</span></td><td>Контакты со стенда → в воронку CRM как Лиды</td></tr>
+      <tr><td>Продажа</td><td>Контакт</td><td><span class="pill">N → 1 (необяз.)</span></td><td>Привязка к покупателю, если назван. Анонимные продажи допустимы.</td></tr>
     </tbody>
   </table>
 
   <p class="footer-note">
-    «Потолкуем?» · Схема данных · Домен «Выставки» · Страница 1 из 2 · Апрель 2026
+    «Потолкуем?» · Схема данных · Хаб «Выставки» · Страница 1 из 2 · Апрель 2026
   </p>
 </div>
 
@@ -517,14 +484,14 @@
     <div class="badge">Битрикс24 · Смарт-процессы · Для согласования</div>
   </div>
 
-  <div class="ent-grid">
+  <div class="ent-grid-p2">
 
-    <!-- ВЫСТАВКА -->
+    <!-- ВЫСТАВКА (spans 2 columns) -->
     <div class="ent-section" style="grid-column: 1 / 3;">
-      <h2 class="b-hub c-hub">Выставка — центральная сущность</h2>
+      <h2 style="border-color:var(--hub); color:var(--hub);">Выставка — центральная сущность</h2>
       <p class="ent-desc">Каждое событие от первого упоминания до архива. К этой записи подтягиваются все связанные данные: этапы, ведущие, продажи, контакты, договоры, логистика.</p>
       <table class="fields">
-        <thead><tr><th style="width:28%">Поле</th><th style="width:14%">Тип</th><th>Описание / значения</th></tr></thead>
+        <thead><tr><th style="width:30%">Поле</th><th style="width:14%">Тип</th><th>Описание / значения</th></tr></thead>
         <tbody>
           <tr><td class="fname">id</td><td class="ftype">int PK</td><td>Уникальный идентификатор</td></tr>
           <tr><td class="fname">name</td><td class="ftype">string</td><td>Название выставки</td></tr>
@@ -538,15 +505,15 @@
           <tr><td class="fname">budget_fact</td><td class="ftype">decimal ₽</td><td>Фактические расходы</td></tr>
           <tr><td class="fname">revenue_fact</td><td class="ftype">decimal ₽</td><td>Выручка от продаж на мероприятии</td></tr>
           <tr><td class="fname">traffic_count</td><td class="ftype">int</td><td>Трафик стенда — всего посетителей</td></tr>
-          <tr><td class="fname">notes</td><td class="ftype">text</td><td>Разбор, что сработало, что улучшить</td></tr>
+          <tr><td class="fname">notes</td><td class="ftype">text</td><td>Разбор: что сработало, что улучшить</td></tr>
         </tbody>
       </table>
     </div>
 
-    <!-- ТИП ВЫСТАВКИ -->
+    <!-- Тип выставки -->
     <div class="ent-section">
-      <h2 class="b-ref c-ref">Тип выставки</h2>
-      <p class="ent-desc">Справочник. Три типа определяют подход к подготовке и ожидаемый результат.</p>
+      <h2 style="border-color:var(--ref); color:var(--ref);">Тип выставки</h2>
+      <p class="ent-desc">Справочник. Определяет подход к подготовке и ожидаемый результат.</p>
       <table class="fields">
         <thead><tr><th>Поле</th><th>Тип</th><th>Описание</th></tr></thead>
         <tbody>
@@ -557,28 +524,28 @@
       </table>
     </div>
 
-    <!-- ЭТАПЫ ПОДГОТОВКИ -->
+    <!-- Этапы подготовки -->
     <div class="ent-section">
-      <h2 class="b-prep c-prep">Этап подготовки</h2>
-      <p class="ent-desc">Пять шагов от «решили участвовать» до «выставка открыта». Чеклист с ответственными и дедлайнами.</p>
+      <h2 style="border-color:var(--prep); color:var(--prep);">Этап подготовки</h2>
+      <p class="ent-desc">5 шагов от «решили участвовать» до «выставка открыта». Чеклист с ответственными и дедлайнами.</p>
       <table class="fields">
         <thead><tr><th>Поле</th><th>Тип</th><th>Описание</th></tr></thead>
         <tbody>
           <tr><td class="fname">id</td><td class="ftype">int PK</td><td>—</td></tr>
           <tr><td class="fname">exhibition_id</td><td class="ftype ffk">FK → Выставка</td><td>—</td></tr>
           <tr><td class="fname">step_order</td><td class="ftype">int</td><td>Порядковый номер шага</td></tr>
-          <tr><td class="fname">name</td><td class="ftype">string</td><td>Согласование участия / Концепция+визуал / Договор / Обучение ведущих / Оплата</td></tr>
+          <tr><td class="fname">name</td><td class="ftype">string</td><td>Согл. участия / Концепция / Договор / Обучение / Оплата</td></tr>
           <tr><td class="fname">status</td><td class="ftype">enum</td><td>Не начат / В работе / Готово / Отменён</td></tr>
-          <tr><td class="fname">responsible</td><td class="ftype">string</td><td>Имя ответственного сотрудника</td></tr>
+          <tr><td class="fname">responsible</td><td class="ftype">string</td><td>Имя ответственного</td></tr>
           <tr><td class="fname">deadline</td><td class="ftype">date</td><td>Срок выполнения</td></tr>
         </tbody>
       </table>
     </div>
 
-    <!-- ВЕДУЩИЙ -->
+    <!-- Ведущий -->
     <div class="ent-section">
-      <h2 class="b-host c-host">Ведущий</h2>
-      <p class="ent-desc">Самостоятельная сущность. Аутсорс-специалист с профилем, навыками и условиями оплаты. История всех его выходов хранится в Выходах.</p>
+      <h2 style="border-color:var(--host); color:var(--host);">Ведущий</h2>
+      <p class="ent-desc">Самостоятельная сущность. Аутсорс-специалист с профилем, навыками и условиями оплаты.</p>
       <table class="fields">
         <thead><tr><th>Поле</th><th>Тип</th><th>Описание</th></tr></thead>
         <tbody>
@@ -589,16 +556,16 @@
           <tr><td class="fname">specialization</td><td class="ftype">string</td><td>Тематика игр, которые ведёт</td></tr>
           <tr><td class="fname">rate_per_shift</td><td class="ftype">decimal ₽</td><td>Ставка за выход</td></tr>
           <tr><td class="fname">kpi_sales_pct</td><td class="ftype">decimal %</td><td>Процент с продаж</td></tr>
-          <tr><td class="fname">kpi_leads_pct</td><td class="ftype">decimal %</td><td>Процент за лиды/подписчиков</td></tr>
+          <tr><td class="fname">kpi_leads_pct</td><td class="ftype">decimal %</td><td>Процент за лиды / подписчиков</td></tr>
           <tr><td class="fname">status</td><td class="ftype">enum</td><td>Активный / На обучении / Архив</td></tr>
         </tbody>
       </table>
     </div>
 
-    <!-- ВЫХОД ВЕДУЩЕГО -->
+    <!-- Выход ведущего -->
     <div class="ent-section">
-      <h2 class="b-shift c-shift">Выход ведущего</h2>
-      <p class="ent-desc">Один выход = один день работы одного ведущего на одной выставке. Агрегирует KPI смены. Детали — в Продажах и Сессиях.</p>
+      <h2 style="border-color:var(--shift); color:var(--shift);">Выход ведущего</h2>
+      <p class="ent-desc">Один выход = один день одного ведущего на одной выставке. Агрегирует KPI смены. Детали — в Продажах и Сессиях.</p>
       <table class="fields">
         <thead><tr><th>Поле</th><th>Тип</th><th>Описание</th></tr></thead>
         <tbody>
@@ -607,41 +574,41 @@
           <tr><td class="fname">exhibition_id</td><td class="ftype ffk">FK → Выставка</td><td>—</td></tr>
           <tr><td class="fname">shift_date</td><td class="ftype">date</td><td>Дата выхода</td></tr>
           <tr><td class="fname">hours_worked</td><td class="ftype">decimal</td><td>Отработано часов</td></tr>
-          <tr><td class="fname">sales_count</td><td class="ftype">int</td><td>Продаж за смену (агрегат из Продаж)</td></tr>
+          <tr><td class="fname">sales_count</td><td class="ftype">int</td><td>Продаж за смену (агрегат)</td></tr>
           <tr><td class="fname">leads_count</td><td class="ftype">int</td><td>Лидов собрано (агрегат)</td></tr>
-          <tr><td class="fname">subscribers_count</td><td class="ftype">int</td><td>Подписчиков в соцсети привлечено</td></tr>
-          <tr><td class="fname">accrual</td><td class="ftype">decimal ₽</td><td>Начислено по итогу (ставка + KPI)</td></tr>
+          <tr><td class="fname">subscribers_count</td><td class="ftype">int</td><td>Подписчиков привлечено</td></tr>
+          <tr><td class="fname">accrual</td><td class="ftype">decimal ₽</td><td>Начислено (ставка + KPI)</td></tr>
         </tbody>
       </table>
     </div>
 
-    <!-- ПРОДАЖА -->
+    <!-- Продажа -->
     <div class="ent-section">
-      <h2 class="b-sale c-sale">Продажа</h2>
-      <p class="ent-desc">Строка чека. Кто / что / сколько / по какой цене / кому. Привязана к Выходу ведущего, не к Выставке напрямую.</p>
+      <h2 style="border-color:var(--sale); color:var(--sale);">Продажа</h2>
+      <p class="ent-desc">Строка чека. Кто / что / сколько / по какой цене / кому. Привязана к Выходу, не к Выставке напрямую.</p>
       <table class="fields">
         <thead><tr><th>Поле</th><th>Тип</th><th>Описание</th></tr></thead>
         <tbody>
           <tr><td class="fname">id</td><td class="ftype">int PK</td><td>—</td></tr>
           <tr><td class="fname">host_shift_id</td><td class="ftype ffk">FK → Выход</td><td>Через выход → знаем ведущего и выставку</td></tr>
-          <tr><td class="fname">product_id</td><td class="ftype ffk">FK → Игра</td><td>Ссылка на каталог игр (внешний домен)</td></tr>
+          <tr><td class="fname">product_id</td><td class="ftype ffk">FK → Игра</td><td>Ссылка на каталог игр</td></tr>
           <tr><td class="fname">quantity</td><td class="ftype">int</td><td>Количество единиц</td></tr>
           <tr><td class="fname">unit_price</td><td class="ftype">decimal ₽</td><td>Цена продажи (может отличаться от прайса)</td></tr>
-          <tr><td class="fname">buyer_contact_id</td><td class="ftype ffk">FK (необяз.)</td><td>Привязка к Контакту, если покупатель назван</td></tr>
+          <tr><td class="fname">buyer_contact_id</td><td class="ftype ffk">FK (необяз.)</td><td>Привязка к Контакту, если назван</td></tr>
           <tr><td class="fname">sold_at</td><td class="ftype">datetime</td><td>Дата и время продажи</td></tr>
         </tbody>
       </table>
     </div>
 
-    <!-- ИГРОВАЯ СЕССИЯ -->
+    <!-- Игровая сессия -->
     <div class="ent-section">
-      <h2 class="b-session c-session">Игровая сессия</h2>
-      <p class="ent-desc">Открытая игра на стенде. Отдельная от Продажи — бесплатное вовлечение публики, ведущий демонстрирует игру.</p>
+      <h2 style="border-color:var(--session); color:var(--session);">Игровая сессия</h2>
+      <p class="ent-desc">Открытая игра на стенде. Бесплатное вовлечение — ведущий демонстрирует игру публике.</p>
       <table class="fields">
         <thead><tr><th>Поле</th><th>Тип</th><th>Описание</th></tr></thead>
         <tbody>
           <tr><td class="fname">id</td><td class="ftype">int PK</td><td>—</td></tr>
-          <tr><td class="fname">host_shift_id</td><td class="ftype ffk">FK → Выход</td><td>Кто вёл, в какой день</td></tr>
+          <tr><td class="fname">host_shift_id</td><td class="ftype ffk">FK → Выход</td><td>Кто вёл и в какой день</td></tr>
           <tr><td class="fname">product_id</td><td class="ftype ffk">FK → Игра</td><td>Какая игра демонстрировалась</td></tr>
           <tr><td class="fname">participants_count</td><td class="ftype">int</td><td>Число участников</td></tr>
           <tr><td class="fname">started_at</td><td class="ftype">datetime</td><td>Начало сессии</td></tr>
@@ -650,32 +617,31 @@
       </table>
     </div>
 
-    <!-- КОНТАКТ / ЛИД -->
+    <!-- Контакт / Лид -->
     <div class="ent-section">
-      <h2 class="b-contact c-contact">Контакт / Лид</h2>
-      <p class="ent-desc">Посетитель, оставивший данные. Создаётся как Лид в CRM → конвертируется в Контакт и Сделку. Отдельные флаги для B2B и подписчиков.</p>
+      <h2 style="border-color:var(--contact); color:var(--contact);">Контакт / Лид</h2>
+      <p class="ent-desc">Посетитель, оставивший данные. Создаётся как Лид в CRM и далее конвертируется в Контакт и Сделку.</p>
       <table class="fields">
         <thead><tr><th>Поле</th><th>Тип</th><th>Описание</th></tr></thead>
         <tbody>
           <tr><td class="fname">id</td><td class="ftype">int PK</td><td>—</td></tr>
           <tr><td class="fname">exhibition_id</td><td class="ftype ffk">FK → Выставка</td><td>Откуда пришёл контакт</td></tr>
-          <tr><td class="fname">host_shift_id</td><td class="ftype ffk">FK (необяз.)</td><td>Ведущий, который привлёк контакт</td></tr>
+          <tr><td class="fname">host_shift_id</td><td class="ftype ffk">FK (необяз.)</td><td>Ведущий, который привлёк</td></tr>
           <tr><td class="fname">name</td><td class="ftype">string</td><td>ФИО</td></tr>
-          <tr><td class="fname">phone</td><td class="ftype">string</td><td>—</td></tr>
-          <tr><td class="fname">email</td><td class="ftype">string</td><td>—</td></tr>
+          <tr><td class="fname">phone / email</td><td class="ftype">string</td><td>—</td></tr>
           <tr><td class="fname">type</td><td class="ftype">enum</td><td>B2C / B2B</td></tr>
           <tr><td class="fname">is_subscriber</td><td class="ftype">boolean</td><td>Подписан на соцсети компании</td></tr>
           <tr><td class="fname">source</td><td class="ftype">enum</td><td>Стенд / Форма на планшете / Ведущий</td></tr>
-          <tr><td class="fname">b2b_potential</td><td class="ftype">decimal ₽</td><td>Оценка потенциала сделки (для B2B)</td></tr>
+          <tr><td class="fname">b2b_potential</td><td class="ftype">decimal ₽</td><td>Потенциал сделки (B2B)</td></tr>
           <tr><td class="fname">status</td><td class="ftype">enum</td><td>Новый / В работе / Конвертирован / Отказ</td></tr>
         </tbody>
       </table>
     </div>
 
-    <!-- ДОГОВОР -->
+    <!-- Договор -->
     <div class="ent-section">
-      <h2 class="b-org c-org">Договор</h2>
-      <p class="ent-desc">Юридические обязательства по выставке. Может быть несколько договоров: с организатором, с подрядчиком на застройку.</p>
+      <h2 style="border-color:var(--org); color:var(--org);">Договор</h2>
+      <p class="ent-desc">Юридические обязательства по выставке. Может быть несколько: с организатором и на застройку.</p>
       <table class="fields">
         <thead><tr><th>Поле</th><th>Тип</th><th>Описание</th></tr></thead>
         <tbody>
@@ -690,10 +656,10 @@
       </table>
     </div>
 
-    <!-- ЛОГИСТИКА -->
+    <!-- Логистика -->
     <div class="ent-section">
-      <h2 class="b-org c-org">Логистика</h2>
-      <p class="ent-desc">Физическая организация: доставка товара на площадку, застройка стенда (подрядчик или своими силами), разрешительные документы.</p>
+      <h2 style="border-color:var(--org); color:var(--org);">Логистика</h2>
+      <p class="ent-desc">Физическая организация: доставка товара, застройка стенда, разрешительные документы.</p>
       <table class="fields">
         <thead><tr><th>Поле</th><th>Тип</th><th>Описание</th></tr></thead>
         <tbody>
@@ -707,20 +673,20 @@
       </table>
     </div>
 
-  </div><!-- /ent-grid -->
+  </div><!-- /ent-grid-p2 -->
 
   <!-- LEGEND -->
-  <div style="margin-top: 6mm; padding-top: 4mm; border-top: 1px solid var(--line); font-size: 7.5pt; color: var(--muted); display: flex; gap: 10mm; flex-wrap: wrap;">
+  <div style="margin-top:5mm; padding-top:4mm; border-top:1px solid var(--line); font-size:7.5pt; color:var(--muted); display:flex; gap:8mm; flex-wrap:wrap;">
     <span><strong>PK</strong> — первичный ключ</span>
-    <span><strong style="color:var(--sale)">FK</strong> — внешний ключ (связь)</span>
-    <span><strong>enum</strong> — перечисление фиксированных значений</span>
-    <span><strong>boolean</strong> — да/нет</span>
-    <span><strong>decimal</strong> — число с дробной частью (деньги, проценты)</span>
+    <span><strong style="color:var(--sale)">FK</strong> — внешний ключ (связь между сущностями)</span>
+    <span><strong>enum</strong> — фиксированный список значений</span>
+    <span><strong>boolean</strong> — да / нет</span>
+    <span><strong>decimal</strong> — число с дробной частью (деньги, %)</span>
     <span><strong>datetime</strong> — дата + время</span>
   </div>
 
   <p class="footer-note">
-    «Потолкуем?» · Схема данных · Домен «Выставки» · Страница 2 из 2 · Апрель 2026
+    «Потолкуем?» · Схема данных · Хаб «Выставки» · Страница 2 из 2 · Апрель 2026
   </p>
 
 </div><!-- /sheet 2 -->
