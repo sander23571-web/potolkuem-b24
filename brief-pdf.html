@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>«Потолкуем?» — Краткое описание системы</title>
+<style>
+  @import url('/usr/share/fonts/truetype/lato/Lato-Regular.ttf');
+
+  @page {
+    size: A4;
+    margin: 22mm 20mm 28mm;
+    @bottom-right {
+      content: counter(page) " / " counter(pages);
+      font-family: 'Lato', 'DejaVu Sans', sans-serif;
+      font-size: 9pt;
+      color: #aaa;
+    }
+    @bottom-left {
+      content: "«Потолкуем?» — Система управления · Демо-версия · Апрель 2026";
+      font-family: 'Lato', 'DejaVu Sans', sans-serif;
+      font-size: 9pt;
+      color: #aaa;
+    }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Lato', 'DejaVu Sans', Arial, sans-serif;
+    font-size: 10.5pt;
+    color: #2C3E50;
+    line-height: 1.65;
+    background: white;
+  }
+
+  /* ─── HEADER ─── */
+  .doc-header {
+    border-bottom: 3px solid #2D4A8A;
+    padding-bottom: 14pt;
+    margin-bottom: 20pt;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .doc-logo {
+    font-size: 22pt;
+    font-weight: 900;
+    color: #2D4A8A;
+    letter-spacing: -0.5pt;
+    line-height: 1;
+  }
+  .doc-logo span { color: #E84C3D; }
+  .doc-meta {
+    text-align: right;
+    font-size: 8.5pt;
+    color: #7F8C8D;
+    line-height: 1.5;
+  }
+  .doc-subtitle {
+    font-size: 13pt;
+    color: #2D4A8A;
+    font-weight: 700;
+    margin-top: 6pt;
+  }
+
+  /* ─── DEMO NOTICE ─── */
+  .demo-notice {
+    background: #FFF8E1;
+    border-left: 4pt solid #F39C12;
+    border-radius: 3pt;
+    padding: 10pt 14pt;
+    margin-bottom: 20pt;
+    font-size: 9.5pt;
+    color: #6D4C00;
+    line-height: 1.5;
+  }
+  .demo-notice strong { color: #5D3F00; }
+
+  /* ─── SECTIONS ─── */
+  h2 {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #2D4A8A;
+    margin: 18pt 0 8pt;
+    padding-bottom: 4pt;
+    border-bottom: 1pt solid #E8EDF5;
+  }
+  h3 {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #1A2340;
+    margin: 12pt 0 5pt;
+  }
+
+  p { margin-bottom: 8pt; }
+
+  /* ─── TABLE ─── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12pt;
+    font-size: 9.5pt;
+    break-inside: avoid;
+  }
+  th {
+    background: #2D4A8A;
+    color: white;
+    padding: 6pt 10pt;
+    text-align: left;
+    font-weight: 700;
+    font-size: 9pt;
+  }
+  td {
+    padding: 6pt 10pt;
+    border-bottom: 1pt solid #E8EDF5;
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: #F8F9FC; }
+
+  /* ─── BLOCKS TABLE ─── */
+  .blocks-table td:first-child {
+    font-weight: 700;
+    color: #2D4A8A;
+    width: 28%;
+    white-space: nowrap;
+  }
+
+  /* ─── STATS GRID ─── */
+  .stats-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8pt;
+    margin: 10pt 0 14pt;
+  }
+  .stat-box {
+    flex: 1;
+    min-width: 100pt;
+    background: #F4F6FA;
+    border-radius: 5pt;
+    padding: 10pt 12pt;
+    text-align: center;
+    break-inside: avoid;
+  }
+  .stat-num {
+    font-size: 20pt;
+    font-weight: 900;
+    color: #2D4A8A;
+    display: block;
+    line-height: 1.1;
+  }
+  .stat-label {
+    font-size: 8pt;
+    color: #7F8C8D;
+    margin-top: 3pt;
+    display: block;
+  }
+
+  /* ─── BULLET LIST ─── */
+  ul {
+    padding-left: 16pt;
+    margin-bottom: 10pt;
+  }
+  ul li {
+    margin-bottom: 4pt;
+    font-size: 10pt;
+  }
+
+  /* ─── AMBASSADOR TABLE ─── */
+  .amb-badge {
+    display: inline-block;
+    padding: 1pt 7pt;
+    border-radius: 10pt;
+    font-size: 8pt;
+    font-weight: 700;
+  }
+  .amb-active { background: #D5F5E3; color: #1E8449; }
+  .amb-training { background: #FEF9E7; color: #B7770D; }
+
+  /* ─── AUTOMATION BOXES ─── */
+  .auto-box {
+    background: #F4F6FA;
+    border-left: 3pt solid #8E44AD;
+    border-radius: 3pt;
+    padding: 10pt 14pt;
+    margin-bottom: 10pt;
+    break-inside: avoid;
+  }
+  .auto-box-title {
+    font-weight: 700;
+    font-size: 10.5pt;
+    color: #1A2340;
+    margin-bottom: 6pt;
+  }
+  .auto-row {
+    display: flex;
+    gap: 8pt;
+    align-items: flex-start;
+    font-size: 9.5pt;
+  }
+  .auto-trigger {
+    flex: 1;
+    background: #EBF5FB;
+    border-radius: 3pt;
+    padding: 7pt 10pt;
+  }
+  .auto-action {
+    flex: 1;
+    background: #EAFAF1;
+    border-radius: 3pt;
+    padding: 7pt 10pt;
+  }
+  .auto-arrow {
+    padding-top: 10pt;
+    color: #aaa;
+    font-size: 14pt;
+    flex-shrink: 0;
+  }
+  .auto-sublabel {
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 0.5pt;
+    text-transform: uppercase;
+    color: #7F8C8D;
+    margin-bottom: 4pt;
+  }
+
+  /* ─── ROADMAP ─── */
+  .roadmap-item {
+    display: flex;
+    gap: 10pt;
+    align-items: flex-start;
+    margin-bottom: 8pt;
+    font-size: 10pt;
+  }
+  .rm-dot {
+    width: 10pt;
+    height: 10pt;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 3pt;
+  }
+  .rm-done { background: #27AE60; }
+  .rm-next { background: #F39C12; }
+  .rm-future { background: #BDC3C7; }
+  .rm-label { font-weight: 700; }
+  .rm-desc { font-size: 9pt; color: #7F8C8D; }
+
+  /* ─── PAGE BREAKS ─── */
+  .pb { break-before: page; }
+  .no-break { break-inside: avoid; }
+
+  /* ─── FOOTER ─── */
+  .doc-footer {
+    margin-top: 24pt;
+    padding-top: 10pt;
+    border-top: 1pt solid #E8EDF5;
+    font-size: 8.5pt;
+    color: #aaa;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="doc-header">
+  <div>
+    <div class="doc-logo">«Потолкуем<span>?</span>»</div>
+    <div class="doc-subtitle">Система управления бизнесом</div>
+  </div>
+  <div class="doc-meta">
+    Краткое описание проекта<br>
+    Платформа: Битрикс24 Профессиональный<br>
+    Апрель 2026
+  </div>
+</div>
+
+<!-- DEMO NOTICE -->
+<div class="demo-notice">
+  <strong>Демонстрационный портал.</strong> Настоящий документ описывает презентационный прототип CRM-системы.
+  Данные по играм, сделкам, маркетплейсам, тиражам и амбассадорам являются демо-информацией, внесённой для наглядности.
+  Раздел «Мероприятия» содержит реальный производственный календарь выставочной активности 2026–2027.
+</div>
+
+<!-- STATS -->
+<div class="stats-grid">
+  <div class="stat-box"><span class="stat-num">20</span><span class="stat-label">игр в каталоге</span></div>
+  <div class="stat-box"><span class="stat-num">8</span><span class="stat-label">блоков системы</span></div>
+  <div class="stat-box"><span class="stat-num">14</span><span class="stat-label">выставок в 2026</span></div>
+  <div class="stat-box"><span class="stat-num">5</span><span class="stat-label">воронок продаж</span></div>
+  <div class="stat-box"><span class="stat-num">5</span><span class="stat-label">сотрудников</span></div>
+  <div class="stat-box"><span class="stat-num">3</span><span class="stat-label">амбассадора</span></div>
+</div>
+
+<!-- IDEA -->
+<h2>Что такое эта система</h2>
+
+<p>Когда у компании 14 выставок в год, 20 игр в линейке, амбассадоры в двух городах и продажи через пять разных каналов — нужна единая точка сборки.</p>
+
+<p>«Потолкуем?» использует платформу Битрикс24, чтобы все процессы жили в одном месте и были связаны между собой. Восемь разделов передают данные друг другу автоматически. Каждый сотрудник видит актуальную картину по своей части работы, директор — по всей компании сразу.</p>
+
+<!-- BLOCKS -->
+<h2>Восемь блоков системы</h2>
+
+<table class="blocks-table no-break">
+  <thead><tr><th>Блок</th><th>Для чего</th></tr></thead>
+  <tbody>
+    <tr><td>Мероприятия</td><td>Каждая выставка и открытая игра — от подготовки до итогового отчёта</td></tr>
+    <tr><td>Амбассадоры</td><td>Кто выходит на мероприятия, на каких условиях, с какой специализацией</td></tr>
+    <tr><td>Каталог игр</td><td>Все 20 игр в одном месте — остатки, цены, статусы</td></tr>
+    <tr><td>Продажи</td><td>Пять воронок под разных клиентов: частники, корпораты, школы, опт, кастом</td></tr>
+    <tr><td>Маркетплейсы</td><td>Рейтинг, остатки и выручка по каждой игре на каждой площадке</td></tr>
+    <tr><td>Точки продаж</td><td>Офлайн-партнёры: магазины, кофейни, коворкинги</td></tr>
+    <tr><td>Тиражи</td><td>Производственные тиражи — от заказа на производство до склада</td></tr>
+    <tr><td>Разработка игр</td><td>Жизненный цикл новой игры от идеи до полки</td></tr>
+  </tbody>
+</table>
+
+<!-- STRENGTHS -->
+<h2>Сильные стороны</h2>
+
+<h3>1. Выставка — это не расход, а точка роста</h3>
+<p>Каждое мероприятие оставляет полный след. Сколько людей подошло к стенду, сколько контактов собрали, сколько игр продали. После второй-третьей выставки становится видно, какие форматы работают, а на каких деньги уходят впустую.</p>
+
+<h3>2. Амбассадор — снаружи, но в системе</h3>
+<p>Внешние представители работают через отдельное пространство — видят только свои задания, материалы и чат с командой. Регистрация бесплатная, лицензию не занимает. После мероприятия заполняют форму — данные попадают в систему без участия менеджера.</p>
+
+<h3>3. Игра — одна запись для всей компании</h3>
+<p>Список игр существует в одном месте — в каталоге, на который ссылаются все остальные блоки. Появилась новая игра — добавили один раз, увидели везде.</p>
+
+<h3>4. Маркетплейс — под контролем вплоть до позиции в поиске</h3>
+<p>Отдельная карточка на каждую игру на каждой платформе: рейтинг, место в поиске, отзывы без ответа, остатки, выручка за месяц. Сразу видно, где нужно вмешаться.</p>
+
+<h3>5. Клиент не теряется</h3>
+<p>Посетитель выставки оставил контакт на планшете — попал в систему, менеджер увидел, позвонил. Компания прислала заявку через форму — попала в нужную воронку автоматически.</p>
+
+<h3>6. Всё связано — данные не вводятся дважды</h3>
+<p>Оптовая сделка закрылась — карточка офлайн-партнёра создаётся сама. Игра вышла из разработки — появляется в каталоге. Амбассадор заполнил отчёт — данные легли в карточку мероприятия.</p>
+
+<!-- TEAM -->
+<div class="pb"></div>
+
+<h2>Команда</h2>
+
+<table class="no-break">
+  <thead><tr><th>Сотрудник</th><th>Роль</th><th>Зона ответственности</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Анна Соколова</strong></td><td>Основатель и руководитель</td><td>Все блоки системы, аналитика, решения</td></tr>
+    <tr><td><strong>Дмитрий Орлов</strong></td><td>Менеджер по продажам</td><td>Воронки, сделки, контакты, лиды</td></tr>
+    <tr><td><strong>Елена Фомина</strong></td><td>Координатор мероприятий</td><td>Выставки, амбассадоры, онбординг</td></tr>
+    <tr><td><strong>Михаил Зайцев</strong></td><td>Менеджер маркетплейсов</td><td>Онлайн-каналы, рейтинги, остатки</td></tr>
+    <tr><td><strong>Ольга Белова</strong></td><td>Специалист по разработке</td><td>Новые игры, тиражи, производство</td></tr>
+  </tbody>
+</table>
+
+<!-- AMBASSADORS -->
+<h2>Амбассадоры (демо-данные)</h2>
+
+<table class="no-break">
+  <thead><tr><th>Имя</th><th>Город</th><th>Специализация</th><th>Выходов</th><th>Рейтинг</th><th>Ставка</th><th>Статус</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Мария Громова</strong></td>
+      <td>Москва</td>
+      <td>Педагог, ведущий мероприятий</td>
+      <td>8</td>
+      <td>4.6</td>
+      <td>3 500 руб.</td>
+      <td><span class="amb-badge amb-active">Активен</span></td>
+    </tr>
+    <tr>
+      <td><strong>Арсений Волков</strong></td>
+      <td>СПб</td>
+      <td>Психолог-фасилитатор</td>
+      <td>12</td>
+      <td>4.8</td>
+      <td>4 000 руб.</td>
+      <td><span class="amb-badge amb-active">Активен</span></td>
+    </tr>
+    <tr>
+      <td><strong>Ксения Ларина</strong></td>
+      <td>Москва</td>
+      <td>HR-специалист</td>
+      <td>0</td>
+      <td>—</td>
+      <td>3 000 руб.</td>
+      <td><span class="amb-badge amb-training">Обучение</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- STATUS -->
+<h2>Что уже реализовано (состояние системы)</h2>
+
+<ul>
+  <li>14 мероприятий 2026–2027 года — от «Образования и науки» (февраль, прошло) до ARTDOM (январь 2027)</li>
+  <li>3 амбассадора с заполненными профилями (Москва и Санкт-Петербург)</li>
+  <li>20 игр в каталоге с ценами и остатками <em>(демо-данные)</em></li>
+  <li>4 игры в активной разработке: «Продажи», «Психология», «Переговоры», «Стартапы» <em>(демо)</em></li>
+  <li>6 карточек маркетплейсов (Wildberries, Ozon, Яндекс Маркет, Детский Мир) <em>(демо)</em></li>
+  <li>10 тестовых сделок по пяти воронкам продаж <em>(демо)</em></li>
+  <li>2 офлайн-точки, 2 тиража в производстве <em>(демо)</em></li>
+  <li>5 именных сотрудников с разграниченными правами доступа</li>
+</ul>
+
+<!-- AUTOMATION -->
+<h2>Автоматизация (готово к запуску)</h2>
+
+<div class="auto-box">
+  <div class="auto-box-title">Сценарий 1: Застрявшая сделка</div>
+  <div class="auto-row">
+    <div class="auto-trigger">
+      <div class="auto-sublabel">Триггер</div>
+      Сделка B2C на стадии «КП отправлено» более 3 дней без изменений
+    </div>
+    <div class="auto-arrow">→</div>
+    <div class="auto-action">
+      <div class="auto-sublabel">Действие</div>
+      Создаётся задача менеджеру: «Клиент не ответил 3 дня — проверь статус»
+    </div>
+  </div>
+</div>
+
+<div class="auto-box">
+  <div class="auto-box-title">Сценарий 2: Онбординг нового амбассадора</div>
+  <div class="auto-row">
+    <div class="auto-trigger">
+      <div class="auto-sublabel">Триггер</div>
+      Карточка амбассадора переходит в стадию «Обучение»
+    </div>
+    <div class="auto-arrow">→</div>
+    <div class="auto-action">
+      <div class="auto-sublabel">Действие</div>
+      Задача Елене Фоминой: «Провести онбординг — материалы, Коллаб, первое мероприятие. Срок: 7 дней»
+    </div>
+  </div>
+</div>
+
+<!-- ROADMAP -->
+<h2>Дорожная карта</h2>
+
+<div class="roadmap-item">
+  <div class="rm-dot rm-done"></div>
+  <div>
+    <div class="rm-label">Структура системы — готово</div>
+    <div class="rm-desc">8 блоков, 5 воронок, каталог 20 игр, 4 в разработке, тестовые данные заведены</div>
+  </div>
+</div>
+<div class="roadmap-item">
+  <div class="rm-dot rm-done"></div>
+  <div>
+    <div class="rm-label">Команда и амбассадоры — готово</div>
+    <div class="rm-desc">5 именных сотрудников, 3 амбассадора с профилями, Коллаб настроен</div>
+  </div>
+</div>
+<div class="roadmap-item">
+  <div class="rm-dot rm-next"></div>
+  <div>
+    <div class="rm-label">CRM-формы — следующий шаг</div>
+    <div class="rm-desc">4 публичные формы: отчёт амбассадора, контакт на стенде, B2B-заявка, анкета точки</div>
+  </div>
+</div>
+<div class="roadmap-item">
+  <div class="rm-dot rm-next"></div>
+  <div>
+    <div class="rm-label">Автоматизация — сформулировано, к запуску</div>
+    <div class="rm-desc">Два робота настраиваются в UI Битрикс24 без программирования</div>
+  </div>
+</div>
+<div class="roadmap-item">
+  <div class="rm-dot rm-future"></div>
+  <div>
+    <div class="rm-label">Расширенная автоматизация — планируется</div>
+    <div class="rm-desc">Уведомления об остатках, ежемесячные дайджесты, синхронизация между блоками</div>
+  </div>
+</div>
+
+<div class="doc-footer">
+  Система управления «Потолкуем?» · Битрикс24 Профессиональный · Демонстрационная версия · Апрель 2026
+</div>
+
+</body>
+</html>

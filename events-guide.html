@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>«Потолкуем?» — Мероприятия в Битрикс24</title>
+<style>
+  @page {
+    size: A4;
+    margin: 20mm 18mm 26mm;
+    @bottom-right {
+      content: counter(page) " / " counter(pages);
+      font-family: 'Lato', 'DejaVu Sans', sans-serif;
+      font-size: 9pt; color: #aaa;
+    }
+    @bottom-left {
+      content: "«Потолкуем?» · Мероприятия в Битрикс24 · Апрель 2026";
+      font-family: 'Lato', 'DejaVu Sans', sans-serif;
+      font-size: 9pt; color: #aaa;
+    }
+  }
+
+  :root {
+    --primary: #2D4A8A;
+    --accent:  #E84C3D;
+    --green:   #27AE60;
+    --yellow:  #F39C12;
+    --purple:  #8E44AD;
+    --teal:    #16A085;
+    --light:   #F4F6FA;
+    --dark:    #1A2340;
+    --text:    #2C3E50;
+    --muted:   #7F8C8D;
+    --shadow:  0 3px 14px rgba(0,0,0,0.08);
+    --radius:  14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Lato', 'DejaVu Sans', Arial, sans-serif;
+    font-size: 14.5px;
+    color: var(--text);
+    background: var(--light);
+    line-height: 1.65;
+  }
+
+  /* ── PRINT BUTTON ── */
+  .print-btn {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--primary); color: white;
+    border: none; border-radius: 50px;
+    padding: 11px 24px; font-size: 13px; font-weight: 700;
+    cursor: pointer; box-shadow: 0 4px 16px rgba(45,74,138,.4);
+    z-index: 100; transition: background .2s;
+  }
+  .print-btn:hover { background: #1e3670; }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, var(--dark) 0%, #2D4A8A 60%, #1a6a8a 100%);
+    color: white; padding: 56px 32px 48px; position: relative; overflow: hidden;
+  }
+  .hero::after {
+    content: ''; position: absolute; right: -60px; top: -60px;
+    width: 320px; height: 320px; border-radius: 50%;
+    background: rgba(255,255,255,.04);
+  }
+  .hero-eyebrow {
+    display: inline-block;
+    background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+    border-radius: 50px; padding: 5px 16px; font-size: 12px; margin-bottom: 18px;
+  }
+  .hero h1 {
+    font-size: clamp(24px, 4vw, 40px); font-weight: 900;
+    line-height: 1.2; margin-bottom: 14px; max-width: 700px;
+  }
+  .hero h1 em { color: #F4C842; font-style: normal; }
+  .hero-lead {
+    font-size: 16px; opacity: .8; max-width: 620px; line-height: 1.6;
+  }
+  .hero-chips {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px;
+  }
+  .chip {
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25);
+    border-radius: 50px; padding: 5px 14px; font-size: 12px; font-weight: 600;
+  }
+
+  /* ── CONTAINER ── */
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── SECTIONS ── */
+  section { padding: 48px 0; }
+  section.light-bg { background: white; }
+  .section-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+  }
+  .section-title {
+    font-size: 24px; font-weight: 800; color: var(--dark); margin-bottom: 8px;
+  }
+  .section-sub { font-size: 15px; color: var(--muted); margin-bottom: 32px; line-height: 1.5; }
+
+  /* ── DIVIDER ── */
+  .divider { height: 1px; background: #E8EDF5; }
+
+  /* ── TWO-COLUMN LAYOUT ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 680px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* ── CARD BASE ── */
+  .card {
+    background: white; border-radius: var(--radius);
+    padding: 24px 26px; box-shadow: var(--shadow);
+    break-inside: avoid;
+  }
+  .card-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; color: var(--dark); }
+  .card-body  { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+
+  /* ── STATUS FLOW ── */
+  .flow-wrap {
+    background: white; border-radius: var(--radius);
+    padding: 28px 32px; box-shadow: var(--shadow);
+    break-inside: avoid;
+  }
+  .flow-row {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  }
+  .flow-box {
+    background: var(--light); border: 1.5px solid #D6E0F0;
+    border-radius: 8px; padding: 7px 14px;
+    font-size: 13px; font-weight: 600; color: var(--primary);
+    white-space: nowrap;
+  }
+  .flow-box.done  { background: #D5F5E3; border-color: #A9DFBF; color: #1E8449; }
+  .flow-box.hot   { background: #D6EAF8; border-color: #AED6F1; color: var(--primary);
+                    box-shadow: 0 0 0 3px rgba(45,74,138,.15); }
+  .flow-arrow { color: #BDC3C7; font-size: 18px; }
+  .flow-legend { display: flex; gap: 20px; margin-top: 16px; flex-wrap: wrap; }
+  .fl-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+  .fl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── FIELD PILLS ── */
+  .field-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .field-pill {
+    display: flex; align-items: center; gap: 7px;
+    background: var(--light); border-radius: 8px;
+    padding: 6px 12px; font-size: 13px;
+  }
+  .field-pill .fp-icon { font-size: 15px; }
+  .field-pill .fp-name { font-weight: 600; color: var(--dark); }
+  .field-pill .fp-type { font-size: 11px; color: var(--muted); margin-left: 2px; }
+  .field-pill.new { background: #EBF5FB; }
+  .field-pill.new .fp-name { color: var(--primary); }
+
+  /* ── CONNECTION DIAGRAM ── */
+  .connections { display: flex; flex-direction: column; gap: 14px; }
+  .conn-item {
+    background: white; border-radius: 12px;
+    padding: 18px 22px; box-shadow: var(--shadow);
+    break-inside: avoid;
+  }
+  .conn-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .conn-block {
+    background: var(--light); border-radius: 8px;
+    padding: 6px 14px; font-size: 13px; font-weight: 700; color: var(--dark);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .conn-arrow {
+    font-size: 18px; color: var(--muted); flex-shrink: 0;
+  }
+  .conn-desc { font-size: 13px; color: var(--muted); margin-top: 10px; line-height: 1.55; }
+  .conn-badge {
+    display: inline-block; padding: 2px 9px; border-radius: 50px;
+    font-size: 11px; font-weight: 700; margin-left: 8px;
+  }
+  .cb-live   { background: #D5F5E3; color: #1E8449; }
+  .cb-plan   { background: #EBF5FB; color: var(--primary); }
+  .cb-idea   { background: #F8EAF6; color: var(--purple); }
+
+  /* ── AUTOMATION CARDS ── */
+  .auto-grid { display: flex; flex-direction: column; gap: 16px; }
+  .auto-card {
+    background: white; border-radius: var(--radius);
+    padding: 22px 26px; box-shadow: var(--shadow);
+    break-inside: avoid;
+  }
+  .auto-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+  }
+  .auto-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .ai-live   { background: #D5F5E3; }
+  .ai-near   { background: #EBF5FB; }
+  .ai-future { background: #F8EAF6; }
+  .auto-name { font-size: 15px; font-weight: 700; color: var(--dark); }
+  .auto-tag  {
+    display: inline-block; padding: 2px 9px; border-radius: 50px;
+    font-size: 10px; font-weight: 700; margin-top: 2px;
+  }
+  .at-live   { background: #D5F5E3; color: #1E8449; }
+  .at-near   { background: #EBF5FB; color: var(--primary); }
+  .at-future { background: #F8EAF6; color: var(--purple); }
+  .auto-flow {
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap; margin-bottom: 10px;
+  }
+  .af-trigger {
+    background: #EBF5FB; border-radius: 8px;
+    padding: 7px 13px; font-size: 13px; flex: 1; min-width: 200px;
+  }
+  .af-action {
+    background: #EAFAF1; border-radius: 8px;
+    padding: 7px 13px; font-size: 13px; flex: 1; min-width: 200px;
+  }
+  .af-arr { color: #BDC3C7; font-size: 16px; flex-shrink: 0; }
+  .af-sublabel {
+    font-size: 10px; font-weight: 700; letter-spacing: .5px;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 4px;
+  }
+  .auto-comment { font-size: 12.5px; color: var(--muted); font-style: italic; }
+
+  /* ── B24 FEATURES ── */
+  .features-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+  }
+  .feat-card {
+    background: white; border-radius: 12px;
+    padding: 18px 20px; box-shadow: var(--shadow);
+    break-inside: avoid;
+  }
+  .feat-icon { font-size: 24px; margin-bottom: 10px; }
+  .feat-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--dark); }
+  .feat-desc  { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+
+  /* ── CTA ── */
+  .cta-block {
+    background: linear-gradient(135deg, var(--dark) 0%, #2D4A8A 100%);
+    color: white; border-radius: var(--radius);
+    padding: 40px 40px; margin: 0;
+    break-inside: avoid;
+  }
+  .cta-title { font-size: 22px; font-weight: 800; margin-bottom: 12px; line-height: 1.3; }
+  .cta-title em { color: #F4C842; font-style: normal; }
+  .cta-body  { font-size: 14px; opacity: .85; line-height: 1.65; margin-bottom: 28px; max-width: 600px; }
+  .cta-steps { display: flex; flex-direction: column; gap: 12px; }
+  .cta-step  {
+    display: flex; align-items: flex-start; gap: 14px;
+    background: rgba(255,255,255,.08); border-radius: 10px;
+    padding: 14px 18px;
+  }
+  .cs-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #F4C842; color: var(--dark);
+    font-size: 13px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .cs-text { font-size: 13.5px; line-height: 1.55; }
+  .cs-text strong { color: #F4C842; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    background: #EBF5FB; border-left: 4px solid var(--primary);
+    border-radius: 4px; padding: 14px 18px;
+    margin: 16px 0; font-size: 13.5px; line-height: 1.6;
+    break-inside: avoid;
+  }
+  .callout strong { color: var(--primary); }
+
+  .callout.green {
+    background: #EAFAF1; border-color: var(--green);
+  }
+  .callout.green strong { color: var(--green); }
+
+  .callout.yellow {
+    background: #FEF9E7; border-color: var(--yellow);
+  }
+  .callout.yellow strong { color: #B7770D; }
+
+  .callout.purple {
+    background: #F8EAF6; border-color: var(--purple);
+  }
+  .callout.purple strong { color: var(--purple); }
+
+  /* ── COMPARISON ── */
+  .compare-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;
+  }
+  .compare-card {
+    border-radius: 12px; padding: 18px 20px; break-inside: avoid;
+  }
+  .cc-now  { background: #EAFAF1; border: 1.5px solid #A9DFBF; }
+  .cc-can  { background: #EBF5FB; border: 1.5px solid #AED6F1; }
+  .cc-head {
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  .cc-now .cc-head { color: #1E8449; }
+  .cc-can .cc-head { color: var(--primary); }
+  .cc-list { list-style: none; }
+  .cc-list li {
+    font-size: 13px; padding: 4px 0;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+    display: flex; align-items: flex-start; gap: 8px;
+    line-height: 1.45;
+  }
+  .cc-list li:last-child { border-bottom: none; }
+  .cc-list li::before { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+  .cc-now .cc-list li::before { content: '✓'; color: var(--green); font-weight: 700; }
+  .cc-can .cc-list li::before { content: '+'; color: var(--primary); font-weight: 700; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--dark); color: rgba(255,255,255,.5);
+    padding: 28px 24px; text-align: center; font-size: 12.5px;
+  }
+  footer a { color: rgba(255,255,255,.7); text-decoration: none; }
+  footer a:hover { color: white; }
+
+  /* ── PRINT ── */
+  @media print {
+    .print-btn { display: none !important; }
+    body { background: white; font-size: 10.5pt; }
+    .hero {
+      background: #1A2340 !important;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      padding: 36px 24px 30px;
+    }
+    .hero h1 { font-size: 22pt; }
+    section { padding: 24px 0; }
+    .card, .conn-item, .auto-card, .feat-card, .flow-wrap {
+      box-shadow: none; border: 1px solid #ddd; break-inside: avoid;
+    }
+    .cta-block {
+      background: #1A2340 !important;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    footer { background: #1A2340 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .two-col { grid-template-columns: 1fr 1fr; }
+    .compare-row { grid-template-columns: 1fr 1fr; }
+    .features-grid { grid-template-columns: repeat(3, 1fr); }
+    .divider { display: none; }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">📄 Сохранить как PDF</button>
+
+<!-- ══════ HERO ══════ -->
+<div class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">Битрикс24 · Смарт-процессы · Демонстрационный портал</div>
+    <h1>Блок «Мероприятия»:<br>от планирования к <em>системе</em></h1>
+    <p class="hero-lead">
+      Этот документ показывает, как блок «Мероприятия» устроен в прототипе CRM «Потолкуем?» —
+      что уже работает, какие связи с другими блоками созданы и что можно построить дальше.
+      Цель — показать потенциал, а не готовое решение.
+    </p>
+    <div class="hero-chips">
+      <span class="chip">14 полей уже настроено</span>
+      <span class="chip">6 статусов воронки</span>
+      <span class="chip">2 связи с другими блоками</span>
+      <span class="chip">4 готовых идеи автоматизации</span>
+      <span class="chip">Потенциал: намного больше</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ DEMO NOTICE ══════ -->
+<div style="background:#FFF3CD; border-bottom:3px solid #F39C12; padding:14px 28px; font-size:13.5px; color:#7D5700; line-height:1.6;">
+  <strong>Демонстрационный портал.</strong>
+  Данные в системе (амбассадоры, игры, сделки, тиражи и др.) — <strong>демо-информация</strong>, занесённая для наглядности: чтобы показать, как выглядит заполненная система и какую пользу она может приносить.
+  Единственное исключение — <strong>мероприятия</strong>: это реальный производственный календарь «Потолкуем?».
+  Конфигурация системы (поля, воронки, связи между блоками) — настоящая и рабочая.
+</div>
+
+<!-- ══════ 1. КОНТЕКСТ ══════ -->
+<section>
+  <div class="container">
+    <div class="section-label">Раздел 1</div>
+    <div class="section-title">Почему мероприятия — это стратегический процесс</div>
+    <div class="section-sub">
+      Для «Потолкуем?» выставки — не просто присутствие на рынке. Это главный живой канал знакомства покупателя с игрой.
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Что происходит сейчас</div>
+        <div class="card-body">
+          14 мероприятий в год, два города, три амбассадора — и всё это нужно планировать, координировать, считать и анализировать.
+          Без системы данные о каждой выставке живут в разных местах: переписка, таблицы, телефонная память.
+          Контакты с выставок теряются. Эффективность мероприятий не видна.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Что должна давать система</div>
+        <div class="card-body">
+          Единый реестр каждого мероприятия — от первого «нас пригласили» до последней строчки в финансовом отчёте.
+          Связи с командой, амбассадорами и клиентами. Сравнение выставок между собой.
+          И — постепенно — автоматизация рутины, которая сейчас отнимает время координатора.
+        </div>
+      </div>
+    </div>
+
+    <div class="callout green" style="margin-top: 20px;">
+      <strong>Главная идея блока «Мероприятия»:</strong> каждое событие — это не просто дата в календаре. Это бизнес-операция с бюджетом, командой, результатами и аналитикой. Система делает эту операцию видимой и управляемой.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════ 2. ЧТО УЖЕ НАСТРОЕНО ══════ -->
+<section class="light-bg">
+  <div class="container">
+    <div class="section-label">Раздел 2</div>
+    <div class="section-title">Что уже настроено в прототипе</div>
+    <div class="section-sub">
+      Ниже — поля и статусы, которые настроены в прототипе как основа для блока «Мероприятия».
+      Сама конфигурация рабочая. Данные в карточках — демонстрационные, занесённые для наглядности.
+      Смысл не в этих цифрах, а в том, что <em>именно такую</em> информацию система позволяет собирать по каждому мероприятию.
+    </div>
+
+    <!-- СТАТУСЫ -->
+    <div style="margin-bottom: 28px;">
+      <div class="card-title" style="margin-bottom: 14px;">Воронка мероприятия — 6 стадий</div>
+      <div class="flow-wrap">
+        <div class="flow-row">
+          <div class="flow-box done">Идея / план</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box">Подготовка</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box hot">Готово к старту</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box">Проведение</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box">Закрытие</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box done">Архив</div>
+        </div>
+        <div class="flow-legend">
+          <div class="fl-item"><div class="fl-dot" style="background:#27AE60;"></div> Уже пройдено</div>
+          <div class="fl-item"><div class="fl-dot" style="background:#2D4A8A;box-shadow:0 0 0 3px rgba(45,74,138,.2);"></div> Активный этап</div>
+          <div class="fl-item"><div class="fl-dot" style="background:#D6E0F0;border:1px solid #AED6F1;"></div> Впереди</div>
+        </div>
+        <div class="card-body" style="margin-top: 14px; font-size: 13.5px; color: var(--muted);">
+          Каждая стадия — это не просто метка. Это сигнал системе: на какой стадии назначать ответственных, что можно заполнять, что ещё нельзя, и когда запускать автоматические действия.
+        </div>
+      </div>
+    </div>
+
+    <!-- ПОЛЯ -->
+    <div class="card-title" style="margin-bottom: 14px;">Поля карточки мероприятия — что уже фиксируется</div>
+    <div class="field-grid">
+      <div class="field-pill"><span class="fp-icon">🏷️</span><span class="fp-name">Тип</span><span class="fp-type">выставка / акция / открытая игра</span></div>
+      <div class="field-pill"><span class="fp-icon">📍</span><span class="fp-name">Место проведения</span><span class="fp-type">текст</span></div>
+      <div class="field-pill"><span class="fp-icon">📅</span><span class="fp-name">Дата начала / конца</span><span class="fp-type">дата</span></div>
+      <div class="field-pill"><span class="fp-icon">👤</span><span class="fp-name">Ответственный</span><span class="fp-type">сотрудник</span></div>
+      <div class="field-pill"><span class="fp-icon">👥</span><span class="fp-name">Трафик стенда</span><span class="fp-type">число</span></div>
+      <div class="field-pill"><span class="fp-icon">📞</span><span class="fp-name">Контактов собрано</span><span class="fp-type">число</span></div>
+      <div class="field-pill"><span class="fp-icon">🎲</span><span class="fp-name">Продаж на месте</span><span class="fp-type">число</span></div>
+      <div class="field-pill"><span class="fp-icon">🤝</span><span class="fp-name">Амбассадоров</span><span class="fp-type">число</span></div>
+      <div class="field-pill"><span class="fp-icon">🎯</span><span class="fp-name">Игровых сессий</span><span class="fp-type">число</span></div>
+      <div class="field-pill"><span class="fp-icon">💰</span><span class="fp-name">Гонорар план / факт</span><span class="fp-type">деньги</span></div>
+      <div class="field-pill"><span class="fp-icon">📊</span><span class="fp-name">Бюджет план / факт</span><span class="fp-type">деньги</span></div>
+      <div class="field-pill"><span class="fp-icon">💵</span><span class="fp-name">Выручка</span><span class="fp-type">деньги</span></div>
+      <div class="field-pill"><span class="fp-icon">⭐</span><span class="fp-name">Оценка мероприятия</span><span class="fp-type">список: 1–5</span></div>
+      <div class="field-pill"><span class="fp-icon">📝</span><span class="fp-name">Что сработало / улучшить</span><span class="fp-type">текст</span></div>
+    </div>
+
+    <div class="callout" style="margin-top: 20px;">
+      <strong>Важно:</strong> набор полей — это не фиксированный список. В Битрикс24 можно добавить любое новое поле без программирования.
+      Если компании нужно фиксировать, например, «количество розданных флаеров», «стоимость аренды стенда», «погода в день проведения» — это настраивается за несколько минут.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════ 3. КАК ЭТО РАБОТАЕТ ══════ -->
+<section>
+  <div class="container">
+    <div class="section-label">Раздел 3</div>
+    <div class="section-title">Как блок работает на практике</div>
+    <div class="section-sub">
+      Сценарий: как может выглядеть ведение мероприятия в системе — с точки зрения каждого участника.
+      Это не описание текущей практики, а иллюстрация возможностей, которые система даёт сразу после настройки.
+    </div>
+
+    <div class="connections">
+
+      <div class="conn-item">
+        <div class="conn-row">
+          <div class="conn-block">👩‍💼 Координатор</div>
+          <div class="conn-arrow">—</div>
+          <span style="font-size: 13px; font-weight: 700; color: var(--dark);">Планирование и запуск</span>
+        </div>
+        <div class="conn-desc">
+          Создаёт карточку мероприятия: вносит название, место, даты и тип. Выбирает амбассадора из связанного блока, ставит его ответственным за мероприятие. Переводит карточку в стадию «Подготовка» — это сигнал команде, что мероприятие в работе. В Коллабе (рабочем пространстве для внешних участников) создаётся задание амбассадору с инструкциями, ссылкой на форму отчёта и всеми нужными файлами.
+        </div>
+      </div>
+
+      <div class="conn-item">
+        <div class="conn-row">
+          <div class="conn-block">🤝 Амбассадор</div>
+          <div class="conn-arrow">—</div>
+          <span style="font-size: 13px; font-weight: 700; color: var(--dark);">Мероприятие и отчёт</span>
+        </div>
+        <div class="conn-desc">
+          Получает задание в своём Коллабе — может открыть с телефона. Видит место, время, что делать и ссылку на форму отчёта. После мероприятия заполняет форму в браузере (без входа в систему): посетители стенда, собранные контакты, продажи, оценка. Нажимает «Отправить» — и всё. Данные приходят в карточку мероприятия автоматически.
+        </div>
+      </div>
+
+      <div class="conn-item">
+        <div class="conn-row">
+          <div class="conn-block">📊 Менеджер</div>
+          <div class="conn-arrow">—</div>
+          <span style="font-size: 13px; font-weight: 700; color: var(--dark);">Работа с контактами</span>
+        </div>
+        <div class="conn-desc">
+          На стенде можно поставить планшет с CRM-формой «Первый контакт»: посетитель оставляет имя и телефон, данные автоматически создают лид в воронке B2C Розница. Менеджер открывает систему и видит список новых контактов с выставки — каждый прикреплён к конкретному мероприятию. Никакого ручного переноса из блокнота в таблицу.
+        </div>
+      </div>
+
+      <div class="conn-item">
+        <div class="conn-row">
+          <div class="conn-block">📈 Директор</div>
+          <div class="conn-arrow">—</div>
+          <span style="font-size: 13px; font-weight: 700; color: var(--dark);">Аналитика и сравнение</span>
+        </div>
+        <div class="conn-desc">
+          После мероприятия карточка может содержать полную картину: трафик, контакты, продажи, бюджет (план vs факт), итоговая оценка. Когда такие данные накапливаются по десяткам событий, появляется аналитика: сколько стоит контакт с Bookmarket против АРХ МОСКВА? Какие форматы дают ROI выше? С какими амбассадорами результат лучше? Демо-данные в прототипе показывают, как выглядит эта картина в заполненной системе.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════ 4. СВЯЗИ ══════ -->
+<section class="light-bg">
+  <div class="container">
+    <div class="section-label">Раздел 4</div>
+    <div class="section-title">Связи с другими блоками системы</div>
+    <div class="section-sub">
+      Самое ценное в CRM — не отдельные карточки, а то, как они соединены между собой.
+      Данные передаются автоматически, без ручного копирования.
+    </div>
+
+    <div style="margin-bottom: 20px; font-size: 13px; color: var(--muted);">
+      <span style="display:inline-block; background:#D5F5E3; color:#1E8449; padding:2px 9px; border-radius:50px; font-weight:700; font-size:11px; margin-right:6px;">Уже работает</span>
+      Связь настроена в прототипе и функционирует.&nbsp;&nbsp;
+      <span style="display:inline-block; background:#EBF5FB; color:var(--primary); padding:2px 9px; border-radius:50px; font-weight:700; font-size:11px; margin-right:6px;">Запланировано</span>
+      Проектировали, реализуется следующим шагом.&nbsp;&nbsp;
+      <span style="display:inline-block; background:#F8EAF6; color:var(--purple); padding:2px 9px; border-radius:50px; font-weight:700; font-size:11px; margin-right:6px;">Идея</span>
+      Имеет смысл добавить — требует обсуждения.
+    </div>
+
+    <div class="connections">
+
+      <!-- АМБАССАДОРЫ -->
+      <div class="conn-item">
+        <div class="conn-row">
+          <div class="conn-block">🎡 Мероприятие</div>
+          <div class="conn-arrow">⇄</div>
+          <div class="conn-block">🤝 Амбассадоры</div>
+          <span class="conn-badge cb-live">Уже работает</span>
+        </div>
+        <div class="conn-desc">
+          <strong>Что сделано:</strong> реализована двусторонняя связь — в карточке мероприятия видна вкладка с привязанными амбассадорами, и наоборот. Координатор прикрепляет амбассадора к конкретной выставке, и эта связь видна с обеих сторон.<br><br>
+          <strong>Как это использовать:</strong> смотреть историю участий каждого амбассадора, видеть загрузку, формировать команду на мероприятие из уже участвовавших в похожих форматах.
+        </div>
+      </div>
+
+      <!-- ПРОДАЖИ -->
+      <div class="conn-item">
+        <div class="conn-row">
+          <div class="conn-block">🎡 Мероприятие</div>
+          <div class="conn-arrow">→</div>
+          <div class="conn-block">💰 Воронки продаж</div>
+          <span class="conn-badge cb-live">Уже работает</span>
+        </div>
+        <div class="conn-desc">
+          <strong>Что сделано:</strong> CRM-форма «Первый контакт» создаёт лид в воронке B2C Розница и автоматически помечает его источником «Мероприятие». Менеджер видит, с какой именно выставки пришёл каждый клиент.<br><br>
+          <strong>Как это использовать:</strong> замерять конверсию «посетитель стенда → покупатель» для каждого мероприятия. Видеть, какие выставки дают качественных лидов, а не просто трафик.
+        </div>
+      </div>
+
+      <!-- ЗАДАЧИ / КОЛЛАБ -->
+      <div class="conn-item">
+        <div class="conn-row">
+          <div class="conn-block">🎡 Мероприятие</div>
+          <div class="conn-arrow">→</div>
+          <div class="conn-block">✅ Задачи в Коллабе</div>
+          <span class="conn-badge cb-plan">Запланировано</span>
+        </div>
+        <div class="conn-desc">
+          <strong>Что предполагается:</strong> задание амбассадору создаётся вручную координатором. В следующем шаге это можно автоматизировать: при переводе мероприятия в стадию «Готово к старту» система сама создаёт задание в Коллабе с нужными данными из карточки — местом, датами и ссылкой на форму.<br><br>
+          <strong>Ценность:</strong> координатор тратит 2 минуты вместо 15. Риск «забыли поставить задачу» исчезает полностью.
+        </div>
+      </div>
+
+      <!-- КАТАЛОГ -->
+      <div class="conn-item">
+        <div class="conn-row">
+          <div class="conn-block">🎡 Мероприятие</div>
+          <div class="conn-arrow">⇄</div>
+          <div class="conn-block">📚 Каталог игр</div>
+          <span class="conn-badge cb-idea">Идея</span>
+        </div>
+        <div class="conn-desc">
+          <strong>Чего пока нет, но можно добавить:</strong> к карточке мероприятия можно привязать список игр, которые берутся на выставку. Это позволит видеть, что нужно подготовить, проконтролировать остатки перед событием и после — зафиксировать, что и в каком количестве ушло с конкретной выставки.<br><br>
+          <strong>Сложность:</strong> требует обсуждения формата учёта «взяли — вернули — продали». Настраивается через дополнительные поля или связанный смарт-процесс.
+        </div>
+      </div>
+
+      <!-- ТИРАЖИ -->
+      <div class="conn-item">
+        <div class="conn-row">
+          <div class="conn-block">🎡 Мероприятие</div>
+          <div class="conn-arrow">⇄</div>
+          <div class="conn-block">📦 Тиражи</div>
+          <span class="conn-badge cb-idea">Идея</span>
+        </div>
+        <div class="conn-desc">
+          <strong>Логика связи:</strong> если компания перевозит игры на выставку из конкретного тиража, это можно зафиксировать — чтобы видеть, какой тираж расходуется на выставочную активность, а какой идёт в продажи через другие каналы. Помогает точнее планировать объём следующего тиража.<br><br>
+          <strong>Практическая польза:</strong> предотвращает ситуацию «приехали на выставку, а игр нет — всё ушло по заказам».
+        </div>
+      </div>
+
+      <!-- КОРПОРАТИВНЫЙ КАЛЕНДАРЬ -->
+      <div class="conn-item">
+        <div class="conn-row">
+          <div class="conn-block">🎡 Мероприятие</div>
+          <div class="conn-arrow">⇄</div>
+          <div class="conn-block">📅 Корпоративный календарь</div>
+          <span class="conn-badge cb-plan">Запланировано</span>
+        </div>
+        <div class="conn-desc">
+          <strong>Что предполагается:</strong> все мероприятия отображаются на общем корпоративном календаре Битрикс24. Каждый сотрудник видит ближайшие выставки, даты подготовки и ответственных. Координатор видит, не пересекаются ли два события так, что одного амбассадора не хватит.<br><br>
+          <strong>Для реализации:</strong> включается в настройках смарт-процесса — занимает несколько минут.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════ 5. ЧТО МОЖНО ДОБАВИТЬ ══════ -->
+<section>
+  <div class="container">
+    <div class="section-label">Раздел 5</div>
+    <div class="section-title">Что можно добавить и как расширить блок</div>
+    <div class="section-sub">
+      Прототип показывает базовую архитектуру. Реальная система строится под конкретные процессы компании —
+      и здесь важно участие людей, которые эти процессы знают изнутри.
+    </div>
+
+    <div class="compare-row">
+      <div class="compare-card cc-now">
+        <div class="cc-head">Уже есть в прототипе</div>
+        <ul class="cc-list">
+          <li>Базовые поля карточки (14 параметров)</li>
+          <li>6 статусов воронки мероприятия</li>
+          <li>Связь с амбассадорами (двусторонняя)</li>
+          <li>Связь с воронкой B2C через форму</li>
+          <li>Форма отчёта амбассадора</li>
+          <li>Ответственный сотрудник на мероприятии</li>
+          <li>Оценка и разбор после события</li>
+        </ul>
+      </div>
+      <div class="compare-card cc-can">
+        <div class="cc-head">Можно добавить</div>
+        <ul class="cc-list">
+          <li>Поля под конкретные метрики компании</li>
+          <li>Чеклист подготовки (задачи по шаблону)</li>
+          <li>Смета расходов с разбивкой по статьям</li>
+          <li>Документы: договор с площадкой, накладная</li>
+          <li>Фотогалерея с мероприятия</li>
+          <li>Связь с каталогом игр (что везём)</li>
+          <li>Интеграция с корпоративным календарём</li>
+          <li>Форма для сбора B2B-контактов на стенде</li>
+          <li>Мини-анкета посетителя (QR-код на стенде)</li>
+          <li>Итоговый отчёт → автоотправка директору</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout yellow">
+      <strong>Ключевой момент:</strong> всё, что написано в колонке «Можно добавить» — это не разработка. Это настройка платформы. Поля, связи, формы, автоматизация добавляются в интерфейсе Битрикс24 без программирования. Но важно знать, <em>что именно</em> добавлять — это требует понимания реальных рабочих процессов компании.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════ 6. АВТОМАТИЗАЦИЯ ══════ -->
+<section class="light-bg">
+  <div class="container">
+    <div class="section-label">Раздел 6</div>
+    <div class="section-title">Автоматизация: что уже сформулировано и что ещё возможно</div>
+    <div class="section-sub">
+      Битрикс24 позволяет настраивать автоматические действия без программирования.
+      Робот — это правило: «когда происходит X — сделай Y». Ниже — конкретные сценарии для блока «Мероприятия».
+    </div>
+
+    <div class="auto-grid">
+
+      <!-- СФОРМУЛИРОВАНО 1 -->
+      <div class="auto-card">
+        <div class="auto-header">
+          <div class="auto-icon ai-near">🤖</div>
+          <div>
+            <div class="auto-name">Онбординг нового амбассадора</div>
+            <span class="auto-tag at-near">Готово к запуску</span>
+          </div>
+        </div>
+        <div class="auto-flow">
+          <div class="af-trigger">
+            <div class="af-sublabel">Триггер</div>
+            Карточка амбассадора переходит в стадию «Обучение»
+          </div>
+          <div class="af-arr">→</div>
+          <div class="af-action">
+            <div class="af-sublabel">Действие</div>
+            Задача координатору: провести онбординг по чеклисту. Срок: 7 дней
+          </div>
+        </div>
+        <div class="auto-comment">Каждый новый амбассадор проходит одинаковый путь введения в работу — без лишних созвонов</div>
+      </div>
+
+      <!-- АВТОМАТИЧЕСКОЕ ЗАДАНИЕ -->
+      <div class="auto-card">
+        <div class="auto-header">
+          <div class="auto-icon ai-near">📋</div>
+          <div>
+            <div class="auto-name">Автоматическое задание амбассадору</div>
+            <span class="auto-tag at-near">Следующий шаг</span>
+          </div>
+        </div>
+        <div class="auto-flow">
+          <div class="af-trigger">
+            <div class="af-sublabel">Триггер</div>
+            Мероприятие переходит в стадию «Готово к старту»
+          </div>
+          <div class="af-arr">→</div>
+          <div class="af-action">
+            <div class="af-sublabel">Действие</div>
+            Задание в Коллабе создаётся автоматически с данными из карточки (место, даты, форма отчёта)
+          </div>
+        </div>
+        <div class="auto-comment">Координатор не тратит время на создание каждого задания вручную</div>
+      </div>
+
+      <!-- НАПОМИНАНИЕ ЗА 7 ДНЕЙ -->
+      <div class="auto-card">
+        <div class="auto-header">
+          <div class="auto-icon ai-near">⏰</div>
+          <div>
+            <div class="auto-name">Напоминание команде за 7 дней</div>
+            <span class="auto-tag at-near">Следующий шаг</span>
+          </div>
+        </div>
+        <div class="auto-flow">
+          <div class="af-trigger">
+            <div class="af-sublabel">Триггер</div>
+            До даты мероприятия осталось 7 дней
+          </div>
+          <div class="af-arr">→</div>
+          <div class="af-action">
+            <div class="af-sublabel">Действие</div>
+            Уведомление всей команде + чеклист финальной подготовки (материалы, транспорт, форма)
+          </div>
+        </div>
+        <div class="auto-comment">Никто не узнаёт о выставке в последний момент</div>
+      </div>
+
+      <!-- ИТОГОВЫЙ ОТЧЁТ -->
+      <div class="auto-card">
+        <div class="auto-header">
+          <div class="auto-icon ai-future">📊</div>
+          <div>
+            <div class="auto-name">Сводка по итогам мероприятия</div>
+            <span class="auto-tag at-future">Идея</span>
+          </div>
+        </div>
+        <div class="auto-flow">
+          <div class="af-trigger">
+            <div class="af-sublabel">Триггер</div>
+            Мероприятие переходит в стадию «Закрытие» и заполнены ключевые поля
+          </div>
+          <div class="af-arr">→</div>
+          <div class="af-action">
+            <div class="af-sublabel">Действие</div>
+            Автоматически формируется и отправляется директору итоговая сводка по показателям
+          </div>
+        </div>
+        <div class="auto-comment">Директор получает данные без запроса — в удобном формате и вовремя</div>
+      </div>
+
+      <!-- ФОРМА → ЛИД -->
+      <div class="auto-card">
+        <div class="auto-header">
+          <div class="auto-icon ai-near">📱</div>
+          <div>
+            <div class="auto-name">Контакт со стенда → лид в воронке</div>
+            <span class="auto-tag at-near">Следующий шаг</span>
+          </div>
+        </div>
+        <div class="auto-flow">
+          <div class="af-trigger">
+            <div class="af-sublabel">Триггер</div>
+            Посетитель заполняет форму на планшете на стенде
+          </div>
+          <div class="af-arr">→</div>
+          <div class="af-action">
+            <div class="af-sublabel">Действие</div>
+            Лид создаётся в воронке B2C, менеджер получает уведомление, источник — мероприятие
+          </div>
+        </div>
+        <div class="auto-comment">CRM-форма настраивается в несколько кликов и открывается в браузере без установки приложений</div>
+      </div>
+
+      <!-- ЗАДАЧА ПОСЛЕ ОТЧЁТА -->
+      <div class="auto-card">
+        <div class="auto-header">
+          <div class="auto-icon ai-future">✅</div>
+          <div>
+            <div class="auto-name">Получен отчёт амбассадора → задача координатору</div>
+            <span class="auto-tag at-future">Идея</span>
+          </div>
+        </div>
+        <div class="auto-flow">
+          <div class="af-trigger">
+            <div class="af-sublabel">Триггер</div>
+            CRM-форма отчёта от амбассадора заполнена и отправлена
+          </div>
+          <div class="af-arr">→</div>
+          <div class="af-action">
+            <div class="af-sublabel">Действие</div>
+            Задача координатору: «Проверить данные, начислить гонорар, перевести мероприятие в Закрытие»
+          </div>
+        </div>
+        <div class="auto-comment">Цепочка закрытия мероприятия запускается автоматически, без ручного контроля</div>
+      </div>
+
+    </div>
+
+    <div class="callout purple" style="margin-top: 24px;">
+      <strong>О роботах и бизнес-процессах Битрикс24:</strong> всё описанное выше — это «роботы» Битрикс24, которые настраиваются через визуальный конструктор. Более сложные сценарии (например, маршрутизация задач в зависимости от типа мероприятия или сумм) реализуются через «Бизнес-процессы» — встроенный no-code движок автоматизации. Это мощный инструмент, и его возможности на порядок шире того, что показано выше.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════ 7. БИТРИКС24 — ЭТО ПЛАТФОРМА ══════ -->
+<section>
+  <div class="container">
+    <div class="section-label">Раздел 7</div>
+    <div class="section-title">Битрикс24 — это не просто CRM</div>
+    <div class="section-sub">
+      В прототипе использован небольшой набор возможностей платформы. Битрикс24 содержит значительно больше инструментов,
+      которые уже могут быть полезны «Потолкуем?» — без дополнительной оплаты, на уже выбранном тарифе.
+    </div>
+
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon">🤝</div>
+        <div class="feat-title">Коллаб</div>
+        <div class="feat-desc">Закрытые рабочие пространства для амбассадоров, партнёров и подрядчиков. Бесплатно, без лицензии, с любого устройства.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📋</div>
+        <div class="feat-title">Задачи и проекты</div>
+        <div class="feat-desc">Полноценное управление проектами: канбан, диаграмма Ганта, дедлайны, подзадачи, комментарии и файлы.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📅</div>
+        <div class="feat-title">Корпоративный календарь</div>
+        <div class="feat-desc">Единый календарь компании. Выставки, встречи, дедлайны — всё в одном месте, видно каждому в своём разрезе.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">💬</div>
+        <div class="feat-title">Корпоративный чат</div>
+        <div class="feat-desc">Внутренние переписки, групповые чаты, уведомления из CRM. Вместо WhatsApp и Telegram — в одной системе.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📁</div>
+        <div class="feat-title">Диск и документы</div>
+        <div class="feat-desc">Хранение файлов компании: скрипты, шаблоны, медиа, договоры — с доступом по ролям и историей версий.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📊</div>
+        <div class="feat-title">Отчёты и аналитика</div>
+        <div class="feat-desc">Встроенная аналитика по сделкам, воронкам, активности сотрудников. Можно настроить дашборд под нужные показатели.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📝</div>
+        <div class="feat-title">CRM-формы</div>
+        <div class="feat-desc">Публичные формы по ссылке — без регистрации. Лиды с сайта, отчёты амбассадоров, анкеты партнёров — всё в CRM.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🤖</div>
+        <div class="feat-title">Автоматизация</div>
+        <div class="feat-desc">Роботы, триггеры, бизнес-процессы. Рутинные действия выполняются сами — уведомления, задачи, изменение стадий.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🏪</div>
+        <div class="feat-title">Магазин приложений</div>
+        <div class="feat-desc">Готовые интеграции с 1С, WhatsApp, Telegram-ботами, Google Таблицами, сервисами рассылок и другими инструментами.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📞</div>
+        <div class="feat-title">Телефония</div>
+        <div class="feat-desc">Встроенная IP-телефония с записью звонков, привязкой к карточке клиента и статистикой по менеджерам.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🌐</div>
+        <div class="feat-title">Сайты и лендинги</div>
+        <div class="feat-desc">Конструктор страниц с формами, подключёнными к CRM. Быстрая посадочная страница — без разработчика.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🧠</div>
+        <div class="feat-title">ИИ-помощник</div>
+        <div class="feat-desc">Встроенный AI помогает с текстами, анализом, черновиками задач и саммаризацией переписок.</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top: 24px;">
+      <strong>Что из этого уже активно в прототипе:</strong> CRM (смарт-процессы), Коллаб для амбассадоров, CRM-формы, автоматизация (роботы). Остальные инструменты доступны на уже оплаченном тарифе — нужна только настройка.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════ 8. ЧЕСТНЫЙ РАЗГОВОР ══════ -->
+<section class="light-bg">
+  <div class="container">
+    <div class="section-label">Раздел 8</div>
+    <div class="section-title">Честно о прототипе и о следующем шаге</div>
+    <div class="section-sub">
+      Что сделано, чего пока нет — и почему дальнейший путь ценнее, чем кажется.
+    </div>
+
+    <div class="two-col" style="margin-bottom: 24px;">
+      <div class="card">
+        <div class="card-title" style="color: var(--green);">Что сделал прототип</div>
+        <div class="card-body">
+          Прototип создал работающую архитектуру системы — блоки, поля, воронки, связи между сущностями. Все восемь разделов функционируют, между ними настроены отношения, данные передаются. Это не макет — это живая система в Битрикс24.
+          <br><br>
+          Данные (кроме мероприятий) внесены как демо-информация — для того чтобы показать, как выглядит заполненная система. Мероприятия — реальный производственный календарь.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color: var(--yellow);">Чего не хватает для полноценной работы</div>
+        <div class="card-body">
+          Тонкая настройка под реальные процессы требует глубокого понимания: как именно ведётся учёт, какие данные нужны для принятия решений, как общается команда, какие сценарии автоматизации сэкономят максимум времени.
+          <br><br>
+          Это то, что знают люди внутри компании, — и именно они должны участвовать в настройке. Мы можем предложить архитектуру, но не заменим носителей бизнес-знания.
+        </div>
+      </div>
+    </div>
+
+    <div class="callout yellow">
+      <strong>Суть:</strong> прототип показывает «что возможно». Реальная система строится в диалоге с командой — когда понятно, что именно нужно автоматизировать, что считать, как обмениваться данными. Именно тогда Битрикс24 становится не «ещё одним инструментом», а настоящей операционной системой компании.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════ CTA ══════ -->
+<section>
+  <div class="container">
+    <div class="cta-block">
+      <div class="cta-title">Если вас заинтересовал <em>блок «Мероприятия»</em> —<br>представьте, на что способна вся система</div>
+      <p class="cta-body">
+        Мероприятия — один из восьми блоков. Рядом — продажи, амбассадоры, маркетплейсы, разработка игр и тиражи. Все связаны между собой. Вся аналитика — в одном окне. И всё это на платформе, которая умеет ещё десятки вещей, которые мы даже не упоминали.
+      </p>
+      <div class="cta-steps">
+        <div class="cta-step">
+          <div class="cs-num">1</div>
+          <div class="cs-text"><strong>Изучите прототип</strong> — система уже живёт в вашем Битрикс24. Посмотрите на реальные карточки, потрогайте воронки, откройте связанные блоки.</div>
+        </div>
+        <div class="cta-step">
+          <div class="cs-num">2</div>
+          <div class="cs-text"><strong>Определите приоритеты</strong> — какой процесс наиболее болезненный сейчас? Потеря контактов с выставок? Неясная картина по амбассадорам? Хаос в подготовке мероприятий? Начните с этого.</div>
+        </div>
+        <div class="cta-step">
+          <div class="cs-num">3</div>
+          <div class="cs-text"><strong>Настройте вместе с теми, кто знает процесс</strong> — тонкая настройка требует участия команды. Вы знаете, что нужно. Мы знаем, как это реализовать в Битрикс24.</div>
+        </div>
+        <div class="cta-step">
+          <div class="cs-num">4</div>
+          <div class="cs-text"><strong>Запустите автоматизацию</strong> — когда система наполнена реальными данными и понятна команде, первые роботы сэкономят часы работы в неделю. Это не преувеличение.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>«Потолкуем?» · Блок «Мероприятия» в Битрикс24 · Демонстрационный портал · Апрель 2026</div>
+  <div style="margin-top: 8px;">
+    <a href="index.html">Главная презентация</a>
+    &nbsp;·&nbsp;
+    <a href="system-full.md">Полное описание системы</a>
+    &nbsp;·&nbsp;
+    <a href="exhibitions.html">Выставочный календарь</a>
+  </div>
+  <div style="margin-top: 10px; font-size: 11px; opacity: .35;">
+    Для сохранения в PDF: нажмите кнопку «Сохранить как PDF» или Ctrl+P → Сохранить как PDF
+  </div>
+</footer>
+
+</body>
+</html>

@@ -10,6 +10,7 @@
       --accent: #E84C3D;
       --green: #27AE60;
       --yellow: #F39C12;
+      --purple: #8E44AD;
       --light: #F4F6FA;
       --dark: #1A2340;
       --text: #2C3E50;
@@ -25,6 +26,26 @@
       line-height: 1.6;
     }
 
+    /* PRINT BUTTON */
+    .print-btn {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(45,74,138,0.4);
+      z-index: 100;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .print-btn:hover { background: #1e3670; transform: translateY(-1px); }
+    .print-btn:active { transform: translateY(0); }
+
     /* HERO */
     .hero {
       background: linear-gradient(135deg, var(--dark) 0%, var(--primary) 100%);
@@ -37,10 +58,8 @@
     .hero::before {
       content: '';
       position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
       background: radial-gradient(ellipse at center, rgba(255,255,255,0.05) 0%, transparent 70%);
     }
     .hero-badge {
@@ -116,6 +135,7 @@
     .block-card.accent { border-left-color: var(--accent); }
     .block-card.green { border-left-color: var(--green); }
     .block-card.yellow { border-left-color: var(--yellow); }
+    .block-card.purple { border-left-color: var(--purple); }
     .block-icon { font-size: 36px; margin-bottom: 14px; }
     .block-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
     .block-desc { color: var(--muted); font-size: 14px; line-height: 1.6; }
@@ -191,6 +211,116 @@
     .funnel-name { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
     .funnel-desc { font-size: 12px; color: var(--muted); }
 
+    /* SCENARIOS */
+    .scenarios-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+      gap: 20px;
+    }
+    .scenario-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--card-shadow);
+    }
+    .scenario-num {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+      line-height: 28px;
+      margin-bottom: 12px;
+    }
+    .scenario-title { font-size: 17px; font-weight: 700; margin-bottom: 16px; color: var(--dark); }
+    .scenario-flow {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .sf-block {
+      background: var(--light);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    .sf-arrow { color: var(--muted); font-size: 14px; }
+    .scenario-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* AMBASSADORS */
+    .ambassadors-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .ambassador-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--card-shadow);
+      position: relative;
+    }
+    .amb-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .amb-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), #4A7FD4);
+      color: white;
+      font-size: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .amb-avatar.green { background: linear-gradient(135deg, var(--green), #52BE80); }
+    .amb-avatar.yellow { background: linear-gradient(135deg, var(--yellow), #F8C471); }
+    .amb-name { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
+    .amb-city { font-size: 13px; color: var(--muted); }
+    .amb-spec {
+      font-size: 13px;
+      color: var(--text);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .amb-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .amb-stat {
+      background: var(--light);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+    }
+    .amb-stat-num { font-size: 16px; font-weight: 700; color: var(--dark); }
+    .amb-stat-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .status-badge {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .status-active { background: #D5F5E3; color: var(--green); }
+    .status-training { background: #FEF9E7; color: var(--yellow); }
+
     /* CATALOG */
     .catalog-grid {
       display: grid;
@@ -221,6 +351,64 @@
     }
     .catalog-games li:last-child { border-bottom: none; }
     .price { font-weight: 600; color: var(--primary); }
+    .price-dev { color: var(--muted); font-style: italic; }
+
+    /* AUTOMATION */
+    .automation-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+      gap: 20px;
+    }
+    .automation-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: var(--card-shadow);
+      border-top: 4px solid var(--purple);
+    }
+    .auto-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .auto-row {
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+    }
+    .auto-block {
+      flex: 1;
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .auto-trigger { background: #EBF5FB; }
+    .auto-action { background: #EAFAF1; }
+    .auto-arrow-col {
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      font-size: 22px;
+      color: var(--muted);
+    }
+    .auto-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .auto-text { font-size: 13px; line-height: 1.55; color: var(--text); }
+    .auto-result {
+      margin-top: 16px;
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+    }
 
     /* EXTERNAL */
     .external-grid {
@@ -285,6 +473,39 @@
     .role-manager { background: #D6EAF8; color: var(--primary); }
     .role-external { background: #D5F5E3; color: var(--green); }
 
+    /* TEAM */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 16px;
+    }
+    .team-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: var(--card-shadow);
+      text-align: center;
+    }
+    .team-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+      margin: 0 auto 12px;
+    }
+    .ta-red    { background: linear-gradient(135deg, #E84C3D, #F1948A); }
+    .ta-blue   { background: linear-gradient(135deg, #2D4A8A, #5D8AD4); }
+    .ta-green  { background: linear-gradient(135deg, #27AE60, #58D68D); }
+    .ta-orange { background: linear-gradient(135deg, #F39C12, #FAD7A0); color: #7D5700; }
+    .ta-purple { background: linear-gradient(135deg, #8E44AD, #BB8FCE); }
+    .team-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .team-role { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
     /* ROADMAP */
     .roadmap { display: flex; flex-direction: column; gap: 16px; }
     .roadmap-item {
@@ -324,25 +545,74 @@
     .divider { height: 1px; background: #E8EDF5; margin: 0; }
     .bg-white { background: white; }
 
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .scenarios-grid { grid-template-columns: 1fr; }
+      .automation-grid { grid-template-columns: 1fr; }
+      .auto-row { flex-direction: column; }
+      .auto-arrow-col { transform: rotate(90deg); padding: 8px 0; justify-content: center; }
+    }
     @media (max-width: 600px) {
       .hero-stats { gap: 24px; }
       .flow-steps { flex-direction: column; }
       .flow-step:not(:last-child)::after { content: '↓'; right: auto; left: 50%; top: auto; bottom: -14px; }
     }
+
+    /* PRINT */
+    @media print {
+      @page { size: A4; margin: 15mm 15mm 20mm; }
+      .print-btn { display: none !important; }
+      body { font-size: 11pt; background: white; }
+      .hero {
+        background: #1A2340 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        padding: 40px 24px 30px;
+      }
+      .hero h1 { font-size: 32pt; }
+      .hero-stat .num { font-size: 24pt; }
+      section { padding: 30px 0; }
+      .block-card, .funnel-card, .scenario-card, .ambassador-card,
+      .automation-card, .team-card, .catalog-section, .external-card,
+      .roadmap-item, .flow { break-inside: avoid; box-shadow: none; border: 1px solid #E0E0E0; }
+      .blocks-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .funnels-grid { grid-template-columns: repeat(3, 1fr); }
+      .catalog-grid { grid-template-columns: repeat(2, 1fr); }
+      .team-grid { grid-template-columns: repeat(3, 1fr); }
+      .scenarios-grid { grid-template-columns: 1fr; }
+      .ambassadors-grid { grid-template-columns: repeat(3, 1fr); }
+      .auto-row { flex-direction: row; }
+      .auto-arrow-col { transform: none; }
+      .divider { display: none; }
+      footer { background: #1A2340 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .roles-table th { background: #2D4A8A !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      a { color: inherit; text-decoration: none; }
+    }
   </style>
 </head>
 <body>
 
+<!-- PRINT BUTTON -->
+<button class="print-btn" onclick="window.print()">📄 Сохранить как PDF</button>
+
+<!-- DEMO BANNER -->
+<div style="background:#FFF3CD; border-bottom:2px solid #F39C12; padding:14px 24px; font-size:13px; text-align:center; color:#7D5700;">
+  <strong>Демонстрационный портал</strong> — система построена как презентационный прототип.
+  Данные по играм, сделкам, маркетплейсам, тиражам и амбассадорам являются <strong>демо-информацией</strong>, внесённой для наглядности.
+  Раздел «Мероприятия» содержит реальный производственный календарь выставочной активности на 2026–2027 год.
+</div>
+
 <!-- HERO -->
 <div class="hero">
-  <div class="hero-badge">🎲 Битрикс24 · Профессиональный тариф</div>
+  <div class="hero-badge">🎲 Битрикс24 · Профессиональный тариф · Апрель 2026</div>
   <h1>Система управления<br><span>«Потолкуем?»</span></h1>
   <p>Единое пространство для мероприятий, продаж, амбассадоров, маркетплейсов и производства игр</p>
   <div class="hero-stats">
     <div class="hero-stat"><span class="num">20</span><span class="label">игр в каталоге</span></div>
-    <div class="hero-stat"><span class="num">7</span><span class="label">блоков системы</span></div>
-    <div class="hero-stat"><span class="num">13</span><span class="label">выставок в 2026</span></div>
+    <div class="hero-stat"><span class="num">8</span><span class="label">блоков системы</span></div>
+    <div class="hero-stat"><span class="num">14</span><span class="label">выставок в 2026</span></div>
     <div class="hero-stat"><span class="num">5</span><span class="label">воронок продаж</span></div>
+    <div class="hero-stat"><span class="num">3</span><span class="label">амбассадора</span></div>
   </div>
 </div>
 
@@ -356,9 +626,9 @@
       <div class="block-card">
         <div class="block-icon">🎡</div>
         <div class="block-title">Мероприятия</div>
-        <div class="block-desc">Реестр всех выставок, акций и открытых игр. Фиксирует план и факт: трафик, продажи, расходы, оценку. Связан с амбассадорами и воронкой продаж.</div>
+        <div class="block-desc">Реестр всех выставок, акций и открытых игр. Фиксирует план и факт: трафик, контакты, продажи, расходы, оценку. Связан с амбассадорами и воронкой продаж.</div>
         <div class="block-tags">
-          <span class="tag">13 выставок/год</span>
+          <span class="tag">14 выставок/год</span>
           <span class="tag">Форма отчёта</span>
           <span class="tag">Гонорары</span>
         </div>
@@ -367,7 +637,7 @@
       <div class="block-card green">
         <div class="block-icon">🤝</div>
         <div class="block-title">Амбассадоры</div>
-        <div class="block-desc">Профили внешних представителей: эксперты по речи, педагоги, блогеры. Ставка за выход, % с продаж, специализация по играм. Доступ через Коллаб.</div>
+        <div class="block-desc">Профили внешних представителей: педагоги, психологи, HR-специалисты. Ставка за выход, % с продаж, специализация по играм. Доступ через Коллаб — без лицензии.</div>
         <div class="block-tags">
           <span class="tag">Коллаб</span>
           <span class="tag">Без лицензий</span>
@@ -378,7 +648,7 @@
       <div class="block-card accent">
         <div class="block-icon">💰</div>
         <div class="block-title">Воронки продаж</div>
-        <div class="block-desc">Пять отдельных воронок под каждый канал: розница, корпоратив, образование, опт и кастомные игры. Лиды со стендов попадают напрямую.</div>
+        <div class="block-desc">Пять отдельных воронок под каждый канал: розница, корпоратив, образование, опт и кастомные игры. Лиды со стендов и форм попадают напрямую.</div>
         <div class="block-tags">
           <span class="tag">B2C</span>
           <span class="tag">B2B Корп</span>
@@ -403,7 +673,7 @@
       <div class="block-card">
         <div class="block-icon">📍</div>
         <div class="block-title">Точки продаж</div>
-        <div class="block-desc">Офлайн-партнёры: книжные, кафе, коворкинги, музеи. Условия работы, остаток на точке, план/факт продаж, история визитов.</div>
+        <div class="block-desc">Офлайн-партнёры: книжные, кафе, коворкинги, музеи. Условия работы, остаток на точке, план/факт продаж, история визитов. Создаются автоматически при закрытии опт-сделки.</div>
         <div class="block-tags">
           <span class="tag">Реализация</span>
           <span class="tag">Закупка</span>
@@ -413,8 +683,8 @@
 
       <div class="block-card green">
         <div class="block-icon">📦</div>
-        <div class="block-title">Поставки</div>
-        <div class="block-desc">Учёт тиражей от заказа до склада. Производитель, плановые и фактические даты, себестоимость, брак. Прикидочный учёт без сложности 1С.</div>
+        <div class="block-title">Тиражи</div>
+        <div class="block-desc">Учёт производственных тиражей от заказа до склада. Производитель, плановые и фактические даты, себестоимость, количество брака. Рабочий учёт без сложности 1С.</div>
         <div class="block-tags">
           <span class="tag">Тираж</span>
           <span class="tag">Себестоимость</span>
@@ -425,18 +695,18 @@
       <div class="block-card accent">
         <div class="block-icon">🔧</div>
         <div class="block-title">Разработка игр</div>
-        <div class="block-desc">Жизненный цикл новой игры от идеи до выпуска. Эксперт по контенту, дизайнер, подрядчик. Бюджеты по этапам, тираж, цена продажи.</div>
+        <div class="block-desc">Жизненный цикл новой игры от идеи до выпуска. Эксперт по контенту, дизайнер, подрядчик. Бюджеты по этапам. Сейчас в работе 4 проекта.</div>
         <div class="block-tags">
           <span class="tag">7 стадий</span>
           <span class="tag">Бюджет</span>
-          <span class="tag">Команда</span>
+          <span class="tag">4 в разработке</span>
         </div>
       </div>
 
       <div class="block-card yellow">
         <div class="block-icon">📚</div>
         <div class="block-title">Каталог игр</div>
-        <div class="block-desc">Единый справочник всех 20 игр. Источник истины для воронок, маркетплейсов и поставок. Серия, статус, карточки, остаток на складе.</div>
+        <div class="block-desc">Единый справочник всех 20 игр. Источник истины для воронок, маркетплейсов и тиражей. Серия, статус, количество карточек, остаток на складе.</div>
         <div class="block-tags">
           <span class="tag">20 игр</span>
           <span class="tag">4 серии</span>
@@ -508,7 +778,7 @@
       <div class="funnel-card">
         <div class="funnel-icon">🏢</div>
         <div class="funnel-name">B2B Корпоратив</div>
-        <div class="funnel-desc">Командные мероприятия, тимбилдинг, подарки.</div>
+        <div class="funnel-desc">Командные мероприятия, тимбилдинг, подарки сотрудникам.</div>
       </div>
       <div class="funnel-card">
         <div class="funnel-icon">🎓</div>
@@ -518,13 +788,183 @@
       <div class="funnel-card">
         <div class="funnel-icon">🏪</div>
         <div class="funnel-name">Опт / Ретейл</div>
-        <div class="funnel-desc">Магазины и кафе. → Точка продаж при закрытии.</div>
+        <div class="funnel-desc">Магазины и кафе. При закрытии → Точка продаж.</div>
       </div>
       <div class="funnel-card">
         <div class="funnel-icon">🎨</div>
         <div class="funnel-name">Кастомная игра</div>
-        <div class="funnel-desc">Уникальный продукт под бренд. → Разработка игр.</div>
+        <div class="funnel-desc">Уникальный продукт под бренд. При старте → Разработка игр.</div>
       </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SCENARIOS -->
+<section class="bg-white">
+  <div class="container">
+    <div class="section-title">Как блоки работают вместе</div>
+    <div class="section-sub">Четыре сценария из реальной практики</div>
+    <div class="scenarios-grid">
+
+      <div class="scenario-card">
+        <div class="scenario-num">1</div>
+        <div class="scenario-title">Выставка → контакт → продажа</div>
+        <div class="scenario-flow">
+          <span class="sf-block">🎡 Мероприятие</span>
+          <span class="sf-arrow">→</span>
+          <span class="sf-block">📋 Форма на стенде</span>
+          <span class="sf-arrow">→</span>
+          <span class="sf-block">💰 B2C Воронка</span>
+          <span class="sf-arrow">→</span>
+          <span class="sf-block">✅ Сделка</span>
+        </div>
+        <div class="scenario-desc">
+          На выставке АРХ МОСКВА HR-директор компании подошёл к стенду. Амбассадор взял контакт через планшет: «корпоратив, 30 человек, октябрь». Запись появилась в воронке B2B Корпоратив автоматически — менеджер видит новый лид и начинает работу.
+        </div>
+      </div>
+
+      <div class="scenario-card">
+        <div class="scenario-num">2</div>
+        <div class="scenario-title">Опт → партнёр → регулярные поставки</div>
+        <div class="scenario-flow">
+          <span class="sf-block">💰 Опт/Ретейл</span>
+          <span class="sf-arrow">→</span>
+          <span class="sf-block">📍 Точка продаж</span>
+          <span class="sf-arrow">→</span>
+          <span class="sf-block">📦 Тираж</span>
+        </div>
+        <div class="scenario-desc">
+          Книжный магазин заинтересовался играми. Переговоры вели в воронке «Опт / Ретейл». Договорились — сделка закрыта → карточка точки продаж создана автоматически → первый тираж зафиксирован. Через месяц менеджер открывает карточку: продано 18 из 24, осталось 6 — пора везти ещё.
+        </div>
+      </div>
+
+      <div class="scenario-card">
+        <div class="scenario-num">3</div>
+        <div class="scenario-title">Амбассадор → отчёт → карточка</div>
+        <div class="scenario-flow">
+          <span class="sf-block">🤝 Амбассадор</span>
+          <span class="sf-arrow">→</span>
+          <span class="sf-block">📱 Коллаб</span>
+          <span class="sf-arrow">→</span>
+          <span class="sf-block">📋 Форма</span>
+          <span class="sf-arrow">→</span>
+          <span class="sf-block">🎡 Мероприятие</span>
+        </div>
+        <div class="scenario-desc">
+          Арсений Волков провёл открытую игру на площадке GOTOVO. После мероприятия открыл ссылку из задания в Коллабе, заполнил форму: 40 посетителей, 8 контактов, 4 продажи, оценка 5 — «Очень живо, приходили компаниями». Карточка мероприятия обновилась. Гонорар начислен.
+        </div>
+      </div>
+
+      <div class="scenario-card">
+        <div class="scenario-num">4</div>
+        <div class="scenario-title">Идея → разработка → маркетплейс</div>
+        <div class="scenario-flow">
+          <span class="sf-block">🔧 Разработка</span>
+          <span class="sf-arrow">→</span>
+          <span class="sf-block">📚 Каталог</span>
+          <span class="sf-arrow">→</span>
+          <span class="sf-block">📦 Тираж</span>
+          <span class="sf-arrow">→</span>
+          <span class="sf-block">🛒 Маркетплейсы</span>
+        </div>
+        <div class="scenario-desc">
+          Игра «Продажи» прошла все стадии: контент написан экспертом, дизайн готов, прототип протестирован. Первый тираж — 1 000 экземпляров. Игра выходит → добавляется в каталог → появляется в журнале маркетплейсов. Маркетолог настраивает карточки WB и Ozon, запускает продвижение.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- AMBASSADORS -->
+<section>
+  <div class="container">
+    <div class="section-title">Амбассадоры</div>
+    <div class="section-sub">Внешние представители — в системе, но без лицензий и без лишнего доступа</div>
+    <div class="ambassadors-grid">
+
+      <div class="ambassador-card">
+        <div class="amb-header">
+          <div class="amb-avatar">МГ</div>
+          <div>
+            <div class="amb-name">Мария Громова</div>
+            <div class="amb-city">📍 Москва</div>
+          </div>
+        </div>
+        <div class="amb-spec">Педагог и ведущий игровых мероприятий. Работает с корпоративными командами и школьниками. Специализация: корпоративы, образование.</div>
+        <div class="amb-stats">
+          <div class="amb-stat">
+            <div class="amb-stat-num">8</div>
+            <div class="amb-stat-label">выходов</div>
+          </div>
+          <div class="amb-stat">
+            <div class="amb-stat-num">4.6 ⭐</div>
+            <div class="amb-stat-label">рейтинг</div>
+          </div>
+          <div class="amb-stat">
+            <div class="amb-stat-num">3 500 ₽</div>
+            <div class="amb-stat-label">ставка</div>
+          </div>
+        </div>
+        <span class="status-badge status-active">Активен</span>
+      </div>
+
+      <div class="ambassador-card">
+        <div class="amb-header">
+          <div class="amb-avatar green">АВ</div>
+          <div>
+            <div class="amb-name">Арсений Волков</div>
+            <div class="amb-city">📍 Санкт-Петербург</div>
+          </div>
+        </div>
+        <div class="amb-spec">Психолог, фасилитатор. Специализируется на выставках и арт-пространствах. Рекорд: 6 продаж за одну игровую сессию.</div>
+        <div class="amb-stats">
+          <div class="amb-stat">
+            <div class="amb-stat-num">12</div>
+            <div class="amb-stat-label">выходов</div>
+          </div>
+          <div class="amb-stat">
+            <div class="amb-stat-num">4.8 ⭐</div>
+            <div class="amb-stat-label">рейтинг</div>
+          </div>
+          <div class="amb-stat">
+            <div class="amb-stat-num">4 000 ₽</div>
+            <div class="amb-stat-label">ставка</div>
+          </div>
+        </div>
+        <span class="status-badge status-active">Активен</span>
+      </div>
+
+      <div class="ambassador-card">
+        <div class="amb-header">
+          <div class="amb-avatar yellow">КЛ</div>
+          <div>
+            <div class="amb-name">Ксения Ларина</div>
+            <div class="amb-city">📍 Москва</div>
+          </div>
+        </div>
+        <div class="amb-spec">HR-специалист, ведёт тренинги по коммуникации. Хочет попробовать формат ведущего игровых мероприятий. Проходит обучение.</div>
+        <div class="amb-stats">
+          <div class="amb-stat">
+            <div class="amb-stat-num">0</div>
+            <div class="amb-stat-label">выходов</div>
+          </div>
+          <div class="amb-stat">
+            <div class="amb-stat-num">—</div>
+            <div class="amb-stat-label">рейтинг</div>
+          </div>
+          <div class="amb-stat">
+            <div class="amb-stat-num">3 000 ₽</div>
+            <div class="amb-stat-label">ставка</div>
+          </div>
+        </div>
+        <span class="status-badge status-training">Обучение</span>
+      </div>
+
     </div>
   </div>
 </section>
@@ -570,11 +1010,12 @@
         </ul>
       </div>
       <div class="catalog-section">
-        <div class="catalog-label">🔧 В разработке</div>
+        <div class="catalog-label">🔧 В разработке · 4 проекта</div>
         <ul class="catalog-games">
-          <li><span>Мировая литература</span><span class="price">—</span></li>
-          <li><span>Универсальные 2.0</span><span class="price">—</span></li>
-          <li><span>Наука</span><span class="price">—</span></li>
+          <li><span>Продажи</span><span class="price-dev">7 200 ₽</span></li>
+          <li><span>Психология</span><span class="price-dev">6 800 ₽</span></li>
+          <li><span>Переговоры</span><span class="price-dev">7 500 ₽</span></li>
+          <li><span>Стартапы</span><span class="price-dev">6 800 ₽</span></li>
         </ul>
       </div>
     </div>
@@ -583,8 +1024,53 @@
 
 <div class="divider"></div>
 
-<!-- EXTERNAL -->
+<!-- AUTOMATION -->
 <section>
+  <div class="container">
+    <div class="section-title">Автоматизация</div>
+    <div class="section-sub">Роботы Битрикс24 — рутинные задачи выполняются без участия человека</div>
+    <div class="automation-grid">
+
+      <div class="automation-card">
+        <div class="auto-title">🤖 Застрявшая сделка</div>
+        <div class="auto-row">
+          <div class="auto-block auto-trigger">
+            <div class="auto-label">Триггер</div>
+            <div class="auto-text">Сделка B2C остаётся на стадии «КП отправлено» более <strong>3 дней</strong> без изменений</div>
+          </div>
+          <div class="auto-arrow-col">→</div>
+          <div class="auto-block auto-action">
+            <div class="auto-label">Действие</div>
+            <div class="auto-text">Робот создаёт задачу ответственному менеджеру: <em>«Клиент не ответил — проверь статус, попробуй другой канал связи»</em></div>
+          </div>
+        </div>
+        <div class="auto-result">Ни один тёплый контакт не теряется из-за забывчивости</div>
+      </div>
+
+      <div class="automation-card">
+        <div class="auto-title">🤖 Онбординг амбассадора</div>
+        <div class="auto-row">
+          <div class="auto-block auto-trigger">
+            <div class="auto-label">Триггер</div>
+            <div class="auto-text">Карточка амбассадора переходит в стадию <strong>«Обучение»</strong></div>
+          </div>
+          <div class="auto-arrow-col">→</div>
+          <div class="auto-block auto-action">
+            <div class="auto-label">Действие</div>
+            <div class="auto-text">Система создаёт задачу Елене Фоминой: <em>«Провести онбординг — передать материалы, пригласить в Коллаб, назначить первое мероприятие. Срок: 7 дней»</em></div>
+          </div>
+        </div>
+        <div class="auto-result">Каждый новый амбассадор проходит одинаковый путь введения в работу</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- EXTERNAL -->
+<section class="bg-white">
   <div class="container">
     <div class="section-title">Внешнее взаимодействие</div>
     <div class="section-sub">Амбассадоры и партнёры работают без лицензий и без лишнего доступа</div>
@@ -659,7 +1145,7 @@
 <div class="divider"></div>
 
 <!-- ROLES -->
-<section class="bg-white">
+<section>
   <div class="container">
     <div class="section-title">Роли и доступы</div>
     <div class="section-sub">Каждый видит только то, что нужно для работы</div>
@@ -690,7 +1176,7 @@
         <tr>
           <td><strong>Производство</strong></td>
           <td><span class="role-badge role-manager">Рабочий</span></td>
-          <td>Каталог, поставки, разработка игр, точки продаж</td>
+          <td>Каталог, тиражи, разработка игр, точки продаж</td>
         </tr>
         <tr>
           <td><strong>Амбассадор</strong></td>
@@ -709,6 +1195,43 @@
 
 <div class="divider"></div>
 
+<!-- TEAM -->
+<section class="bg-white">
+  <div class="container">
+    <div class="section-title">Команда</div>
+    <div class="section-sub">Пять сотрудников с разграниченными ролями и именным доступом</div>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-avatar ta-red">АС</div>
+        <div class="team-name">Анна Соколова</div>
+        <div class="team-role">Основатель и руководитель</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar ta-blue">ДО</div>
+        <div class="team-name">Дмитрий Орлов</div>
+        <div class="team-role">Менеджер по продажам</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar ta-green">ЕФ</div>
+        <div class="team-name">Елена Фомина</div>
+        <div class="team-role">Координатор мероприятий</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar ta-orange">МЗ</div>
+        <div class="team-name">Михаил Зайцев</div>
+        <div class="team-role">Менеджер маркетплейсов</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar ta-purple">ОБ</div>
+        <div class="team-name">Ольга Белова</div>
+        <div class="team-role">Специалист по разработке и производству</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
 <!-- ROADMAP -->
 <section>
   <div class="container">
@@ -719,28 +1242,35 @@
         <div class="roadmap-dot done"></div>
         <div>
           <div class="roadmap-label">✅ Структура системы — готово</div>
-          <div class="roadmap-desc">7 блоков, 5 воронок, каталог из 20 игр, тестовые данные заведены</div>
+          <div class="roadmap-desc">8 блоков, 5 воронок, каталог из 20 игр, 4 игры в разработке, тестовые данные заведены во все разделы</div>
         </div>
       </div>
       <div class="roadmap-item">
         <div class="roadmap-dot done"></div>
         <div>
-          <div class="roadmap-label">✅ Внешние пользователи — готово</div>
-          <div class="roadmap-desc">Коллаб для амбассадоров настроен, формы спроектированы</div>
+          <div class="roadmap-label">✅ Команда и амбассадоры — готово</div>
+          <div class="roadmap-desc">5 сотрудников с именными аккаунтами, 3 амбассадора с профилями, Коллаб настроен</div>
         </div>
       </div>
       <div class="roadmap-item">
         <div class="roadmap-dot next"></div>
         <div>
           <div class="roadmap-label">⏳ Формы — следующий шаг</div>
-          <div class="roadmap-desc">Создание 4 публичных форм в UI Битрикс24 для амбассадоров, партнёров и клиентов</div>
+          <div class="roadmap-desc">Создание 4 публичных CRM-форм: отчёт амбассадора, контакт на стенде, B2B-заявка, анкета новой точки</div>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-dot next"></div>
+        <div>
+          <div class="roadmap-label">⏳ Автоматизация — сформулировано, готово к запуску</div>
+          <div class="roadmap-desc">Два робота: «Застрявшая сделка» и «Онбординг амбассадора». Настраиваются в UI Битрикс24 без программирования</div>
         </div>
       </div>
       <div class="roadmap-item">
         <div class="roadmap-dot future"></div>
         <div>
-          <div class="roadmap-label">🔮 Автоматизация — следующий этап</div>
-          <div class="roadmap-desc">Роботы и бизнес-процессы: уведомления, расчёт гонораров, синхронизация между блоками</div>
+          <div class="roadmap-label">🔮 Расширенная автоматизация — планируется</div>
+          <div class="roadmap-desc">Уведомления об остатках, синхронизация маркетплейсов, ежемесячные дайджесты, бизнес-процессы между блоками</div>
         </div>
       </div>
     </div>
@@ -749,11 +1279,16 @@
 
 <!-- FOOTER -->
 <footer>
-  <div>Система управления «Потолкуем?» · Битрикс24 Профессиональный</div>
+  <div>Система управления «Потолкуем?» · Битрикс24 Профессиональный · Апрель 2026</div>
   <div style="margin-top:8px">
-    <a href="https://github.com/sander23571-web/potolkuem-b24">GitHub: документация и API-паттерны</a>
+    <a href="system-brief.md">Краткое описание</a>
     &nbsp;·&nbsp;
-    <a href="system-overview.md">Markdown-версия</a>
+    <a href="system-full.md">Полное описание</a>
+    &nbsp;·&nbsp;
+    <a href="exhibitions.html">Выставочный календарь</a>
+  </div>
+  <div style="margin-top:12px; font-size:11px; opacity:0.4">
+    Для сохранения в PDF: нажмите кнопку «Сохранить как PDF» или Ctrl+P → Сохранить как PDF
   </div>
 </footer>
 

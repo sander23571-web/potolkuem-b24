@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>«Потолкуем?» — Выставочный календарь 2026–2027</title>
+<style>
+  @page {
+    size: A4;
+    margin: 20mm 18mm 25mm;
+    @bottom-right {
+      content: counter(page) " / " counter(pages);
+      font-family: 'Lato', 'DejaVu Sans', sans-serif;
+      font-size: 9pt;
+      color: #aaa;
+    }
+    @bottom-left {
+      content: "«Потолкуем?» — Выставочный календарь 2026–2027";
+      font-family: 'Lato', 'DejaVu Sans', sans-serif;
+      font-size: 9pt;
+      color: #aaa;
+    }
+  }
+
+  :root {
+    --primary: #2D4A8A;
+    --accent: #E84C3D;
+    --green: #27AE60;
+    --yellow: #F39C12;
+    --muted: #7F8C8D;
+    --light: #F4F6FA;
+    --dark: #1A2340;
+    --text: #2C3E50;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.07);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Lato', 'DejaVu Sans', Arial, sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--light);
+    line-height: 1.6;
+  }
+
+  /* PRINT BUTTON */
+  .print-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 10px 22px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(45,74,138,0.4);
+    z-index: 100;
+    transition: background 0.2s;
+  }
+  .print-btn:hover { background: #1e3670; }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--primary) 100%);
+    color: white;
+    padding: 52px 32px 40px;
+    text-align: center;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 50px;
+    padding: 5px 16px;
+    font-size: 12px;
+    margin-bottom: 18px;
+  }
+  .hero h1 {
+    font-size: 32px;
+    font-weight: 900;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  .hero h1 span { color: #F4C842; }
+  .hero-sub {
+    font-size: 16px;
+    opacity: 0.8;
+    max-width: 540px;
+    margin: 0 auto 32px;
+  }
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 36px;
+    flex-wrap: wrap;
+  }
+  .hs-num { font-size: 30px; font-weight: 900; color: #F4C842; display: block; }
+  .hs-label { font-size: 12px; opacity: 0.7; }
+
+  /* CONTAINER */
+  .container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+
+  /* SECTIONS */
+  section { padding: 40px 0; }
+  .section-title { font-size: 22px; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
+  .section-sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    padding: 16px 20px;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .leg-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .leg-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .leg-archive { background: #BDC3C7; }
+  .leg-closing { background: var(--yellow); }
+  .leg-active  { background: var(--green); }
+  .leg-prep    { background: var(--primary); }
+  .leg-plan    { background: #D6EAF8; border: 1px solid var(--primary); }
+
+  /* CALENDAR MONTH */
+  .month-group { margin-bottom: 32px; }
+  .month-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #E8EDF5;
+  }
+
+  /* EVENT CARD */
+  .event-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 12px;
+    display: flex;
+    overflow: hidden;
+    break-inside: avoid;
+    transition: box-shadow 0.2s;
+  }
+  .event-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+
+  .event-sidebar {
+    width: 6px;
+    flex-shrink: 0;
+  }
+  .sb-archive { background: #BDC3C7; }
+  .sb-closing { background: var(--yellow); }
+  .sb-active  { background: var(--green); }
+  .sb-prep    { background: var(--primary); }
+  .sb-plan    { background: #D6EAF8; }
+
+  .event-date {
+    width: 72px;
+    flex-shrink: 0;
+    padding: 16px 10px;
+    text-align: center;
+    border-right: 1px solid #EEF1F7;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .ev-day { font-size: 20px; font-weight: 900; color: var(--dark); line-height: 1; }
+  .ev-month { font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 600; text-transform: uppercase; }
+  .ev-year { font-size: 10px; color: #BDC3C7; margin-top: 1px; }
+
+  .event-body {
+    flex: 1;
+    padding: 14px 18px;
+  }
+  .event-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .event-name { font-size: 16px; font-weight: 700; color: var(--dark); }
+  .event-status {
+    flex-shrink: 0;
+    padding: 2px 10px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .es-archive { background: #F0F2F5; color: var(--muted); }
+  .es-closing { background: #FEF9E7; color: #B7770D; }
+  .es-active  { background: #D5F5E3; color: #1E8449; }
+  .es-prep    { background: #D6EAF8; color: var(--primary); }
+  .es-plan    { background: #EBF5FB; color: #1A5276; }
+
+  .event-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .ev-meta-item { display: flex; align-items: center; gap: 5px; }
+  .ev-meta-icon { font-size: 13px; }
+
+  .event-type-badge {
+    display: inline-block;
+    background: var(--light);
+    color: var(--primary);
+    padding: 2px 10px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .event-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .event-ambassadors {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .amb-chip {
+    display: inline-block;
+    background: #D5F5E3;
+    color: #1E8449;
+    padding: 1px 9px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+
+  /* SUMMARY TABLE */
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    font-size: 13px;
+  }
+  .summary-table th {
+    background: var(--primary);
+    color: white;
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .summary-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--light);
+    vertical-align: top;
+  }
+  .summary-table tr:last-child td { border-bottom: none; }
+  .summary-table tr:hover td { background: #F8F9FC; }
+  .col-num { font-weight: 700; color: var(--primary); }
+
+  /* WHAT WE TRACK */
+  .track-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 14px;
+  }
+  .track-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+  }
+  .track-icon { font-size: 24px; margin-bottom: 10px; }
+  .track-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .track-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: #E8EDF5; }
+
+  /* FOOTER */
+  footer {
+    background: var(--dark);
+    color: rgba(255,255,255,0.5);
+    padding: 24px;
+    text-align: center;
+    font-size: 12px;
+  }
+
+  /* PRINT */
+  @media print {
+    @page { size: A4; margin: 18mm 16mm 24mm; }
+    .print-btn { display: none !important; }
+    body { background: white; font-size: 10pt; }
+    .hero {
+      background: #1A2340 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      padding: 30px 24px 24px;
+    }
+    .hero h1 { font-size: 22pt; }
+    .event-card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+    .legend { box-shadow: none; border: 1px solid #ddd; }
+    .track-card { box-shadow: none; border: 1px solid #ddd; }
+    .summary-table th { background: #2D4A8A !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    section { padding: 20px 0; }
+    .month-group { break-inside: avoid; }
+    footer { background: #1A2340 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    a { text-decoration: none; color: inherit; }
+  }
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">📄 Сохранить как PDF</button>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">Реальные данные системы · CRM Битрикс24</div>
+  <h1>Выставочный календарь<br><span>«Потолкуем?»</span> 2026–2027</h1>
+  <div class="hero-sub">Реестр мероприятий из производственного CRM — единственный раздел системы, содержащий актуальные рабочие данные</div>
+  <div class="hero-stats">
+    <div>
+      <span class="hs-num">14</span>
+      <span class="hs-label">мероприятий</span>
+    </div>
+    <div>
+      <span class="hs-num">2</span>
+      <span class="hs-label">прошло</span>
+    </div>
+    <div>
+      <span class="hs-num">3</span>
+      <span class="hs-label">в подготовке</span>
+    </div>
+    <div>
+      <span class="hs-num">9</span>
+      <span class="hs-label">запланировано</span>
+    </div>
+  </div>
+</div>
+
+<!-- CALENDAR -->
+<section>
+  <div class="container">
+    <div class="section-title">Мероприятия по месяцам</div>
+    <div class="section-sub">Все выставки, открытые игры и акции на 2026–2027 год</div>
+
+    <!-- LEGEND -->
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot leg-archive"></div> Архив (прошло)</div>
+      <div class="leg-item"><div class="leg-dot leg-closing"></div> Закрытие (подводим итоги)</div>
+      <div class="leg-item"><div class="leg-dot leg-active"></div> Проведение (идёт)</div>
+      <div class="leg-item"><div class="leg-dot leg-prep"></div> Подготовка (активная фаза)</div>
+      <div class="leg-item"><div class="leg-dot leg-plan"></div> Идея / план (в работе)</div>
+    </div>
+
+    <!-- ── ФЕВРАЛЬ 2026 ── -->
+    <div class="month-group">
+      <div class="month-label">Февраль 2026</div>
+
+      <div class="event-card">
+        <div class="event-sidebar sb-archive"></div>
+        <div class="event-date">
+          <div class="ev-day">7–9</div>
+          <div class="ev-month">Февр.</div>
+          <div class="ev-year">2026</div>
+        </div>
+        <div class="event-body">
+          <div class="event-title-row">
+            <div class="event-name">Образование и наука</div>
+            <div class="event-status es-archive">Архив</div>
+          </div>
+          <span class="event-type-badge">Выставка</span>
+          <div class="event-meta">
+            <span class="ev-meta-item"><span class="ev-meta-icon">📍</span> ЦВК Экспоцентр, Москва</span>
+            <span class="ev-meta-item"><span class="ev-meta-icon">🗓️</span> 3 дня</span>
+          </div>
+          <div class="event-desc">Первое мероприятие сезона. Аудитория — педагоги, методисты, представители образовательных организаций. Высокий потенциал для канала B2B Образование.</div>
+          <div class="event-ambassadors">Амбассадор: <span class="amb-chip">Мария Громова</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── МАРТ 2026 ── -->
+    <div class="month-group">
+      <div class="month-label">Март 2026</div>
+
+      <div class="event-card">
+        <div class="event-sidebar sb-archive"></div>
+        <div class="event-date">
+          <div class="ev-day">14</div>
+          <div class="ev-month">Март</div>
+          <div class="ev-year">2026</div>
+        </div>
+        <div class="event-body">
+          <div class="event-title-row">
+            <div class="event-name">GOTOVO</div>
+            <div class="event-status es-archive">Архив</div>
+          </div>
+          <span class="event-type-badge">Открытая игра</span>
+          <div class="event-meta">
+            <span class="ev-meta-item"><span class="ev-meta-icon">📍</span> GOTOVO Space, Москва</span>
+            <span class="ev-meta-item"><span class="ev-meta-icon">🗓️</span> 1 день</span>
+          </div>
+          <div class="event-desc">Открытая игровая сессия в арт-пространстве GOTOVO. Формат позволяет органично познакомить аудиторию с механикой игры в живом формате без привязки к выставочной логике.</div>
+          <div class="event-ambassadors">Амбассадор: <span class="amb-chip">Арсений Волков</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── АПРЕЛЬ 2026 ── -->
+    <div class="month-group">
+      <div class="month-label">Апрель 2026</div>
+
+      <div class="event-card">
+        <div class="event-sidebar sb-closing"></div>
+        <div class="event-date">
+          <div class="ev-day">4–5</div>
+          <div class="ev-month">Апр.</div>
+          <div class="ev-year">2026</div>
+        </div>
+        <div class="event-body">
+          <div class="event-title-row">
+            <div class="event-name">Bookmarket</div>
+            <div class="event-status es-closing">Закрытие</div>
+          </div>
+          <span class="event-type-badge">Выставка</span>
+          <div class="event-meta">
+            <span class="ev-meta-item"><span class="ev-meta-icon">📍</span> КЦ ЗИЛ, Москва</span>
+            <span class="ev-meta-item"><span class="ev-meta-icon">🗓️</span> 2 дня</span>
+          </div>
+          <div class="event-desc">Книжный маркет с широкой аудиторией любителей чтения, образования и культуры. Совпадение с ядром аудитории «Потолкуем?». Подводим итоги и готовим финансовый отчёт.</div>
+          <div class="event-ambassadors">Амбассадор: <span class="amb-chip">Мария Громова</span></div>
+        </div>
+      </div>
+
+      <div class="event-card">
+        <div class="event-sidebar sb-prep"></div>
+        <div class="event-date">
+          <div class="ev-day">17–20</div>
+          <div class="ev-month">Апр.</div>
+          <div class="ev-year">2026</div>
+        </div>
+        <div class="event-body">
+          <div class="event-title-row">
+            <div class="event-name">АРХ МОСКВА</div>
+            <div class="event-status es-prep">Подготовка</div>
+          </div>
+          <span class="event-type-badge">Выставка</span>
+          <div class="event-meta">
+            <span class="ev-meta-item"><span class="ev-meta-icon">📍</span> Гостиный Двор, Москва</span>
+            <span class="ev-meta-item"><span class="ev-meta-icon">🗓️</span> 4 дня</span>
+          </div>
+          <div class="event-desc">Крупнейшая архитектурная выставка России. Высококультурная аудитория — архитекторы, дизайнеры, девелоперы. Отличный контекст для игры «Архитектура» и серии «Тематические».</div>
+          <div class="event-ambassadors">Амбассадоры: <span class="amb-chip">Арсений Волков</span><span class="amb-chip">Мария Громова</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ИЮНЬ 2026 ── -->
+    <div class="month-group">
+      <div class="month-label">Июнь 2026</div>
+
+      <div class="event-card">
+        <div class="event-sidebar sb-prep"></div>
+        <div class="event-date">
+          <div class="ev-day">5–8</div>
+          <div class="ev-month">Июнь</div>
+          <div class="ev-year">2026</div>
+        </div>
+        <div class="event-body">
+          <div class="event-title-row">
+            <div class="event-name">Красная площадь</div>
+            <div class="event-status es-prep">Подготовка</div>
+          </div>
+          <span class="event-type-badge">Выставка</span>
+          <div class="event-meta">
+            <span class="ev-meta-item"><span class="ev-meta-icon">📍</span> Красная площадь, Москва</span>
+            <span class="ev-meta-item"><span class="ev-meta-icon">🗓️</span> 4 дня</span>
+          </div>
+          <div class="event-desc">Книжный фестиваль «Красная площадь» — одно из крупнейших книжных мероприятий страны. Масштабный трафик, широкая аудитория, высокая медийность. Стратегически важное мероприятие сезона.</div>
+          <div class="event-ambassadors">Амбассадор: <span class="amb-chip">Мария Громова</span></div>
+        </div>
+      </div>
+
+      <div class="event-card">
+        <div class="event-sidebar sb-plan"></div>
+        <div class="event-date">
+          <div class="ev-day">19–22</div>
+          <div class="ev-month">Июнь</div>
+          <div class="ev-year">2026</div>
+        </div>
+        <div class="event-body">
+          <div class="event-title-row">
+            <div class="event-name">ММВА</div>
+            <div class="event-status es-plan">Идея / план</div>
+          </div>
+          <span class="event-type-badge">Выставка</span>
+          <div class="event-meta">
+            <span class="ev-meta-item"><span class="ev-meta-icon">📍</span> Крокус Экспо, Москва</span>
+            <span class="ev-meta-item"><span class="ev-meta-icon">🗓️</span> 4 дня</span>
+          </div>
+          <div class="event-desc">Московская международная выставка в области архитектуры и дизайна. Профессиональная аудитория с интересом к культуре, эстетике и коммуникации — целевой профиль игры.</div>
+          <div class="event-ambassadors">Амбассадор: <span class="amb-chip">Арсений Волков</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ИЮЛЬ 2026 ── -->
+    <div class="month-group">
+      <div class="month-label">Июль 2026</div>
+
+      <div class="event-card">
+        <div class="event-sidebar sb-plan"></div>
+        <div class="event-date">
+          <div class="ev-day">4</div>
+          <div class="ev-month">Июль</div>
+          <div class="ev-year">2026</div>
+        </div>
+        <div class="event-body">
+          <div class="event-title-row">
+            <div class="event-name">Открытая игра (летняя)</div>
+            <div class="event-status es-plan">Идея / план</div>
+          </div>
+          <span class="event-type-badge">Открытая игра</span>
+          <div class="event-meta">
+            <span class="ev-meta-item"><span class="ev-meta-icon">📍</span> Москва, площадка уточняется</span>
+            <span class="ev-meta-item"><span class="ev-meta-icon">🗓️</span> 1 день</span>
+          </div>
+          <div class="event-desc">Летняя серия открытых игр в кафе, коворкингах и парковых пространствах. Формат камерный, аудитория — постоянные покупатели и их знакомые. Поддерживает вовлечённость вне сезона выставок.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── СЕНТЯБРЬ 2026 ── -->
+    <div class="month-group">
+      <div class="month-label">Сентябрь 2026</div>
+
+      <div class="event-card">
+        <div class="event-sidebar sb-plan"></div>
+        <div class="event-date">
+          <div class="ev-day">11–13</div>
+          <div class="ev-month">Сент.</div>
+          <div class="ev-year">2026</div>
+        </div>
+        <div class="event-body">
+          <div class="event-title-row">
+            <div class="event-name">Cosmoscow</div>
+            <div class="event-status es-plan">Идея / план</div>
+          </div>
+          <span class="event-type-badge">Выставка</span>
+          <div class="event-meta">
+            <span class="ev-meta-item"><span class="ev-meta-icon">📍</span> Гостиный Двор, Москва</span>
+            <span class="ev-meta-item"><span class="ev-meta-icon">🗓️</span> 3 дня</span>
+          </div>
+          <div class="event-desc">Международная ярмарка современного искусства. Творческая, мыслящая аудитория с высокой покупательной способностью — идеальный контекст для тематических и культурных серий игр.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ОКТЯБРЬ 2026 ── -->
+    <div class="month-group">
+      <div class="month-label">Октябрь 2026</div>
+
+      <div class="event-card">
+        <div class="event-sidebar sb-plan"></div>
+        <div class="event-date">
+          <div class="ev-day">15–18</div>
+          <div class="ev-month">Окт.</div>
+          <div class="ev-year">2026</div>
+        </div>
+        <div class="event-body">
+          <div class="event-title-row">
+            <div class="event-name">Арт Москва</div>
+            <div class="event-status es-plan">Идея / план</div>
+          </div>
+          <span class="event-type-badge">Выставка</span>
+          <div class="event-meta">
+            <span class="ev-meta-item"><span class="ev-meta-icon">📍</span> Гостиный Двор, Москва</span>
+            <span class="ev-meta-item"><span class="ev-meta-icon">🗓️</span> 4 дня</span>
+          </div>
+          <div class="event-desc">Форум современного искусства и дизайна. Широкая аудитория — любители культуры, коллекционеры, галеристы. Выгодный контекст для тематических серий.</div>
+        </div>
+      </div>
+
+      <div class="event-card">
+        <div class="event-sidebar sb-plan"></div>
+        <div class="event-date">
+          <div class="ev-day">24</div>
+          <div class="ev-month">Окт.</div>
+          <div class="ev-year">2026</div>
+        </div>
+        <div class="event-body">
+          <div class="event-title-row">
+            <div class="event-name">Открытая игра СПб</div>
+            <div class="event-status es-plan">Идея / план</div>
+          </div>
+          <span class="event-type-badge">Открытая игра</span>
+          <div class="event-meta">
+            <span class="ev-meta-item"><span class="ev-meta-icon">📍</span> Арт-пространство, Санкт-Петербург</span>
+            <span class="ev-meta-item"><span class="ev-meta-icon">🗓️</span> 1 день</span>
+          </div>
+          <div class="event-desc">Выход в Санкт-Петербурге. Арсений Волков — местный амбассадор с сетью контактов в арт- и психологическом сообществе города. Тест петербургской аудитории.</div>
+          <div class="event-ambassadors">Амбассадор: <span class="amb-chip">Арсений Волков</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── НОЯБРЬ 2026 ── -->
+    <div class="month-group">
+      <div class="month-label">Ноябрь 2026</div>
+
+      <div class="event-card">
+        <div class="event-sidebar sb-plan"></div>
+        <div class="event-date">
+          <div class="ev-day">7–9</div>
+          <div class="ev-month">Нояб.</div>
+          <div class="ev-year">2026</div>
+        </div>
+        <div class="event-body">
+          <div class="event-title-row">
+            <div class="event-name">Игрокон</div>
+            <div class="event-status es-plan">Идея / план</div>
+          </div>
+          <span class="event-type-badge">Выставка</span>
+          <div class="event-meta">
+            <span class="ev-meta-item"><span class="ev-meta-icon">📍</span> Москва, площадка уточняется</span>
+            <span class="ev-meta-item"><span class="ev-meta-icon">🗓️</span> 3 дня</span>
+          </div>
+          <div class="event-desc">Крупнейший российский фестиваль настольных игр. Целевая аудитория — любители настолок, коллекционеры, критики и издатели игр. Ключевое событие для сообщества настольщиков.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ДЕКАБРЬ 2026 ── -->
+    <div class="month-group">
+      <div class="month-label">Декабрь 2026</div>
+
+      <div class="event-card">
+        <div class="event-sidebar sb-plan"></div>
+        <div class="event-date">
+          <div class="ev-day">4–8</div>
+          <div class="ev-month">Дек.</div>
+          <div class="ev-year">2026</div>
+        </div>
+        <div class="event-body">
+          <div class="event-title-row">
+            <div class="event-name">Non/fiction</div>
+            <div class="event-status es-plan">Идея / план</div>
+          </div>
+          <span class="event-type-badge">Выставка</span>
+          <div class="event-meta">
+            <span class="ev-meta-item"><span class="ev-meta-icon">📍</span> Гостиный Двор, Москва</span>
+            <span class="ev-meta-item"><span class="ev-meta-icon">🗓️</span> 5 дней</span>
+          </div>
+          <div class="event-desc">Международная ярмарка интеллектуальной литературы. Читающая, думающая аудитория — сильнейшее совпадение с ЦА игры. Потенциал для B2C и B2B Образование.</div>
+        </div>
+      </div>
+
+      <div class="event-card">
+        <div class="event-sidebar sb-plan"></div>
+        <div class="event-date">
+          <div class="ev-day">20</div>
+          <div class="ev-month">Дек.</div>
+          <div class="ev-year">2026</div>
+        </div>
+        <div class="event-body">
+          <div class="event-title-row">
+            <div class="event-name">Корпоративный чемпионат</div>
+            <div class="event-status es-plan">Идея / план</div>
+          </div>
+          <span class="event-type-badge">Акция на локации</span>
+          <div class="event-meta">
+            <span class="ev-meta-item"><span class="ev-meta-icon">📍</span> Площадка партнёра, Москва</span>
+            <span class="ev-meta-item"><span class="ev-meta-icon">🗓️</span> 1 день</span>
+          </div>
+          <div class="event-desc">Предновогодний корпоративный чемпионат — закрытое мероприятие для команды компании-партнёра или нескольких корпоративных клиентов. Формат нетворкинга + игра.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ЯНВАРЬ 2027 ── -->
+    <div class="month-group">
+      <div class="month-label">Январь 2027</div>
+
+      <div class="event-card">
+        <div class="event-sidebar sb-plan"></div>
+        <div class="event-date">
+          <div class="ev-day">23–25</div>
+          <div class="ev-month">Янв.</div>
+          <div class="ev-year">2027</div>
+        </div>
+        <div class="event-body">
+          <div class="event-title-row">
+            <div class="event-name">ARTDOM</div>
+            <div class="event-status es-plan">Идея / план</div>
+          </div>
+          <span class="event-type-badge">Выставка</span>
+          <div class="event-meta">
+            <span class="ev-meta-item"><span class="ev-meta-icon">📍</span> Москва, площадка уточняется</span>
+            <span class="ev-meta-item"><span class="ev-meta-icon">🗓️</span> 3 дня</span>
+          </div>
+          <div class="event-desc">Выставка в сфере искусства, дизайна и домашнего пространства. Завершает выставочный цикл 2026–2027. Аудитория творческих профессионалов и ценителей эстетики.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- WHAT WE TRACK -->
+<section style="background: white;">
+  <div class="container">
+    <div class="section-title">Что фиксируется по каждому мероприятию</div>
+    <div class="section-sub">Данные из CRM — основа для анализа эффективности выставочной активности</div>
+    <div class="track-grid">
+      <div class="track-card">
+        <div class="track-icon">👥</div>
+        <div class="track-title">Трафик стенда</div>
+        <div class="track-desc">Сколько человек подошло к стенду за всё мероприятие</div>
+      </div>
+      <div class="track-card">
+        <div class="track-icon">📞</div>
+        <div class="track-title">Контакты</div>
+        <div class="track-desc">Количество собранных лидов, попадающих в воронку продаж</div>
+      </div>
+      <div class="track-card">
+        <div class="track-icon">🎲</div>
+        <div class="track-title">Продажи на месте</div>
+        <div class="track-desc">Количество игр, проданных прямо на стенде в ходе мероприятия</div>
+      </div>
+      <div class="track-card">
+        <div class="track-icon">🎯</div>
+        <div class="track-title">Игровые сессии</div>
+        <div class="track-desc">Сколько раз амбассадор провёл демонстрационную игру</div>
+      </div>
+      <div class="track-card">
+        <div class="track-icon">💰</div>
+        <div class="track-title">Бюджет (план / факт)</div>
+        <div class="track-desc">Стоимость участия, стенда, материалов и гонораров амбассадоров</div>
+      </div>
+      <div class="track-card">
+        <div class="track-icon">⭐</div>
+        <div class="track-title">Оценка и разбор</div>
+        <div class="track-desc">Что сработало, что нужно улучшить — для следующего мероприятия</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SUMMARY TABLE -->
+<section>
+  <div class="container">
+    <div class="section-title">Сводная таблица мероприятий</div>
+    <div class="section-sub">Статус всех 14 позиций на апрель 2026</div>
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Мероприятие</th>
+          <th>Тип</th>
+          <th>Дата</th>
+          <th>Город</th>
+          <th>Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="col-num">1</td><td>Образование и наука</td><td>Выставка</td><td>7–9 февр. 2026</td><td>Москва</td><td>Архив ✓</td></tr>
+        <tr><td class="col-num">2</td><td>GOTOVO</td><td>Открытая игра</td><td>14 марта 2026</td><td>Москва</td><td>Архив ✓</td></tr>
+        <tr><td class="col-num">3</td><td>Bookmarket</td><td>Выставка</td><td>4–5 апр. 2026</td><td>Москва</td><td>Закрытие</td></tr>
+        <tr><td class="col-num">4</td><td>АРХ МОСКВА</td><td>Выставка</td><td>17–20 апр. 2026</td><td>Москва</td><td>Подготовка →</td></tr>
+        <tr><td class="col-num">5</td><td>Красная площадь</td><td>Выставка</td><td>5–8 июн. 2026</td><td>Москва</td><td>Подготовка</td></tr>
+        <tr><td class="col-num">6</td><td>ММВА</td><td>Выставка</td><td>19–22 июн. 2026</td><td>Москва</td><td>Идея / план</td></tr>
+        <tr><td class="col-num">7</td><td>Открытая игра (летняя)</td><td>Открытая игра</td><td>4 июл. 2026</td><td>Москва</td><td>Идея / план</td></tr>
+        <tr><td class="col-num">8</td><td>Cosmoscow</td><td>Выставка</td><td>11–13 сент. 2026</td><td>Москва</td><td>Идея / план</td></tr>
+        <tr><td class="col-num">9</td><td>Арт Москва</td><td>Выставка</td><td>15–18 окт. 2026</td><td>Москва</td><td>Идея / план</td></tr>
+        <tr><td class="col-num">10</td><td>Открытая игра СПб</td><td>Открытая игра</td><td>24 окт. 2026</td><td>СПб</td><td>Идея / план</td></tr>
+        <tr><td class="col-num">11</td><td>Игрокон</td><td>Выставка</td><td>7–9 нояб. 2026</td><td>Москва</td><td>Идея / план</td></tr>
+        <tr><td class="col-num">12</td><td>Non/fiction</td><td>Выставка</td><td>4–8 дек. 2026</td><td>Москва</td><td>Идея / план</td></tr>
+        <tr><td class="col-num">13</td><td>Корпоративный чемпионат</td><td>Акция на локации</td><td>20 дек. 2026</td><td>Москва</td><td>Идея / план</td></tr>
+        <tr><td class="col-num">14</td><td>ARTDOM</td><td>Выставка</td><td>23–25 янв. 2027</td><td>Москва</td><td>Идея / план</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>«Потолкуем?» · Выставочный календарь 2026–2027 · Данные из CRM Битрикс24 · Апрель 2026</div>
+  <div style="margin-top:8px">
+    <a href="index.html" style="color:rgba(255,255,255,0.6)">Главная презентация</a>
+    &nbsp;·&nbsp;
+    <a href="system-brief.md" style="color:rgba(255,255,255,0.6)">Краткое описание</a>
+  </div>
+  <div style="margin-top:10px; font-size:11px; opacity:0.35;">
+    Для сохранения в PDF: кнопка «Сохранить как PDF» или Ctrl+P → Сохранить как PDF
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Битрикс24 · Хаб «Выставка» — структура и связи</title>
+  <style>
+    @page {
+      size: A3 landscape;
+      margin: 14mm;
+    }
+
+    :root {
+      --ink: #1a1d21;
+      --muted: #5c6370;
+      --line: #c8cdd5;
+      --hub: #1e5a8e;
+      --hub-soft: #e8f1f8;
+      --s1: #2d6a4f;
+      --s2: #9b2226;
+      --s3: #7b2cbf;
+      --s4: #bc6c25;
+      --s5: #0077b6;
+      --s6: #606c38;
+      --card: #ffffff;
+      --shadow: rgba(26, 29, 33, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #f4f5f7;
+      color: var(--ink);
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      font-size: 11pt;
+      line-height: 1.35;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .sheet {
+      width: 297mm;
+      height: 420mm;
+      max-width: 100%;
+      margin: 0 auto;
+      background: #fff;
+      padding: 12mm 14mm 14mm;
+      box-shadow: 0 8px 32px var(--shadow);
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8mm;
+      align-items: end;
+      border-bottom: 2px solid var(--hub);
+      padding-bottom: 6mm;
+      margin-bottom: 6mm;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22pt;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--hub);
+    }
+
+    .subtitle {
+      margin: 3mm 0 0;
+      font-size: 11pt;
+      color: var(--muted);
+      max-width: 140mm;
+    }
+
+    .badge {
+      font-size: 9pt;
+      font-weight: 600;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 4px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+      align-self: start;
+    }
+
+    .intro {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6mm;
+      margin-bottom: 5mm;
+      font-size: 10pt;
+      color: var(--muted);
+    }
+
+    .intro strong {
+      color: var(--ink);
+    }
+
+    .diagram-wrap {
+      margin: 4mm 0 7mm;
+    }
+
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .hub-title {
+      font-size: 13pt;
+      font-weight: 800;
+      fill: #fff;
+    }
+
+    .hub-sub {
+      font-size: 8.5pt;
+      fill: rgba(255, 255, 255, 0.92);
+    }
+
+    .sat-title {
+      font-size: 10pt;
+      font-weight: 700;
+    }
+
+    .sat-body {
+      font-size: 8.2pt;
+      fill: var(--ink);
+    }
+
+    .legend-row {
+      font-size: 8.5pt;
+      fill: var(--muted);
+    }
+
+    section.block {
+      margin-top: 5mm;
+    }
+
+    h2 {
+      margin: 0 0 3mm;
+      font-size: 12pt;
+      color: var(--hub);
+      font-weight: 700;
+    }
+
+    .matrix {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9pt;
+    }
+
+    .matrix th,
+    .matrix td {
+      border: 1px solid var(--line);
+      padding: 5px 8px;
+      vertical-align: top;
+    }
+
+    .matrix th {
+      background: var(--hub-soft);
+      color: var(--hub);
+      text-align: left;
+      font-weight: 700;
+      font-size: 9pt;
+    }
+
+    .matrix td:first-child {
+      font-weight: 600;
+      width: 22%;
+    }
+
+    .matrix td:nth-child(2) {
+      width: 22%;
+    }
+
+    .matrix .rel {
+      color: var(--muted);
+      font-size: 8.5pt;
+    }
+
+    .footnotes {
+      margin-top: 5mm;
+      font-size: 8.5pt;
+      color: var(--muted);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3mm 8mm;
+    }
+
+    .footnotes strong {
+      color: var(--ink);
+    }
+
+    footer {
+      margin-top: 5mm;
+      padding-top: 4mm;
+      border-top: 1px dashed var(--line);
+      font-size: 8pt;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 8mm;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .sheet {
+        box-shadow: none;
+        width: auto;
+        height: auto;
+        padding: 0;
+      }
+    }
+
+    @media screen and (max-width: 900px) {
+      .intro {
+        grid-template-columns: 1fr;
+      }
+
+      .footnotes {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <header>
+      <div>
+        <h1>Структура хаба «Выставка» в Битрикс24</h1>
+        <p class="subtitle">
+          Платформа реализации — <strong>Битрикс24</strong>: центральная карточка события (смарт-процесс),
+          связанные объекты CRM и пользовательские поля.
+          На схеме — единая точка сборки: что входит в контур выставки, какие блоки подключены и какие связи нужны,
+          чтобы контролировать подготовку, команду на площадке, продажи, аудиторию и организацию.
+        </p>
+      </div>
+      <div class="badge">Битрикс24 · печать A3 · альбомная ориентация</div>
+    </header>
+
+    <div class="intro">
+      <p>
+        <strong>Центр схемы — выставка.</strong>
+        В Битрикс24 это ключевая карточка (как правило, отдельный смарт-процесс «Мероприятие / Выставка» с воронкой этапов).
+        Все перечисленные блоки подключаются связями к объекту и пользовательским полям: это один контур на платформе,
+        а не разрозненные таблицы или файлы — от согласования участия до отчёта и пост-работы с контактами.
+      </p>
+      <p>
+        <strong>Как читать связи.</strong>
+        «Один ко многим» означает: у одной выставки много связанных записей в другом объекте (продажи, контакты, сессии и т.д.).
+        В терминах Битрикс24 это поля-связи между элементами смарт-процессов и CRM.
+        Стрелки на иллюстрации показывают логику: все факты события собираются в карточке выставки как в хабе.
+      </p>
+    </div>
+
+    <div class="diagram-wrap" aria-label="Диаграмма хаба Выставка">
+      <svg viewBox="0 0 1120 520" xmlns="http://www.w3.org/2000/svg" role="img">
+        <defs>
+          <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.12" />
+          </filter>
+          <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+            <path d="M0,0 L10,3 L0,6 Z" fill="#8a93a3" />
+          </marker>
+        </defs>
+
+        <!-- connectors -->
+        <g stroke="#aeb6c4" stroke-width="1.6" fill="none" marker-end="url(#arrow)">
+          <path d="M560 248 L560 118" />
+          <path d="M560 248 L760 158" />
+          <path d="M560 248 L820 268" />
+          <path d="M560 248 L760 378" />
+          <path d="M560 248 L560 398" />
+          <path d="M560 248 L360 378" />
+          <path d="M560 248 L300 268" />
+          <path d="M560 248 L360 158" />
+        </g>
+
+        <!-- center hub -->
+        <g filter="url(#s)">
+          <rect x="430" y="248" width="260" height="120" rx="14" fill="var(--hub)" />
+        </g>
+        <text x="560" y="278" text-anchor="middle" class="hub-title">Выставка</text>
+        <text x="560" y="298" text-anchor="middle" class="hub-sub">
+          карточка смарт-процесса · этапы воронки · ответственные
+        </text>
+        <text x="560" y="316" text-anchor="middle" class="hub-sub">
+          тип · период · площадка · статус · рамки бюджета
+        </text>
+        <text x="560" y="334" text-anchor="middle" class="hub-sub">
+          цель: промо / продажи / имидж (по типу мероприятия)
+        </text>
+
+        <!-- satellites -->
+        <g filter="url(#s)">
+          <rect x="430" y="40" width="260" height="78" rx="10" fill="#fff" stroke="var(--s5)" stroke-width="2" />
+        </g>
+        <text x="560" y="66" text-anchor="middle" class="sat-title" fill="var(--s5)">Подготовка</text>
+        <text x="560" y="84" text-anchor="middle" class="sat-body">
+          этапы согласования и запуска · ответственные · дедлайны
+        </text>
+        <text x="560" y="100" text-anchor="middle" class="sat-body">договор с организатором · оплата</text>
+
+        <g filter="url(#s)">
+          <rect x="730" y="110" width="240" height="96" rx="10" fill="#fff" stroke="var(--s1)" stroke-width="2" />
+        </g>
+        <text x="850" y="136" text-anchor="middle" class="sat-title" fill="var(--s1)">Ведущие</text>
+        <text x="850" y="154" text-anchor="middle" class="sat-body">смены на выставке · длительность выходов</text>
+        <text x="850" y="170" text-anchor="middle" class="sat-body">навыки (какие игры ведёт)</text>
+        <text x="850" y="186" text-anchor="middle" class="sat-body">ставка · KPI · учёт начислений</text>
+
+        <g filter="url(#s)">
+          <rect x="780" y="236" width="280" height="96" rx="10" fill="#fff" stroke="var(--s2)" stroke-width="2" />
+        </g>
+        <text x="920" y="262" text-anchor="middle" class="sat-title" fill="var(--s2)">Продажи на месте</text>
+        <text x="920" y="280" text-anchor="middle" class="sat-body">чековые строки: товар · количество · цена</text>
+        <text x="920" y="296" text-anchor="middle" class="sat-body">кто продал · кому (если зафиксировано)</text>
+        <text x="920" y="312" text-anchor="middle" class="sat-body">каталог игр / SKU выставки</text>
+
+        <g filter="url(#s)">
+          <rect x="730" y="354" width="240" height="96" rx="10" fill="#fff" stroke="var(--s3)" stroke-width="2" />
+        </g>
+        <text x="850" y="380" text-anchor="middle" class="sat-title" fill="var(--s3)">Аудитория и CRM</text>
+        <text x="850" y="398" text-anchor="middle" class="sat-body">контакты с выставки · источник (стенд / форма)</text>
+        <text x="850" y="414" text-anchor="middle" class="sat-body">подписчики · уточнение интереса к игре</text>
+        <text x="850" y="430" text-anchor="middle" class="sat-body">B2B-интерес и потенциал сделки</text>
+
+        <g filter="url(#s)">
+          <rect x="430" y="398" width="260" height="96" rx="10" fill="#fff" stroke="var(--s4)" stroke-width="2" />
+        </g>
+        <text x="560" y="424" text-anchor="middle" class="sat-title" fill="var(--s4)">Стенд и активность</text>
+        <text x="560" y="442" text-anchor="middle" class="sat-body">открытые игровые сессии · участники</text>
+        <text x="560" y="458" text-anchor="middle" class="sat-body">отдельные активности: конкурс, презентация…</text>
+        <text x="560" y="474" text-anchor="middle" class="sat-body">связь с ведущим и игрой из каталога</text>
+
+        <g filter="url(#s)">
+          <rect x="150" y="354" width="240" height="96" rx="10" fill="#fff" stroke="var(--s5)" stroke-width="2" />
+        </g>
+        <text x="270" y="380" text-anchor="middle" class="sat-title" fill="var(--s5)">Маркетинг и касания</text>
+        <text x="270" y="398" text-anchor="middle" class="sat-body">кампании вокруг события</text>
+        <text x="270" y="414" text-anchor="middle" class="sat-body">коммуникации с контактами до/после</text>
+        <text x="270" y="430" text-anchor="middle" class="sat-body">канал: письмо · звонок · напоминание</text>
+
+        <g filter="url(#s)">
+          <rect x="60" y="236" width="280" height="96" rx="10" fill="#fff" stroke="var(--s6)" stroke-width="2" />
+        </g>
+        <text x="200" y="262" text-anchor="middle" class="sat-title" fill="var(--s6)">Организация «вещами»</text>
+        <text x="200" y="280" text-anchor="middle" class="sat-body">логистика: доставка · комплект · документы</text>
+        <text x="200" y="296" text-anchor="middle" class="sat-body">застройка и подрядчик / самосбор</text>
+
+        <g filter="url(#s)">
+          <rect x="150" y="110" width="240" height="96" rx="10" fill="#fff" stroke="#475569" stroke-width="2" />
+        </g>
+        <text x="270" y="136" text-anchor="middle" class="sat-title" fill="#475569">Тип выставки</text>
+        <text x="270" y="154" text-anchor="middle" class="sat-body">флагманская игровая · специализированная</text>
+        <text x="270" y="170" text-anchor="middle" class="sat-body">имиджевая (упор на присутствие, не объём продаж)</text>
+
+        <text x="560" y="508" text-anchor="middle" class="legend-row">
+          Линии — логика хаба в Битрикс24 (связи карточек и разделов) · таблица связей для согласования — ниже
+        </text>
+      </svg>
+    </div>
+
+    <section class="block">
+      <h2>Состав хаба и связи в Битрикс24 (для согласования)</h2>
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th>Объект A</th>
+            <th>Объект B</th>
+            <th>Связь</th>
+            <th>Зачем Заказчику</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Тип выставки</td>
+            <td>Выставка</td>
+            <td class="rel">один ко многим</td>
+            <td>Справочник в CRM или отдельный смарт-процесс; фильтры и отчёты по типу в стандартных списках Битрикс24.</td>
+          </tr>
+          <tr>
+            <td>Выставка</td>
+            <td>Этапы подготовки</td>
+            <td class="rel">один ко многим</td>
+            <td>Пять шагов организации — стадии воронки смарт-процесса или связанный чеклист задач по шаблону.</td>
+          </tr>
+          <tr>
+            <td>Выставка</td>
+            <td>Ведущий · смены</td>
+            <td class="rel">один ко многим</td>
+            <td>Учёт выходов и часов — основа контроля аутсорса и расчётов.</td>
+          </tr>
+          <tr>
+            <td>Ведущий</td>
+            <td>Игра в каталоге</td>
+            <td class="rel">многие ко многим</td>
+            <td>Что человек реально может вести на стенде.</td>
+          </tr>
+          <tr>
+            <td>Выставка</td>
+            <td>Продажа</td>
+            <td class="rel">один ко многим</td>
+            <td>Прозрачность «кто · что · за сколько» и привязка к смене ведущего.</td>
+          </tr>
+          <tr>
+            <td>Продажа</td>
+            <td>Контакт</td>
+            <td class="rel">многие к одному (необязательно)</td>
+            <td>При известном покупателе — связь с контактом/компанией CRM; иначе фиксируется только строка продажи в элементе выставки.</td>
+          </tr>
+          <tr>
+            <td>Выставка</td>
+            <td>Контакт на выставке</td>
+            <td class="rel">один ко многим</td>
+            <td>Лид или контакт с меткой источника и привязкой к выставке (CRM-форма на планшете, ручной ввод, ответственный).</td>
+          </tr>
+          <tr>
+            <td>Контакт</td>
+            <td>Подписка / интерес</td>
+            <td class="rel">один ко многим</td>
+            <td>Подписчики отделены от «просто оставил телефон», учёт привлечения к соцсетям.</td>
+          </tr>
+          <tr>
+            <td>Контакт</td>
+            <td>B2B-интерес</td>
+            <td class="rel">один ко многим</td>
+            <td>Корпоративный сценарий и потенциал заказной / отраслевой линии.</td>
+          </tr>
+          <tr>
+            <td>Выставка</td>
+            <td>Игровая сессия</td>
+            <td class="rel">один ко многим</td>
+            <td>Открытые игры на стенде: ведущий, игра, участники, время.</td>
+          </tr>
+          <tr>
+            <td>Выставка</td>
+            <td>Активность стенда</td>
+            <td class="rel">один ко многим</td>
+            <td>Конкурсы и прочие форматы, не смешивая с игровой сессией как фактом проведения.</td>
+          </tr>
+          <tr>
+            <td>Выставка</td>
+            <td>Маркетинговая кампания</td>
+            <td class="rel">один ко многим</td>
+            <td>Привязка акций и посылов к конкретному мероприятию.</td>
+          </tr>
+          <tr>
+            <td>Кампания · контакт</td>
+            <td>Коммуникация</td>
+            <td class="rel">один ко многим</td>
+            <td>История касаний: почта и телефония Битрикс24, задачи менеджеру, результат в карточке контакта.</td>
+          </tr>
+          <tr>
+            <td>Выставка</td>
+            <td>Договор</td>
+            <td class="rel">один ко многим</td>
+            <td>Организатор, застройка — разные типы обязательств.</td>
+          </tr>
+          <tr>
+            <td>Выставка</td>
+            <td>Логистика</td>
+            <td class="rel">один ко многим</td>
+            <td>Доставка, комплектация, разрешительная документация по отдельным задачам.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <div class="footnotes">
+      <p>
+        <strong>Принцип хаба в Битрикс24.</strong>
+        Выставка — ключевой элемент смарт-процесса: связанные сущности и поля подтягиваются к карточке,
+        чтобы в списках и отчётах сохранялся контекст «откуда пришёл клиент» и можно было сравнивать форматы выставок.
+      </p>
+      <p>
+        <strong>Конкуренция ведущих.</strong>
+        Рейтинги и обзор доходов настраиваются правами доступа и отчётами по связанным элементам (продажи, смены, KPI);
+        отдельной «сущности конкуренции» не требуется — достаточно данных и отображения для нужных ролей.
+      </p>
+      <p>
+        <strong>Граница версии.</strong>
+        Блок «другие мероприятия и переговоры с площадками» может жить отдельным контуром и подключаться позже, чтобы не перегружать первый релиз карточки выставки.
+      </p>
+      <p>
+        <strong>Печать.</strong>
+        В браузере: Ctrl+P → принтер или «Сохранить как PDF» → бумага A3, альбомная ориентация, поля по умолчанию.
+      </p>
+    </div>
+
+    <footer>
+      <span>Битрикс24 · хаб «Выставка» · структура для согласования с Заказчиком</span>
+      <span>Смарт-процессы · CRM · связи · роботы (по мере внедрения)</span>
+    </footer>
+  </div>
+</body>
+</html>
