@@ -354,7 +354,8 @@
         <span class="pk">id</span> · <span class="typ">int PK</span><br>
         name · <span class="typ">string</span><br>
         phone / email · <span class="typ">string</span><br>
-        specialization · <span class="typ">string</span><br>
+        specialization · <span class="typ">multiselect</span> — тема игр<br>
+        audience_type · <span class="typ">multiselect</span> — тип аудитории<br>
         rate_per_shift · <span class="typ">decimal ₽</span><br>
         kpi_sales_pct / kpi_leads_pct · <span class="typ">%</span><br>
         status · <span class="typ">enum</span>
@@ -599,7 +600,8 @@
           <tr><td class="fname">name</td><td class="ftype">string</td><td>ФИО</td></tr>
           <tr><td class="fname">phone</td><td class="ftype">string</td><td>Контактный телефон</td></tr>
           <tr><td class="fname">email</td><td class="ftype">string</td><td>—</td></tr>
-          <tr><td class="fname">specialization</td><td class="ftype">string</td><td>Тематика игр, которые ведёт</td></tr>
+          <tr><td class="fname">specialization</td><td class="ftype">multiselect</td><td>Тема игр: Классика / Гастрономия / Архитектура и интерьер / Психология и речь / Бизнес и переговоры / Стартапы / HR и тимбилдинг / Региональная / Детская и семейная</td></tr>
+          <tr><td class="fname">audience_type</td><td class="ftype">multiselect</td><td>Тип аудитории: Семейная / Детская · Общая / Взрослая · Корпоративная (B2B) · Образовательная</td></tr>
           <tr><td class="fname">rate_per_shift</td><td class="ftype">decimal ₽</td><td>Ставка за выход</td></tr>
           <tr><td class="fname">kpi_sales_pct</td><td class="ftype">decimal %</td><td>Процент с продаж</td></tr>
           <tr><td class="fname">kpi_leads_pct</td><td class="ftype">decimal %</td><td>Процент за лиды / подписчиков</td></tr>
