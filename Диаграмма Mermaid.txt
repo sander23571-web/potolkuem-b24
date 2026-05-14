@@ -1,0 +1,106 @@
+erDiagram
+    ExhibitionType ||--o{ Exhibition : "тип"
+    Exhibition ||--o{ ExhibitionStage : "этапы"
+    Exhibition ||--o{ HostShift : "выходы"
+    Exhibition ||--o{ GameSession : "сессии"
+    Exhibition ||--o{ Contact : "контакты"
+
+    Host ||--o{ HostShift : "работает"
+    Host ||--o{ HostProduct : "знает"
+
+    HostShift ||--o{ Sale : "продажа на выходе"
+    HostShift ||--o{ GameSession : "сессия на выходе"
+
+    Product ||--o{ HostProduct : ""
+    Product ||--o{ Sale : "товар"
+
+    Contact ||--o{ Sale : "покупатель (опц)"
+
+    ExhibitionType {
+        int id PK
+        string name
+        string comment "Flagship / Специализированная / Имиджевая"
+    }
+
+    Exhibition {
+        int id PK
+        int type_id FK
+        string name
+        date start_date
+        date end_date
+        string status
+        string location
+        decimal budget_plan
+        decimal budget_fact
+    }
+
+    ExhibitionStage {
+        int id PK
+        int exhibition_id FK
+        int step_order
+        string name
+        string status
+        string responsible
+        date deadline
+    }
+
+    Host {
+        int id PK
+        string name
+        decimal rate_per_shift
+        decimal kpi_sales_percent
+        decimal kpi_leads_percent
+    }
+
+    HostProduct {
+        int host_id FK
+        int product_id FK
+        string comment "игры, которые ведущий умеет вести"
+    }
+
+    HostShift {
+        int id PK
+        int exhibition_id FK
+        int host_id FK
+        date shift_date
+        decimal hours_worked
+        int sales_count "агрегат из Sale"
+        int leads_count "агрегат из Contact"
+        int subscribers_count
+    }
+
+    Product {
+        int id PK
+        string name
+        string product_kind "Универсальная / Тематическая / Региональная"
+    }
+
+    GameSession {
+        int id PK
+        int host_shift_id FK
+        int product_id FK
+        int participants_count
+        datetime started_at
+        datetime ended_at
+    }
+
+    Sale {
+        int id PK
+        int host_shift_id FK
+        int product_id FK
+        int quantity
+        decimal unit_price
+        int buyer_contact_id FK "nullable"
+        datetime sold_at
+    }
+
+    Contact {
+        int id PK
+        int exhibition_id FK
+        string name
+        string phone
+        string email
+        bool is_b2b
+        bool is_subscriber
+        string source_note "стенд / форма / ведущий"
+    }

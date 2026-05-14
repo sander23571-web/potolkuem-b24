@@ -1,0 +1,257 @@
+Ты сейчас описал не просто «схему БД», а полноценную операционную систему вокруг выставок — с продажами, HR (ведущие), маркетингом, логистикой и CRM. Если это тупо «нарисовать», ты быстро упрёшься в хаос.
+
+Поэтому сразу скажу прямо:
+👉 тебе нужен не просто ERD, а модульная схема (domain-driven), иначе она развалится при первом расширении.
+
+Я тебе сейчас:
+
+разложу структуру БД по блокам
+покажу ключевые таблицы и связи
+дам формат, который можно сразу загрузить в AI-инструменты
+🧠 1. Как правильно декомпозировать (главное)
+
+Твоя система делится на 6 доменов:
+
+1. Выставки (ядро)
+события
+типы
+этапы подготовки
+2. Ведущие (аутсорс)
+люди
+навыки
+KPI
+выплаты
+3. Продажи
+транзакции
+товары
+кто продал
+4. Контакты / CRM
+лиды (B2C + B2B)
+подписчики
+коммуникации
+5. Маркетинг и активности
+стенды
+PR
+акции
+игровые сессии
+6. Логистика и организация
+договоры
+застройка
+перевозки
+🧱 2. КЛЮЧЕВАЯ СХЕМА (упрощённо, но правильно)
+
+Я дам тебе структуру так, как её лучше строить.
+
+🎯 ВЫСТАВКИ
+
+Exhibitions
+
+id
+name
+type_id
+start_date / end_date
+status
+location
+budget
+
+ExhibitionTypes
+
+id
+name
+(Flagship / Специализированная / Имиджевая)
+📊 ЭТАПЫ ОРГАНИЗАЦИИ
+
+ExhibitionStages
+
+id
+exhibition_id
+stage_name
+status
+responsible
+deadline
+👨‍🎤 ВЕДУЩИЕ
+
+Hosts
+
+id
+name
+rate_per_day
+kpi_percent_sales
+kpi_percent_leads
+
+HostSkills
+
+id
+host_id
+game_id
+📅 ВЫХОДЫ ВЕДУЩИХ (ключевая таблица)
+
+👉 это ОЧЕНЬ важно — отдельная сущность
+
+HostShifts
+
+id
+host_id
+exhibition_id
+date
+hours_worked
+📈 KPI ВЕДУЩИХ
+
+HostPerformance
+
+id
+host_shift_id
+sales_count
+revenue
+subscribers привлечено
+b2b_leads
+games_played
+💰 ПРОДАЖИ
+
+Sales
+
+id
+exhibition_id
+host_id
+product_id
+price
+quantity
+datetime
+🎲 ПРОДУКТЫ
+
+Products
+
+id
+name
+type (классика / тематическая / корпоративная)
+👥 КОНТАКТЫ
+
+Contacts
+
+id
+name
+phone
+email
+type (B2C / B2B)
+🔗 СВЯЗЬ С ВЫСТАВКОЙ
+
+ExhibitionContacts
+
+id
+exhibition_id
+contact_id
+source (стенд / регистрация / ведущий)
+interested_in_product_id
+📢 КОММУНИКАЦИИ
+
+Communications
+
+id
+contact_id
+type (email / call)
+status
+result
+campaign_id
+🎯 МАРКЕТИНГ
+
+Campaigns
+
+id
+exhibition_id
+type (рассылка / акция / PR)
+🎪 АКТИВНОСТИ НА СТЕНДЕ
+
+Activities
+
+id
+exhibition_id
+type (игра / конкурс)
+responsible
+🎮 ИГРОВЫЕ СЕССИИ
+
+GameSessions
+
+id
+exhibition_id
+host_id
+game_id
+participants_count
+datetime
+🚚 ЛОГИСТИКА
+
+Logistics
+
+id
+exhibition_id
+type (доставка / застройка)
+status
+contractor
+📄 ДОГОВОРЫ
+
+Contracts
+
+id
+exhibition_id
+type (организатор / застройка)
+amount
+status
+🔗 3. КЛЮЧЕВЫЕ СВЯЗИ (самое важное)
+Exhibition → ВСЁ
+Host → HostShifts → HostPerformance
+Host → Sales
+Sales → Products
+Contacts ↔ Exhibitions
+Contacts → Communications
+Exhibition → Campaigns
+⚠️ 4. ВАЖНЫЕ МОМЕНТЫ (ты правильно чувствуешь)
+🔴 1. Кто/что/почём продал
+
+Решается через:
+
+Sales.host_id
+Sales.product_id
+Sales.price
+🔴 2. Конкуренция ведущих
+
+👉 делай:
+
+HostPerformance (агрегаты)
+или VIEW/дашборд
+🔴 3. Подписчики ≠ просто контакты
+
+Добавь:
+
+поле is_subscriber
+или отдельную таблицу SocialSubscriptions
+🔴 4. B2B — отдельный сценарий
+
+Лучше:
+
+type = B2B
+отдельная таблица:
+
+B2BDeals
+
+contact_id
+status
+potential_value
+🚀 5. Как это теперь визуализировать (самое полезное)
+👉 Вставь это в AI-инструмент:
+Вариант 1 (лучший):
+ForgeSQL → вставляешь таблицы → получаешь ERD + SQL
+Вариант 2:
+DrawSQL → вставляешь SQL
+💡 Хочешь сильно ускориться
+
+Я могу:
+
+превратить это в готовый SQL
+или
+в Mermaid/DBML схему (одной вставкой → получишь диаграмму)
+или
+адаптировать под Битрикс24 (смарт-процессы + связи) ← это вообще отдельный уровень
+
+Просто скажи, что тебе нужно дальше:
+👉 «SQL»
+👉 «визуальная схема»
+👉 «под Битрикс»
