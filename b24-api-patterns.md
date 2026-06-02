@@ -207,7 +207,13 @@ POST /userfieldconfig.list
 ```
 
 > **⚠ Пагинация:** `userfieldconfig.list` возвращает max 50 записей.
-> Смотри `result.next` для следующей страницы. Поля хранятся в `result.fields` (массив, lowercase ключи: `id`, `entityId`, `fieldName`, `editFormLabel`, ...).
+> `next` находится в **корне** ответа (`resp.next`), а не в `result`. Поля в `resp.result.fields` (массив, lowercase ключи).
+
+> **⚠ Enum-значения НЕ возвращаются через list** — только через `userfieldconfig.get`:
+> ```bash
+> POST /userfieldconfig.get { "moduleId": "crm", "id": 574 }
+> # result.field.enum[].id, .value, .sort
+> ```
 
 > **⚠ Ответ userfieldconfig.add:** возвращает `result.field` (объект с полным описанием поля), а не просто `result` (ID). ID поля находится в `result.field.id`.
 
