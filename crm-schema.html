@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Схема CRM — Потолкуем?</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6fb; color: #1a1a2e; }
+  header { background: #1a1a2e; color: #fff; padding: 24px 36px; }
+  header h1 { font-size: 22px; font-weight: 600; }
+  header p  { font-size: 13px; color: #aab; margin-top: 4px; }
+  .legend-bar { background: #fff; border-bottom: 1px solid #e0e4ef; padding: 14px 36px; display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
+  .legend-bar span { font-size: 12px; color: #555; }
+  .chip { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-right: 4px; }
+  .chip-std  { background: #dbeafe; color: #1d4ed8; }
+  .chip-sp   { background: #d1fae5; color: #065f46; }
+  .chip-ext  { background: #fef3c7; color: #92400e; }
+  .chip-cat  { background: #ede9fe; color: #5b21b6; }
+  .diagram-wrap { padding: 32px 36px; overflow-x: auto; }
+  .mermaid { max-width: 100%; }
+  .notes { padding: 0 36px 40px; }
+  .notes h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1a1a2e; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .card { background: #fff; border-radius: 10px; padding: 18px 20px; border: 1px solid #e0e4ef; }
+  .card h3 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+  .card ul { font-size: 12px; color: #444; padding-left: 16px; line-height: 1.8; }
+  .card code { background: #f0f4ff; color: #3b3fbf; padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+  .arrow-note { font-size: 12px; color: #666; margin-top: 8px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Схема сущностей CRM — Потолкуем?</h1>
+  <p>potolkuem.bitrix24.ru · актуально на 19.06.2026</p>
+</header>
+
+<div class="legend-bar">
+  <span>Условные обозначения:</span>
+  <span><span class="chip chip-std">Стандартный CRM</span> Лид, Контакт, Компания, Сделка</span>
+  <span><span class="chip chip-sp">Смарт-процесс</span> 8 кастомных сущностей</span>
+  <span><span class="chip chip-ext">Внешние источники</span> Сайт, CardScanner</span>
+  <span><span class="chip chip-cat">Склад / Каталог</span> Товары, Склады</span>
+</div>
+
+<div class="diagram-wrap">
+<div class="mermaid">
+%%{init: {"theme": "base", "themeVariables": {"fontSize":"14px","primaryColor":"#dbeafe","primaryTextColor":"#1e3a5f","primaryBorderColor":"#3b82f6","lineColor":"#6b7280","secondaryColor":"#d1fae5","tertiaryColor":"#fef9c3"}}}%%
+flowchart TD
+
+  %% ── Внешние источники ──────────────────────────────
+  subgraph EXT["🌐 Внешние источники"]
+    direction TB
+    SITE["Сайт\npotolkuem.pro"]
+    CARD["CardScanner PWA\npotolkuem.bobp.ru"]
+  end
+
+  %% ── Стандартный CRM ────────────────────────────────
+  subgraph SCRM["📋 Стандартный CRM"]
+    direction TB
+    LID["Лид"]
+    CONTACT["Контакт"]
+    COMPANY["Компания"]
+    subgraph FUNNELS["Сделки — воронки"]
+      direction LR
+      D18["Сайт/ВК/Розница\n(кат. 18)"]
+      D24["ОПТ\n(кат. 24)"]
+      D26["Мероприятия B2C\n(кат. 26)"]
+      D28["Ателье Производство\n(кат. 28)"]
+      D30["Мероприятия B2B\n(кат. 30)"]
+    end
+  end
+
+  %% ── Мероприятия ────────────────────────────────────
+  subgraph EVT["🎪 Мероприятия (смарт-процессы)"]
+    direction TB
+    EXH["Выставки\nentityTypeId 1048"]
+    HOST["Ведущие\nentityTypeId 1052"]
+    SHIFT["Выход ведущего\nentityTypeId 1056"]
+    SESSION["Игровая сессия\nentityTypeId 1060"]
+    EXPENSE["Расходы\nentityTypeId 1070"]
+  end
+
+  %% ── Операционные ───────────────────────────────────
+  subgraph OPS["⚙️ Операционные (смарт-процессы)"]
+    direction TB
+    LOGISTIC["Логистика\nentityTypeId 1064"]
+    CONSENT["Согласия 152-ФЗ\nentityTypeId 1068"]
+    DEV["Отдел разработки\nentityTypeId 1044"]
+  end
+
+  %% ── Склад и каталог ────────────────────────────────
+  subgraph CAT["📦 Склад и каталог"]
+    direction LR
+    PROD["Каталог товаров\n25 игр"]
+    STORE["Склады\n12 точек"]
+  end
+
+  %% ══ Связи: внешние источники → CRM ════════════════
+  SITE -->|"b24-lead: форма заявки"| LID
+  SITE -->|"b24-lead: анкета ведущего\n→ Контакт + запись в 1052"| HOST
+  SITE -->|"b24-order: заказ с сайта"| D18
+  CARD -->|"OCR визитки"| CONTACT
+  CARD -->|"QR-токен согласия"| CONSENT
+
+  %% ══ Связи: стандартный CRM ════════════════════════
+  LID --->|"конвертация"| CONTACT
+  LID --->|"конвертация"| D18
+  CONTACT <-->|"привязка"| COMPANY
+  CONSENT -->|"contactId"| CONTACT
+
+  %% ══ Связи: Сделки ↔ прочие ═══════════════════════
+  D18 & D24 & D26 & D28 & D30 -->|"товарные позиции"| PROD
+  D18 -->|"PARENT_ID_1048"| EXH
+  D18 -->|"PARENT_ID_1052"| HOST
+
+  %% ══ Связи: Ведущие ════════════════════════════════
+  CONTACT -->|"contactId\nна ведущем"| HOST
+  HOST -->|"parentId1052"| SHIFT
+  HOST -->|"parentId1052\n(после правки 19.06)"| SESSION
+
+  %% ══ Связи: Выставка — центральный хаб ════════════
+  EXH <-->|"parentId1048"| SHIFT
+  EXH -->|"parentId1048"| EXPENSE
+  EXH <-->|"parentId1048"| SESSION
+  EXH <-->|"parentId1048"| LOGISTIC
+
+  %% ══ Связи: Выход ведущего ═════════════════════════
+  SHIFT -->|"parentId1056"| SESSION
+
+  %% ══ Связи: Склад ══════════════════════════════════
+  STORE -->|"остатки"| PROD
+
+  %% ══ Стили ════════════════════════════════════════
+  classDef ext    fill:#fef3c7,stroke:#f59e0b,color:#78350f,font-weight:600
+  classDef std    fill:#dbeafe,stroke:#3b82f6,color:#1e40af,font-weight:600
+  classDef sp     fill:#d1fae5,stroke:#10b981,color:#064e3b,font-weight:600
+  classDef cat    fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95,font-weight:600
+  classDef deal   fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+
+  class SITE,CARD ext
+  class LID,CONTACT,COMPANY std
+  class D18,D24,D26,D28,D30 deal
+  class EXH,HOST,SHIFT,SESSION,EXPENSE,LOGISTIC,CONSENT,DEV sp
+  class PROD,STORE cat
+</div>
+</div>
+
+<div class="notes">
+  <h2>Пояснения по связям</h2>
+  <div class="grid">
+
+    <div class="card">
+      <h3>🎪 Выставка — центральный хаб</h3>
+      <ul>
+        <li>К ней привязаны: <b>Выходы</b>, <b>Расходы</b>, <b>Игровые сессии</b>, <b>Логистика</b></li>
+        <li>Сделки выставки ссылаются на неё через <code>PARENT_ID_1048</code></li>
+        <li>Сделки + Выходы также ссылаются на Ведущего через <code>PARENT_ID_1052</code></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>🎤 Ведущий — профиль и связи</h3>
+      <ul>
+        <li>Связан с <b>Контактом</b> через <code>contactId</code></li>
+        <li>Один ведущий → много <b>Выходов</b> (через <code>parentId1052</code> на Выходе)</li>
+        <li>Один ведущий → много <b>Игровых сессий</b> (через <code>parentId1052</code> на Сессии)</li>
+        <li>Сделки ведущего видны через <code>PARENT_ID_1052</code> на Сделке</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>📝 Сделки — воронки и поля</h3>
+      <ul>
+        <li><b>Кат. 18</b> — розница: онлайн-заказы, выставочные продажи</li>
+        <li><b>Кат. 24</b> — оптовые покупатели (B2B)</li>
+        <li><b>Кат. 26</b> — B2C мероприятия (открытые игры)</li>
+        <li><b>Кат. 28</b> — Ателье (производство игр)</li>
+        <li><b>Кат. 30</b> — B2B корпоративы</li>
+        <li>В каждой сделке — <b>товарные позиции</b> из каталога (резервируют склад)</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>📦 Склад и каталог</h3>
+      <ul>
+        <li>25 товаров (игр) в каталоге</li>
+        <li>12 складов: 2 собственных, 1 WB, 7 точек продаж, 1 выездной, 1 кластер</li>
+        <li>Остатки: только склады 4, 6, 8 заполнены (итого ~10 117 шт.)</li>
+        <li>Добавление товара в сделку → автоматический <b>резерв</b> на складе</li>
+        <li>Метод списания: <b>FIFO</b></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>🔐 Согласия 152-ФЗ</h3>
+      <ul>
+        <li>Создаются через <b>CardScanner</b> (QR-токен) или consent-service</li>
+        <li>Привязываются к <b>Контакту</b> через <code>contactId</code></li>
+        <li>Без связей с другими смарт-процессами (изолированная сущность)</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>⚠️ Важные особенности API</h3>
+      <ul>
+        <li><code>PARENT_ID_1052</code> в Сделке — только через <code>crm.deal.update</code>, не через <code>add</code></li>
+        <li><code>parentId1052</code> camelCase в <code>crm.deal.add</code> — молча игнорируется</li>
+        <li>Смена воронки сделки (<code>CATEGORY_ID</code>) через API не работает</li>
+        <li>Игровая сессия: ведущий — <b>родитель</b> сессии (с 19.06.2026), не наоборот</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
