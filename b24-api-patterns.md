@@ -137,20 +137,26 @@ GET /crm.status.list?filter[ENTITY_ID]=DYNAMIC_1038_STAGE_15
 **Единственный рабочий метод:** `userfieldconfig.add` с `moduleId: "crm"`.
 Подробности и история ошибки — в п.8 раздела «Важные находки».
 
+> ⚠️ **Перед созданием полей** убедись, что у СП включено `isUseInUserfieldEnabled: "Y"` (проверь через `crm.type.get`).
+> Без этого флага ответ будет: _"Вы не можете создавать пользовательские поля"_. Включается через `crm.type.update`.
+
 ```bash
 POST /userfieldconfig.add
 {
-  "moduleId": "crm",
-  "field": {
+  "moduleId": "crm",          # обязателен! без него — ошибка "{moduleId} not found"
+  "field": {                  # ⚠ именно "field", НЕ "fields"!
     "entityId": "CRM_7",             # CRM_ + typeId (НЕ entityTypeId!)
     "fieldName": "UF_CRM_7_MY_FIELD", # полное имя с префиксом
-    "userTypeId": "string",
+    "userTypeId": "string",           # camelCase! не USER_TYPE_ID
     "editFormLabel": {"ru": "Название"},
     "mandatory": "N",
     "multiple": "N"
   }
 }
 ```
+
+> ⚠️ Все ключи внутри `field` — **camelCase** (`entityId`, `fieldName`, `userTypeId`, `editFormLabel`, `mandatory`).
+> UPPERCASE-варианты (`ENTITY_ID`, `FIELD_NAME` и т.д.) возвращают ошибку "Could not find value for parameter {field}".
 
 ### 8. Типы полей (userTypeId)
 
