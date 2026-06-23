@@ -7,17 +7,17 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   :root {
-    --black:   #1a1a1a;
-    --dark:    #2d2d2d;
-    --accent:  #c8a96e;
-    --accent2: #8b5e3c;
+    --black:   #0f0b2e;
+    --dark:    #1e1a3a;
+    --accent:  #4a5df9;
+    --accent2: #3d4de6;
     --red:     #c0392b;
     --green:   #27ae60;
-    --bg:      #f5f2ee;
+    --bg:      #f5f3ff;
     --card:    #ffffff;
-    --border:  #e0d9ce;
-    --text:    #3d3530;
-    --muted:   #8a7f74;
+    --border:  #e0daf7;
+    --text:    #1e1a3a;
+    --muted:   #7b79a0;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -222,7 +222,7 @@
   .tl-header {
     display: grid;
     grid-template-columns: 90px 1fr 1fr 1fr 1fr;
-    background: var(--black);
+    background: var(--dark);
     color: #888;
     font-size: 11px;
     letter-spacing: 2px;
@@ -240,7 +240,7 @@
     align-items: center;
   }
   .tl-row:last-child { border-bottom: none; }
-  .tl-row:hover { background: #faf8f5; }
+  .tl-row:hover { background: #f9f7ff; }
   .tl-date {
     font-size: 12px;
     color: var(--muted);
@@ -263,7 +263,7 @@
     width: 100%;
   }
   .prod-table th {
-    background: var(--black);
+    background: var(--dark);
     color: #888;
     font-size: 11px;
     letter-spacing: 2px;
@@ -278,7 +278,7 @@
     font-size: 14px;
   }
   .prod-table tr:last-child td { border-bottom: none; }
-  .prod-table tr:hover td { background: #faf8f5; }
+  .prod-table tr:hover td { background: #f9f7ff; }
   .prod-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
   .share-bar {
     height: 6px;
@@ -314,7 +314,7 @@
     border-bottom: 1px solid var(--border);
     font-size: 14px;
   }
-  .expense-table tr:last-child td { border-bottom: none; font-weight: 600; background: #faf8f5; }
+  .expense-table tr:last-child td { border-bottom: none; font-weight: 600; background: #f9f7ff; }
   .expense-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
   .pct {
     font-size: 12px;
@@ -344,8 +344,8 @@
 
   /* ── Плашка предупреждения ── */
   .notice {
-    background: #fff8f0;
-    border: 1px solid #f0d9b5;
+    background: #f0eeff;
+    border: 1px solid #d5ccff;
     border-left: 3px solid var(--accent2);
     border-radius: 4px;
     padding: 12px 16px;
@@ -372,7 +372,7 @@
   <div class="hero-dates">
     <div><strong>27–30 мая 2026</strong> · 4 дня</div>
     <div><strong>6 ведущих</strong> · 10 выходов</div>
-    <div><strong>Данные:</strong> 02.06.2026</div>
+    <div><strong>Данные:</strong> 03.06.2026</div>
   </div>
 </div>
 
@@ -389,12 +389,12 @@
       </div>
       <div class="kpi-card red">
         <div class="kpi-label">Расходы</div>
-        <div class="kpi-value red">530 085</div>
+        <div class="kpi-value red">569 085</div>
         <div class="kpi-note">руб.</div>
       </div>
       <div class="kpi-card red">
         <div class="kpi-label">P&amp;L</div>
-        <div class="kpi-value red">−229 396</div>
+        <div class="kpi-value red">−268 396</div>
         <div class="kpi-note">руб. убыток</div>
       </div>
       <div class="kpi-card">
@@ -447,7 +447,7 @@
       </thead>
       <tbody>
         <tr>
-          <td>Архитектура <span style="font-size:11px;color:#c8a96e">★ флагман</span></td>
+          <td>Архитектура <span style="font-size:11px;color:var(--accent)">★ флагман</span></td>
           <td class="num">30</td>
           <td class="num">195 820</td>
           <td><span class="share-bar" style="width:120px"></span><span class="pct">65%</span></td>
@@ -468,11 +468,11 @@
           <td class="num">6 285</td>
         </tr>
         <tr>
-          <td>Региональные <span style="font-size:11px;color:var(--muted)">(Урал ×4, Сибирь ×2, ДВ ×2, Юг ×3, Поморье ×3)</span></td>
+          <td>Диалекты <span style="font-size:11px;color:var(--muted)">(Урал ×4, Сибирь ×2, ДВ ×2, Юг ×3, Поморье ×3)</span></td>
           <td class="num">14</td>
           <td class="num">17 779</td>
           <td><span class="share-bar" style="width:13px"></span><span class="pct">6%</span></td>
-          <td class="num">1 616</td>
+          <td class="num">1 270</td>
         </tr>
         <tr>
           <td>Музыка</td>
@@ -495,12 +495,12 @@
           <td><span class="share-bar" style="width:5px"></span><span class="pct">2%</span></td>
           <td class="num">6 120</td>
         </tr>
-        <tr style="font-weight:600;background:#faf8f5">
+        <tr style="font-weight:600;background:#f9f7ff">
           <td>Итого</td>
           <td class="num">59</td>
           <td class="num">300 689</td>
           <td></td>
-          <td class="num">5 369</td>
+          <td class="num">5 097</td>
         </tr>
       </tbody>
     </table>
@@ -523,17 +523,17 @@
           <tr>
             <td><span class="exp-bar" style="width:80px"></span>Аренда стенда</td>
             <td class="num">276 635</td>
-            <td class="num">52%</td>
+            <td class="num">49%</td>
           </tr>
           <tr>
             <td><span class="exp-bar" style="width:42px"></span>Оклейка стенда</td>
             <td class="num">145 930</td>
-            <td class="num">28%</td>
+            <td class="num">26%</td>
           </tr>
           <tr>
-            <td><span class="exp-bar" style="width:17px"></span>Ведущие (комиссия 20%)</td>
-            <td class="num">60 118</td>
-            <td class="num">11%</td>
+            <td><span class="exp-bar" style="width:29px"></span>Ведущие (6 чел., выход + KPI)</td>
+            <td class="num">99 118</td>
+            <td class="num">17%</td>
           </tr>
           <tr>
             <td><span class="exp-bar" style="width:8px"></span>Игры в подарок (4 шт.)</td>
@@ -552,7 +552,7 @@
           </tr>
           <tr>
             <td><strong>ИТОГО</strong></td>
-            <td class="num"><strong>530 085</strong></td>
+            <td class="num"><strong>569 085</strong></td>
             <td class="num">100%</td>
           </tr>
         </tbody>
@@ -562,31 +562,36 @@
         <div class="section-title" style="margin-bottom:16px">P&amp;L</div>
         <div class="pnl-row">
           <span style="color:var(--green)">Выручка</span>
-          <div class="pnl-bar-wrap"><div class="pnl-bar" style="width:57%"></div></div>
+          <div class="pnl-bar-wrap"><div class="pnl-bar" style="width:53%"></div></div>
           <span class="pnl-amount num" style="color:var(--green)">+ 300 689</span>
         </div>
         <div class="pnl-row">
-          <span>Аренда + оклейка</span>
-          <div class="pnl-bar-wrap"><div class="pnl-bar red" style="width:79%"></div></div>
-          <span class="pnl-amount num" style="color:var(--red)">− 422 565</span>
+          <span>Аренда стенда</span>
+          <div class="pnl-bar-wrap"><div class="pnl-bar red" style="width:49%"></div></div>
+          <span class="pnl-amount num" style="color:var(--red)">− 276 635</span>
+        </div>
+        <div class="pnl-row">
+          <span>Оклейка стенда</span>
+          <div class="pnl-bar-wrap"><div class="pnl-bar red" style="width:26%"></div></div>
+          <span class="pnl-amount num" style="color:var(--red)">− 145 930</span>
         </div>
         <div class="pnl-row">
           <span>Ведущие</span>
-          <div class="pnl-bar-wrap"><div class="pnl-bar red" style="width:11%"></div></div>
-          <span class="pnl-amount num" style="color:var(--red)">− 60 118</span>
+          <div class="pnl-bar-wrap"><div class="pnl-bar red" style="width:17%"></div></div>
+          <span class="pnl-amount num" style="color:var(--red)">− 99 118</span>
         </div>
         <div class="pnl-row">
           <span>Прочее</span>
-          <div class="pnl-bar-wrap"><div class="pnl-bar red" style="width:7%"></div></div>
+          <div class="pnl-bar-wrap"><div class="pnl-bar red" style="width:8%"></div></div>
           <span class="pnl-amount num" style="color:var(--red)">− 47 402</span>
         </div>
         <div class="pnl-row total" style="margin-top:8px">
           <span style="color:var(--red)">Убыток</span>
           <div class="pnl-bar-wrap"></div>
-          <span class="pnl-amount num" style="color:var(--red)">− 229 396</span>
+          <span class="pnl-amount num" style="color:var(--red)">− 268 396</span>
         </div>
         <div style="font-size:12px;color:var(--muted);margin-top:16px;line-height:1.5">
-          Оклад Ани (сотрудник) и базовые ставки ведущих (35 000 руб.) — в расходах <em>не учтены</em>. Реальный убыток выше.
+          Оклад Ани (сотрудник) в расходах <em>не учтён</em>. Реальный убыток выше.
         </div>
       </div>
 
@@ -624,70 +629,70 @@
       </div>
       <div class="tl-row">
         <div class="tl-date">27 мая</div>
-        <div><span class="tl-dot" style="background:#c8a96e"></span>Музеник Даниил</div>
+        <div><span class="tl-dot" style="background:#4a5df9"></span>Музеник Даниил</div>
         <div class="num">6</div>
         <div class="num">—</div>
         <div class="num">8 669</div>
       </div>
       <div class="tl-row">
         <div class="tl-date">27 мая</div>
-        <div><span class="tl-dot" style="background:#8b5e3c"></span>Макарова Ольга</div>
+        <div><span class="tl-dot" style="background:#3d4de6"></span>Макарова Ольга</div>
         <div class="num">12</div>
         <div class="num">—</div>
         <div class="num">8 148</div>
       </div>
       <div class="tl-row">
         <div class="tl-date">28 мая</div>
-        <div><span class="tl-dot" style="background:#c8a96e"></span>Музеник Даниил</div>
+        <div><span class="tl-dot" style="background:#4a5df9"></span>Музеник Даниил</div>
         <div class="num">29</div>
         <div class="num">—</div>
         <div class="num">8 669</div>
       </div>
       <div class="tl-row">
         <div class="tl-date">28 мая</div>
-        <div><span class="tl-dot" style="background:#8b5e3c"></span>Макарова Ольга</div>
+        <div><span class="tl-dot" style="background:#3d4de6"></span>Макарова Ольга</div>
         <div class="num">9</div>
         <div class="num">—</div>
         <div class="num">8 148</div>
       </div>
       <div class="tl-row">
         <div class="tl-date">29 мая</div>
-        <div><span class="tl-dot" style="background:#c8a96e"></span>Музеник Даниил</div>
+        <div><span class="tl-dot" style="background:#4a5df9"></span>Музеник Даниил</div>
         <div class="num">19</div>
         <div class="num">—</div>
         <div class="num">8 668</div>
       </div>
       <div class="tl-row">
         <div class="tl-date">29 мая</div>
-        <div><span class="tl-dot" style="background:#8b5e3c"></span>Макарова Ольга</div>
+        <div><span class="tl-dot" style="background:#3d4de6"></span>Макарова Ольга</div>
         <div class="num">23</div>
         <div class="num">—</div>
         <div class="num">8 147</div>
       </div>
       <div class="tl-row">
         <div class="tl-date">29 мая</div>
-        <div><span class="tl-dot" style="background:#6b8e6b"></span>Шестикова Екатерина</div>
+        <div><span class="tl-dot" style="background:#7b8ef9"></span>Шестикова Екатерина</div>
         <div class="num">16</div>
         <div class="num">3</div>
         <div class="num">6 480</div>
       </div>
       <div class="tl-row">
         <div class="tl-date">29 мая</div>
-        <div><span class="tl-dot" style="background:#9b7db5"></span>Звёздочкина Варвара</div>
+        <div><span class="tl-dot" style="background:#9eabfa"></span>Звёздочкина Варвара</div>
         <div class="num">0</div>
         <div class="num">1</div>
         <div class="num">4 860</div>
       </div>
       <div class="tl-row">
         <div class="tl-date">30 мая</div>
-        <div><span class="tl-dot" style="background:#8b5e3c"></span>Макарова Ольга</div>
+        <div><span class="tl-dot" style="background:#3d4de6"></span>Макарова Ольга</div>
         <div class="num">6</div>
         <div class="num">—</div>
         <div class="num">8 147</div>
       </div>
       <div class="tl-row">
         <div class="tl-date">30 мая</div>
-        <div><span class="tl-dot" style="background:#c05c5c"></span>Сухомицкая Екатерина <span style="font-size:11px;color:var(--green)">★ KPI</span></div>
+        <div><span class="tl-dot" style="background:var(--green)"></span>Сухомицкая Екатерина <span style="font-size:11px;color:var(--green)">★ KPI</span></div>
         <div class="num"><strong>62</strong></div>
         <div class="num">4</div>
         <div class="num">9 432</div>
@@ -702,16 +707,20 @@
 
 <!-- FOOTER -->
 <div class="footer">
-  Потолкуем? · АРХ МОСКВА 2026 · Данные: potolkuem.bitrix24.ru · Отчёт сформирован 02.06.2026
+  Потолкуем? · АРХ МОСКВА 2026 · Данные: potolkuem.bitrix24.ru · Отчёт обновлён 03.06.2026
 </div>
 
 <script>
-const GOLD   = '#c8a96e';
-const BROWN  = '#8b5e3c';
-const RED    = '#c0392b';
-const GREEN  = '#27ae60';
-const MUTED  = '#c8b89a';
-const BG     = '#f5f2ee';
+const P1 = '#3d4de6';  // dark purple
+const P2 = '#4a5df9';  // primary purple
+const P3 = '#7b8ef9';  // medium purple
+const P4 = '#9eabfa';  // light purple
+const P5 = '#bbc5fc';  // lighter
+const P6 = '#dde2fc';  // very light
+const P7 = '#1e2eb5';  // deep purple
+const RED   = '#c0392b';
+const GREEN = '#27ae60';
+const BG    = '#f5f3ff';
 
 // 1. Выручка по ведущим
 new Chart(document.getElementById('hostChart'), {
@@ -720,7 +729,7 @@ new Chart(document.getElementById('hostChart'), {
     labels: ['Макарова\nОльга', 'Анна\n(сотрудник)', 'Музеник\nДаниил', 'Сухомицкая\nЕкатерина', 'Шестикова\nЕкатерина', 'Звёздочкина\nВарвара'],
     datasets: [{
       data: [93049, 88750, 77530, 19660, 14900, 6800],
-      backgroundColor: [BROWN, '#a07850', GOLD, MUTED, '#d4b896', '#e8d5b0'],
+      backgroundColor: [P1, P2, P3, P4, P5, P6],
       borderRadius: 3,
       borderSkipped: false,
     }]
@@ -738,7 +747,7 @@ new Chart(document.getElementById('hostChart'), {
     },
     scales: {
       x: {
-        grid: { color: '#ece8e0' },
+        grid: { color: '#ece8f8' },
         ticks: {
           callback: v => (v/1000).toFixed(0) + 'k',
           font: { size: 11 }
@@ -753,10 +762,10 @@ new Chart(document.getElementById('hostChart'), {
 new Chart(document.getElementById('productChart'), {
   type: 'doughnut',
   data: {
-    labels: ['Архитектура', 'Красноречие', 'Живопись', 'Региональные', 'Музыка', 'Рекламная пауза', 'Классика 2.0'],
+    labels: ['Архитектура', 'Красноречие', 'Живопись', 'Диалекты', 'Музыка', 'Рекламная пауза', 'Классика 2.0'],
     datasets: [{
       data: [195820, 32670, 25140, 17779, 12240, 10920, 6120],
-      backgroundColor: ['#8b5e3c', '#c8a96e', '#a07850', '#d4b896', '#b89060', '#e8d5b0', '#6b4a2a'],
+      backgroundColor: [P1, P2, P3, P4, P5, P6, P7],
       borderWidth: 2,
       borderColor: '#fff',
     }]
@@ -784,8 +793,8 @@ new Chart(document.getElementById('expenseChart'), {
   data: {
     labels: ['Аренда', 'Оклейка', 'Ведущие', 'Игры\nподарок', 'Логистика', 'Лифлеты'],
     datasets: [{
-      data: [276635, 145930, 60118, 27200, 12403, 7799],
-      backgroundColor: ['#7a3a2a', '#a05040', '#c06050', '#d07860', '#e09070', '#eea880'],
+      data: [276635, 145930, 99118, 27200, 12403, 7799],
+      backgroundColor: [P7, P1, P2, P3, P4, P5],
       borderRadius: 3,
     }]
   },
@@ -802,7 +811,7 @@ new Chart(document.getElementById('expenseChart'), {
     scales: {
       x: { grid: { display: false }, ticks: { font: { size: 11 } } },
       y: {
-        grid: { color: '#ece8e0' },
+        grid: { color: '#ece8f8' },
         ticks: {
           callback: v => (v/1000).toFixed(0) + 'k',
           font: { size: 11 }
@@ -821,25 +830,25 @@ new Chart(document.getElementById('dayChart'), {
       {
         label: 'Макарова Ольга',
         data: [23262, 23262, 23262, 23263],
-        backgroundColor: BROWN,
+        backgroundColor: P1,
         borderRadius: 2,
       },
       {
         label: 'Музеник Даниил',
         data: [25843, 25843, 25844, 0],
-        backgroundColor: GOLD,
+        backgroundColor: P2,
         borderRadius: 2,
       },
       {
         label: 'Анна (сотрудник)',
         data: [22188, 22188, 22187, 22187],
-        backgroundColor: '#a07850',
+        backgroundColor: P3,
         borderRadius: 2,
       },
       {
         label: 'Прочие ведущие',
         data: [0, 0, 21700, 19660],
-        backgroundColor: MUTED,
+        backgroundColor: P4,
         borderRadius: 2,
       }
     ]
@@ -861,7 +870,7 @@ new Chart(document.getElementById('dayChart'), {
       x: { stacked: true, grid: { display: false }, ticks: { font: { size: 12 } } },
       y: {
         stacked: true,
-        grid: { color: '#ece8e0' },
+        grid: { color: '#ece8f8' },
         ticks: {
           callback: v => (v/1000).toFixed(0) + 'k',
           font: { size: 11 }

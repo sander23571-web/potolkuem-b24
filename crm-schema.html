@@ -2,218 +2,639 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Схема CRM — Потолкуем?</title>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<title>ER-схема CRM — Потолкуем?</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6fb; color: #1a1a2e; }
-  header { background: #1a1a2e; color: #fff; padding: 24px 36px; }
-  header h1 { font-size: 22px; font-weight: 600; }
-  header p  { font-size: 13px; color: #aab; margin-top: 4px; }
-  .legend-bar { background: #fff; border-bottom: 1px solid #e0e4ef; padding: 14px 36px; display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
-  .legend-bar span { font-size: 12px; color: #555; }
-  .chip { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-right: 4px; }
-  .chip-std  { background: #dbeafe; color: #1d4ed8; }
-  .chip-sp   { background: #d1fae5; color: #065f46; }
-  .chip-ext  { background: #fef3c7; color: #92400e; }
-  .chip-cat  { background: #ede9fe; color: #5b21b6; }
-  .diagram-wrap { padding: 32px 36px; overflow-x: auto; }
-  .mermaid { max-width: 100%; }
-  .notes { padding: 0 36px 40px; }
-  .notes h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1a1a2e; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
-  .card { background: #fff; border-radius: 10px; padding: 18px 20px; border: 1px solid #e0e4ef; }
-  .card h3 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
-  .card ul { font-size: 12px; color: #444; padding-left: 16px; line-height: 1.8; }
-  .card code { background: #f0f4ff; color: #3b3fbf; padding: 1px 5px; border-radius: 4px; font-size: 11px; }
-  .arrow-note { font-size: 12px; color: #666; margin-top: 8px; line-height: 1.6; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #e8ebf5; color: #1a1a2e; }
+
+header { background: #1a1a2e; color: #fff; padding: 18px 28px; display: flex; align-items: center; justify-content: space-between; }
+header h1 { font-size: 18px; font-weight: 700; }
+header p  { font-size: 12px; color: #8899bb; margin-top: 3px; }
+
+.legend-bar {
+  background: #fff; border-bottom: 1px solid #dde2f0;
+  padding: 10px 28px; display: flex; gap: 20px; flex-wrap: wrap; align-items: center; font-size: 12px; color: #555;
+}
+.chip { display: inline-block; padding: 2px 9px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+.chip-std  { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; }
+.chip-sp   { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+.chip-cat  { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
+.chip-ext  { background: #fef3c7; color: #78350f; border: 1px solid #fcd34d; }
+
+.scroll-wrap { overflow: auto; padding: 20px; }
+
+#canvas {
+  position: relative;
+  width: 1560px;
+  height: 1560px;
+  margin: 0 auto;
+}
+
+svg#arrows {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* Entity cards */
+.ent {
+  position: absolute;
+  border-radius: 8px;
+  border: 2px solid #ccc;
+  min-width: 230px;
+  max-width: 270px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+  font-size: 11px;
+}
+.ent-head {
+  padding: 7px 11px;
+  border-radius: 6px 6px 0 0;
+  font-weight: 700; font-size: 12px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.ent-head .etid { font-size: 10px; font-weight: 400; opacity: 0.7; }
+.ent-body { padding: 0; }
+.f-row {
+  display: flex; align-items: center;
+  padding: 2px 10px;
+  border-bottom: 1px solid #f3f4f8;
+  gap: 4px;
+  line-height: 1.6;
+}
+.f-row:last-child { border-bottom: none; }
+.f-pk  { color: #2563eb; font-weight: 700; font-size: 10px; min-width: 22px; }
+.f-fk  { color: #dc2626; font-weight: 700; font-size: 10px; min-width: 22px; }
+.f-uf  { color: #7c3aed; font-weight: 600; font-size: 10px; min-width: 22px; }
+.f-reg { color: #aaa; font-size: 10px; min-width: 22px; }
+.f-name { flex: 1; color: #222; }
+.f-type { color: #999; font-style: italic; font-size: 10px; white-space: nowrap; }
+.f-sep {
+  background: #f8f9fc; color: #888; font-size: 10px; font-weight: 600;
+  padding: 2px 10px; letter-spacing: 0.05em; text-transform: uppercase;
+  border-bottom: 1px solid #e8ebf5;
+}
+
+/* type colors */
+.std .ent-head { background: #dbeafe; color: #1e40af; border-bottom: 2px solid #3b82f6; }
+.std { border-color: #3b82f6; }
+.sp  .ent-head { background: #d1fae5; color: #065f46; border-bottom: 2px solid #10b981; }
+.sp  { border-color: #10b981; }
+.cat .ent-head { background: #ede9fe; color: #4c1d95; border-bottom: 2px solid #8b5cf6; }
+.cat { border-color: #8b5cf6; }
+.ext .ent-head { background: #fef3c7; color: #78350f; border-bottom: 2px solid #f59e0b; }
+.ext { border-color: #f59e0b; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Схема сущностей CRM — Потолкуем?</h1>
-  <p>potolkuem.bitrix24.ru · актуально на 19.06.2026</p>
+  <div>
+    <h1>ER-схема CRM — Потолкуем?</h1>
+    <p>potolkuem.bitrix24.ru · актуально на 20.06.2026 · данные получены из API</p>
+  </div>
 </header>
 
 <div class="legend-bar">
-  <span>Условные обозначения:</span>
+  <span>Типы сущностей:</span>
   <span><span class="chip chip-std">Стандартный CRM</span> Лид, Контакт, Компания, Сделка</span>
   <span><span class="chip chip-sp">Смарт-процесс</span> 8 кастомных сущностей</span>
-  <span><span class="chip chip-ext">Внешние источники</span> Сайт, CardScanner</span>
-  <span><span class="chip chip-cat">Склад / Каталог</span> Товары, Склады</span>
+  <span><span class="chip chip-cat">Склад / Каталог</span></span>
+  <span><span class="chip chip-ext">Внешние источники</span></span>
+  <span style="margin-left:20px;">Поля:
+    <b style="color:#2563eb">PK</b> = первичный ключ &nbsp;
+    <b style="color:#dc2626">FK</b> = внешний ключ (связь) &nbsp;
+    <b style="color:#7c3aed">UF</b> = пользовательское поле
+  </span>
+  <span style="color:#e55">—— красные линии</span> = основные рабочие связи &nbsp;
+  <span style="color:#999">- - серые</span> = потенциальные связи из поля
 </div>
 
-<div class="diagram-wrap">
-<div class="mermaid">
-%%{init: {"theme": "base", "themeVariables": {"fontSize":"14px","primaryColor":"#dbeafe","primaryTextColor":"#1e3a5f","primaryBorderColor":"#3b82f6","lineColor":"#6b7280","secondaryColor":"#d1fae5","tertiaryColor":"#fef9c3"}}}%%
-flowchart TD
+<div class="scroll-wrap">
+<div id="canvas">
+<svg id="arrows"></svg>
 
-  %% ── Внешние источники ──────────────────────────────
-  subgraph EXT["🌐 Внешние источники"]
-    direction TB
-    SITE["Сайт\npotolkuem.pro"]
-    CARD["CardScanner PWA\npotolkuem.bobp.ru"]
-  end
+<!-- ══════════════════════════════════════════════════════════
+     ВНЕШНИЕ ИСТОЧНИКИ
+══════════════════════════════════════════════════════════ -->
 
-  %% ── Стандартный CRM ────────────────────────────────
-  subgraph SCRM["📋 Стандартный CRM"]
-    direction TB
-    LID["Лид"]
-    CONTACT["Контакт"]
-    COMPANY["Компания"]
-    subgraph FUNNELS["Сделки — воронки"]
-      direction LR
-      D18["Сайт/ВК/Розница\n(кат. 18)"]
-      D24["ОПТ\n(кат. 24)"]
-      D26["Мероприятия B2C\n(кат. 26)"]
-      D28["Ателье Производство\n(кат. 28)"]
-      D30["Мероприятия B2B\n(кат. 30)"]
-    end
-  end
-
-  %% ── Мероприятия ────────────────────────────────────
-  subgraph EVT["🎪 Мероприятия (смарт-процессы)"]
-    direction TB
-    EXH["Выставки\nentityTypeId 1048"]
-    HOST["Ведущие\nentityTypeId 1052"]
-    SHIFT["Выход ведущего\nentityTypeId 1056"]
-    SESSION["Игровая сессия\nentityTypeId 1060"]
-    EXPENSE["Расходы\nentityTypeId 1070"]
-  end
-
-  %% ── Операционные ───────────────────────────────────
-  subgraph OPS["⚙️ Операционные (смарт-процессы)"]
-    direction TB
-    LOGISTIC["Логистика\nentityTypeId 1064"]
-    CONSENT["Согласия 152-ФЗ\nentityTypeId 1068"]
-    DEV["Отдел разработки\nentityTypeId 1044"]
-  end
-
-  %% ── Склад и каталог ────────────────────────────────
-  subgraph CAT["📦 Склад и каталог"]
-    direction LR
-    PROD["Каталог товаров\n25 игр"]
-    STORE["Склады\n12 точек"]
-  end
-
-  %% ══ Связи: внешние источники → CRM ════════════════
-  SITE -->|"b24-lead: форма заявки"| LID
-  SITE -->|"b24-lead: анкета ведущего\n→ Контакт + запись в 1052"| HOST
-  SITE -->|"b24-order: заказ с сайта"| D18
-  CARD -->|"OCR визитки"| CONTACT
-  CARD -->|"QR-токен согласия"| CONSENT
-
-  %% ══ Связи: стандартный CRM ════════════════════════
-  LID --->|"конвертация"| CONTACT
-  LID --->|"конвертация"| D18
-  CONTACT <-->|"привязка"| COMPANY
-  CONSENT -->|"contactId"| CONTACT
-
-  %% ══ Связи: Сделки ↔ прочие ═══════════════════════
-  D18 & D24 & D26 & D28 & D30 -->|"товарные позиции"| PROD
-  D18 -->|"PARENT_ID_1048"| EXH
-  D18 -->|"PARENT_ID_1052"| HOST
-
-  %% ══ Связи: Ведущие ════════════════════════════════
-  CONTACT -->|"contactId\nна ведущем"| HOST
-  HOST -->|"parentId1052"| SHIFT
-  HOST -->|"parentId1052\n(после правки 19.06)"| SESSION
-
-  %% ══ Связи: Выставка — центральный хаб ════════════
-  EXH <-->|"parentId1048"| SHIFT
-  EXH -->|"parentId1048"| EXPENSE
-  EXH <-->|"parentId1048"| SESSION
-  EXH <-->|"parentId1048"| LOGISTIC
-
-  %% ══ Связи: Выход ведущего ═════════════════════════
-  SHIFT -->|"parentId1056"| SESSION
-
-  %% ══ Связи: Склад ══════════════════════════════════
-  STORE -->|"остатки"| PROD
-
-  %% ══ Стили ════════════════════════════════════════
-  classDef ext    fill:#fef3c7,stroke:#f59e0b,color:#78350f,font-weight:600
-  classDef std    fill:#dbeafe,stroke:#3b82f6,color:#1e40af,font-weight:600
-  classDef sp     fill:#d1fae5,stroke:#10b981,color:#064e3b,font-weight:600
-  classDef cat    fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95,font-weight:600
-  classDef deal   fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
-
-  class SITE,CARD ext
-  class LID,CONTACT,COMPANY std
-  class D18,D24,D26,D28,D30 deal
-  class EXH,HOST,SHIFT,SESSION,EXPENSE,LOGISTIC,CONSENT,DEV sp
-  class PROD,STORE cat
-</div>
-</div>
-
-<div class="notes">
-  <h2>Пояснения по связям</h2>
-  <div class="grid">
-
-    <div class="card">
-      <h3>🎪 Выставка — центральный хаб</h3>
-      <ul>
-        <li>К ней привязаны: <b>Выходы</b>, <b>Расходы</b>, <b>Игровые сессии</b>, <b>Логистика</b></li>
-        <li>Сделки выставки ссылаются на неё через <code>PARENT_ID_1048</code></li>
-        <li>Сделки + Выходы также ссылаются на Ведущего через <code>PARENT_ID_1052</code></li>
-      </ul>
-    </div>
-
-    <div class="card">
-      <h3>🎤 Ведущий — профиль и связи</h3>
-      <ul>
-        <li>Связан с <b>Контактом</b> через <code>contactId</code></li>
-        <li>Один ведущий → много <b>Выходов</b> (через <code>parentId1052</code> на Выходе)</li>
-        <li>Один ведущий → много <b>Игровых сессий</b> (через <code>parentId1052</code> на Сессии)</li>
-        <li>Сделки ведущего видны через <code>PARENT_ID_1052</code> на Сделке</li>
-      </ul>
-    </div>
-
-    <div class="card">
-      <h3>📝 Сделки — воронки и поля</h3>
-      <ul>
-        <li><b>Кат. 18</b> — розница: онлайн-заказы, выставочные продажи</li>
-        <li><b>Кат. 24</b> — оптовые покупатели (B2B)</li>
-        <li><b>Кат. 26</b> — B2C мероприятия (открытые игры)</li>
-        <li><b>Кат. 28</b> — Ателье (производство игр)</li>
-        <li><b>Кат. 30</b> — B2B корпоративы</li>
-        <li>В каждой сделке — <b>товарные позиции</b> из каталога (резервируют склад)</li>
-      </ul>
-    </div>
-
-    <div class="card">
-      <h3>📦 Склад и каталог</h3>
-      <ul>
-        <li>25 товаров (игр) в каталоге</li>
-        <li>12 складов: 2 собственных, 1 WB, 7 точек продаж, 1 выездной, 1 кластер</li>
-        <li>Остатки: только склады 4, 6, 8 заполнены (итого ~10 117 шт.)</li>
-        <li>Добавление товара в сделку → автоматический <b>резерв</b> на складе</li>
-        <li>Метод списания: <b>FIFO</b></li>
-      </ul>
-    </div>
-
-    <div class="card">
-      <h3>🔐 Согласия 152-ФЗ</h3>
-      <ul>
-        <li>Создаются через <b>CardScanner</b> (QR-токен) или consent-service</li>
-        <li>Привязываются к <b>Контакту</b> через <code>contactId</code></li>
-        <li>Без связей с другими смарт-процессами (изолированная сущность)</li>
-      </ul>
-    </div>
-
-    <div class="card">
-      <h3>⚠️ Важные особенности API</h3>
-      <ul>
-        <li><code>PARENT_ID_1052</code> в Сделке — только через <code>crm.deal.update</code>, не через <code>add</code></li>
-        <li><code>parentId1052</code> camelCase в <code>crm.deal.add</code> — молча игнорируется</li>
-        <li>Смена воронки сделки (<code>CATEGORY_ID</code>) через API не работает</li>
-        <li>Игровая сессия: ведущий — <b>родитель</b> сессии (с 19.06.2026), не наоборот</li>
-      </ul>
-    </div>
-
+<div class="ent ext" id="E_SITE" style="left:10px; top:20px; min-width:200px">
+  <div class="ent-head">🌐 Сайт potolkuem.pro</div>
+  <div class="ent-body">
+    <div class="f-sep">Выходы</div>
+    <div class="f-row"><span class="f-reg">→</span><span class="f-name">b24-lead (форма заявки)</span></div>
+    <div class="f-row"><span class="f-reg">→</span><span class="f-name">b24-lead (анкета ведущего)</span></div>
+    <div class="f-row"><span class="f-reg">→</span><span class="f-name">b24-order (заказ)</span></div>
   </div>
 </div>
+
+<div class="ent ext" id="E_CARD" style="left:230px; top:20px; min-width:200px">
+  <div class="ent-head">📱 CardScanner PWA</div>
+  <div class="ent-body">
+    <div class="f-sep">potolkuem.bobp.ru</div>
+    <div class="f-row"><span class="f-reg">→</span><span class="f-name">OCR визитки → Контакт</span></div>
+    <div class="f-row"><span class="f-reg">→</span><span class="f-name">QR-токен → Согласие</span></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     СТАНДАРТНЫЙ CRM
+══════════════════════════════════════════════════════════ -->
+
+<div class="ent std" id="E_LID" style="left:10px; top:160px;">
+  <div class="ent-head">Лид <span class="etid">crm.lead</span></div>
+  <div class="ent-body">
+    <div class="f-sep">Системные поля</div>
+    <div class="f-row"><span class="f-pk">PK</span><span class="f-name">ID</span><span class="f-type">integer</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">TITLE</span><span class="f-type">string</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">STATUS_ID</span><span class="f-type">crm_status</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">SOURCE_ID</span><span class="f-type">crm_status</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">OPPORTUNITY</span><span class="f-type">double</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">CURRENCY_ID</span><span class="f-type">crm_currency</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">ASSIGNED_BY_ID</span><span class="f-type">user</span></div>
+    <div class="f-sep">Связи</div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">COMPANY_ID</span><span class="f-type">→ Компания</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">CONTACT_ID</span><span class="f-type">→ Контакт</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">PARENT_ID_1048</span><span class="f-type">→ Выставки</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">PARENT_ID_1052</span><span class="f-type">→ Ведущие</span></div>
+  </div>
+</div>
+
+<div class="ent std" id="E_CONTACT" style="left:10px; top:500px;">
+  <div class="ent-head">Контакт <span class="etid">crm.contact</span></div>
+  <div class="ent-body">
+    <div class="f-sep">Системные поля</div>
+    <div class="f-row"><span class="f-pk">PK</span><span class="f-name">ID</span><span class="f-type">integer</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">NAME / LAST_NAME</span><span class="f-type">string</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">PHONE / EMAIL</span><span class="f-type">crm_multifield</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">TYPE_ID</span><span class="f-type">crm_status</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">SOURCE_ID</span><span class="f-type">crm_status</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">ASSIGNED_BY_ID</span><span class="f-type">user</span></div>
+    <div class="f-sep">Пользовательские поля</div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">UF_CRM_CONTACT_1724396813899</span><span class="f-type">string</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">UF_CRM_CONTACT_1724396838238</span><span class="f-type">string</span></div>
+    <div class="f-sep">Связи</div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">COMPANY_ID</span><span class="f-type">→ Компания</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">LEAD_ID</span><span class="f-type">→ Лид</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">PARENT_ID_1048</span><span class="f-type">→ Выставки</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">PARENT_ID_1052</span><span class="f-type">→ Ведущие</span></div>
+  </div>
+</div>
+
+<div class="ent std" id="E_COMPANY" style="left:10px; top:850px;">
+  <div class="ent-head">Компания <span class="etid">crm.company</span></div>
+  <div class="ent-body">
+    <div class="f-sep">Системные поля</div>
+    <div class="f-row"><span class="f-pk">PK</span><span class="f-name">ID</span><span class="f-type">integer</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">TITLE</span><span class="f-type">string</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">COMPANY_TYPE</span><span class="f-type">crm_status</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">REVENUE</span><span class="f-type">double</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">CURRENCY_ID</span><span class="f-type">crm_currency</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">ASSIGNED_BY_ID</span><span class="f-type">user</span></div>
+    <div class="f-sep">Связи</div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">CONTACT_ID</span><span class="f-type">→ Контакт</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">LEAD_ID</span><span class="f-type">→ Лид</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">PARENT_ID_1048</span><span class="f-type">→ Выставки</span></div>
+  </div>
+</div>
+
+<!-- СДЕЛКИ -->
+<div class="ent std" id="E_DEAL" style="left:300px; top:160px; min-width:260px;">
+  <div class="ent-head">Сделка (5 воронок) <span class="etid">crm.deal</span></div>
+  <div class="ent-body">
+    <div class="f-sep">Воронки (CATEGORY_ID)</div>
+    <div class="f-row"><span class="f-reg">18</span><span class="f-name">Сайт/ВК/Розница</span></div>
+    <div class="f-row"><span class="f-reg">24</span><span class="f-name">ОПТ</span></div>
+    <div class="f-row"><span class="f-reg">26</span><span class="f-name">Мероприятия B2C</span></div>
+    <div class="f-row"><span class="f-reg">28</span><span class="f-name">Ателье (Производство)</span></div>
+    <div class="f-row"><span class="f-reg">30</span><span class="f-name">Мероприятия B2B</span></div>
+    <div class="f-sep">Системные поля</div>
+    <div class="f-row"><span class="f-pk">PK</span><span class="f-name">ID</span><span class="f-type">integer</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">TITLE</span><span class="f-type">string</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">STAGE_ID</span><span class="f-type">crm_status</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">OPPORTUNITY</span><span class="f-type">double</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">CURRENCY_ID</span><span class="f-type">crm_currency</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">CLOSEDATE</span><span class="f-type">date</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">ASSIGNED_BY_ID</span><span class="f-type">user</span></div>
+    <div class="f-sep">Связи</div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">COMPANY_ID</span><span class="f-type">→ Компания</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">CONTACT_ID</span><span class="f-type">→ Контакт</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">LEAD_ID</span><span class="f-type">→ Лид</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">PARENT_ID_1048</span><span class="f-type">→ Выставки</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">PARENT_ID_1052</span><span class="f-type">→ Ведущие</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">PARENT_ID_1056</span><span class="f-type">→ Выход ведущего</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">PARENT_ID_1064</span><span class="f-type">→ Логистика</span></div>
+    <div class="f-sep">Товарные позиции</div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">productRows[].productId</span><span class="f-type">→ Каталог</span></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     СМАРТ-ПРОЦЕССЫ — МЕРОПРИЯТИЯ
+══════════════════════════════════════════════════════════ -->
+
+<div class="ent sp" id="E_EXH" style="left:610px; top:20px; min-width:260px;">
+  <div class="ent-head">🎪 Выставки <span class="etid">entityTypeId=1048</span></div>
+  <div class="ent-body">
+    <div class="f-sep">Системные поля</div>
+    <div class="f-row"><span class="f-pk">PK</span><span class="f-name">id</span><span class="f-type">integer</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">title</span><span class="f-type">string</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">stageId</span><span class="f-type">crm_status</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">begindate / closedate</span><span class="f-type">date</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">assignedById</span><span class="f-type">user</span></div>
+    <div class="f-sep">Пользовательские поля</div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm12_1777190279</span><span class="f-type">Тип выставки</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm12_1777190355</span><span class="f-type">Место проведения</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm12_1777190393</span><span class="f-type">Цель участия</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm12_1777190457</span><span class="f-type">Плановый бюджет</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm12_1777190514</span><span class="f-type">Фактич. расходы</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm12_1777190536</span><span class="f-type">Выручка от продаж</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm12_1777190574</span><span class="f-type">Трафик стенда</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm12_1781526676</span><span class="f-type">Документы (file)</span></div>
+    <div class="f-sep">Связи</div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">contactId</span><span class="f-type">→ Контакт</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">companyId</span><span class="f-type">→ Компания</span></div>
+  </div>
+</div>
+
+<div class="ent sp" id="E_HOST" style="left:610px; top:500px; min-width:260px;">
+  <div class="ent-head">🎤 Ведущие <span class="etid">entityTypeId=1052</span></div>
+  <div class="ent-body">
+    <div class="f-sep">Системные поля</div>
+    <div class="f-row"><span class="f-pk">PK</span><span class="f-name">id</span><span class="f-type">integer</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">title</span><span class="f-type">string</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">stageId</span><span class="f-type">crm_status</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">assignedById</span><span class="f-type">user</span></div>
+    <div class="f-sep">Пользовательские поля</div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm14_1777193240</span><span class="f-type">Специализация</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm14_1777193275</span><span class="f-type">Тип аудитории</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm14_1777193365</span><span class="f-type">Ставка за выход</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm14_1777193404</span><span class="f-type">Процент с продаж</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm14_1777193431</span><span class="f-type">Процент за лиды</span></div>
+    <div class="f-sep">Связи</div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">contactId</span><span class="f-type">→ Контакт</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">parentId1048</span><span class="f-type">→ Выставки</span></div>
+  </div>
+</div>
+
+<div class="ent sp" id="E_SHIFT" style="left:610px; top:870px; min-width:260px;">
+  <div class="ent-head">📋 Выход ведущего <span class="etid">entityTypeId=1056</span></div>
+  <div class="ent-body">
+    <div class="f-sep">Системные поля</div>
+    <div class="f-row"><span class="f-pk">PK</span><span class="f-name">id</span><span class="f-type">integer</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">title</span><span class="f-type">string</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">stageId</span><span class="f-type">crm_status</span></div>
+    <div class="f-sep">Пользовательские поля</div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm16_1777193655</span><span class="f-type">Дата выхода</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm16_1777193711</span><span class="f-type">Продаж за смену</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm16_1777193780</span><span class="f-type">Собрано лидов</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm16_1777193805</span><span class="f-type">Подписчиков</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm16_1777193828</span><span class="f-type">Начислено (money)</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm16_1779107483</span><span class="f-type">Отработано часов</span></div>
+    <div class="f-sep">Связи</div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">parentId1048</span><span class="f-type">→ Выставки</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">parentId1052</span><span class="f-type">→ Ведущие</span></div>
+  </div>
+</div>
+
+<!-- Игровая сессия -->
+<div class="ent sp" id="E_SESSION" style="left:920px; top:20px; min-width:260px;">
+  <div class="ent-head">🎮 Игровая сессия <span class="etid">entityTypeId=1060</span></div>
+  <div class="ent-body">
+    <div class="f-sep">Системные поля</div>
+    <div class="f-row"><span class="f-pk">PK</span><span class="f-name">id</span><span class="f-type">integer</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">title</span><span class="f-type">string</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">stageId</span><span class="f-type">crm_status</span></div>
+    <div class="f-sep">Пользовательские поля</div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm18_1778278124642</span><span class="f-type">Дата проведения</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm18_1777195667</span><span class="f-type">Число участников</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm18_1778278041514</span><span class="f-type">Стоимость участия</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm18_1778278423125</span><span class="f-type">Количество мест</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm18_1778278387669</span><span class="f-type">Адрес проведения</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm18_1777408520691</span><span class="f-type">Место проведения</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm18_1777195643</span><span class="f-type">Выход ведущего (crm)</span></div>
+    <div class="f-sep">Связи</div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">parentId1048</span><span class="f-type">→ Выставки</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">parentId1052</span><span class="f-type">→ Ведущие ⭐</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">parentId1056</span><span class="f-type">→ Выход ведущего</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">contactId</span><span class="f-type">→ Контакт</span></div>
+  </div>
+</div>
+
+<!-- Расходы -->
+<div class="ent sp" id="E_EXPENSE" style="left:920px; top:490px; min-width:260px;">
+  <div class="ent-head">💰 Расходы <span class="etid">entityTypeId=1070</span></div>
+  <div class="ent-body">
+    <div class="f-sep">Системные поля</div>
+    <div class="f-row"><span class="f-pk">PK</span><span class="f-name">id</span><span class="f-type">integer</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">title</span><span class="f-type">string</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">stageId</span><span class="f-type">crm_status</span></div>
+    <div class="f-sep">Пользовательские поля</div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm24ExpenseType</span><span class="f-type">Статья расхода</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm24Description</span><span class="f-type">Описание</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm24Qty</span><span class="f-type">Количество</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm24PriceUnit</span><span class="f-type">Цена за ед., руб.</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm24Amount</span><span class="f-type">Сумма, руб.</span></div>
+    <div class="f-sep">Связи</div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">parentId1048</span><span class="f-type">→ Выставки</span></div>
+  </div>
+</div>
+
+<!-- Логистика -->
+<div class="ent sp" id="E_LOG" style="left:920px; top:800px; min-width:260px;">
+  <div class="ent-head">🚚 Логистика <span class="etid">entityTypeId=1064</span></div>
+  <div class="ent-body">
+    <div class="f-sep">Системные поля</div>
+    <div class="f-row"><span class="f-pk">PK</span><span class="f-name">id</span><span class="f-type">integer</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">title</span><span class="f-type">string</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">stageId</span><span class="f-type">crm_status</span></div>
+    <div class="f-sep">Пользовательские поля</div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm20_1777203988</span><span class="f-type">Тип доставки</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm20_1777204080</span><span class="f-type">Комментарий</span></div>
+    <div class="f-sep">Связи</div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">parentId1048</span><span class="f-type">→ Выставки</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">parentId2</span><span class="f-type">→ Сделка</span></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     ОПЕРАЦИОННЫЕ
+══════════════════════════════════════════════════════════ -->
+
+<!-- Согласия -->
+<div class="ent sp" id="E_CONSENT" style="left:300px; top:850px; min-width:245px;">
+  <div class="ent-head">🔐 Согласия 152-ФЗ <span class="etid">entityTypeId=1068</span></div>
+  <div class="ent-body">
+    <div class="f-sep">Системные поля</div>
+    <div class="f-row"><span class="f-pk">PK</span><span class="f-name">id</span><span class="f-type">integer</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">stageId</span><span class="f-type">crm_status</span></div>
+    <div class="f-sep">Пользовательские поля</div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm22ConsentPd</span><span class="f-type">Согласие на ПД</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm22ConsentMarketing</span><span class="f-type">Согласие на рассылки</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm22ConsentTextPd</span><span class="f-type">Текст согласия ПД</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm22IpAddress</span><span class="f-type">IP-адрес</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm22UserAgent</span><span class="f-type">User-Agent</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm22Source</span><span class="f-type">Источник согласия</span></div>
+    <div class="f-sep">Связи</div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">contactId</span><span class="f-type">→ Контакт</span></div>
+  </div>
+</div>
+
+<!-- Отдел разработки -->
+<div class="ent sp" id="E_DEV" style="left:300px; top:1130px; min-width:260px;">
+  <div class="ent-head">⚙️ Отдел разработки <span class="etid">entityTypeId=1044</span></div>
+  <div class="ent-body">
+    <div class="f-sep">Системные поля</div>
+    <div class="f-row"><span class="f-pk">PK</span><span class="f-name">id</span><span class="f-type">integer</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">title</span><span class="f-type">string (название игры)</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">stageId</span><span class="f-type">crm_status</span></div>
+    <div class="f-sep">Пользовательские поля</div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm10_1770882392</span><span class="f-type">Описание игры</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm10_1772361395</span><span class="f-type">Руководитель проекта (crm)</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm10_1772361511</span><span class="f-type">Художник-иллюстратор (crm)</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm10_1772361557</span><span class="f-type">Внутренний дизайнер</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm10_1772365415</span><span class="f-type">Типография (crm)</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm10_1770882451</span><span class="f-type">Проект (url)</span></div>
+    <div class="f-row"><span class="f-uf">UF</span><span class="f-name">ufCrm10_1770882578</span><span class="f-type">Договор с РП (file)</span></div>
+    <div class="f-sep">Связи</div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">contactId</span><span class="f-type">→ Контакт</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">companyId</span><span class="f-type">→ Компания (Типография)</span></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     СКЛАД И КАТАЛОГ
+══════════════════════════════════════════════════════════ -->
+
+<div class="ent cat" id="E_CAT" style="left:1210px; top:20px; min-width:240px;">
+  <div class="ent-head">📦 Каталог товаров <span class="etid">catalog.product</span></div>
+  <div class="ent-body">
+    <div class="f-sep">Поля</div>
+    <div class="f-row"><span class="f-pk">PK</span><span class="f-name">id</span><span class="f-type">integer</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">name</span><span class="f-type">string (название игры)</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">active</span><span class="f-type">Y/N</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">price</span><span class="f-type">double</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">currency</span><span class="f-type">string</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">quantity</span><span class="f-type">double (остаток)</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">xmlId</span><span class="f-type">string</span></div>
+    <div class="f-sep">Статистика</div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">25 товаров (игр)</span></div>
+  </div>
+</div>
+
+<div class="ent cat" id="E_STORE" style="left:1210px; top:320px; min-width:240px;">
+  <div class="ent-head">🏪 Склады <span class="etid">catalog.store</span></div>
+  <div class="ent-body">
+    <div class="f-sep">Поля</div>
+    <div class="f-row"><span class="f-pk">PK</span><span class="f-name">id</span><span class="f-type">integer</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">title</span><span class="f-type">string</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">address</span><span class="f-type">string</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">active</span><span class="f-type">Y/N</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">code</span><span class="f-type">string</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">userId</span><span class="f-type">user (ответственный)</span></div>
+    <div class="f-sep">Статистика</div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">12 складов</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">id=4,6,8 — с остатками</span></div>
+  </div>
+</div>
+
+<div class="ent cat" id="E_STOCK" style="left:1210px; top:570px; min-width:240px;">
+  <div class="ent-head">📊 Остатки <span class="etid">catalog.storeProduct</span></div>
+  <div class="ent-body">
+    <div class="f-sep">Поля</div>
+    <div class="f-row"><span class="f-pk">PK</span><span class="f-name">id</span><span class="f-type">integer</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">productId</span><span class="f-type">→ Каталог</span></div>
+    <div class="f-row"><span class="f-fk">FK</span><span class="f-name">storeId</span><span class="f-type">→ Склад</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">amount</span><span class="f-type">double (доступно)</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">quantityReserved</span><span class="f-type">double (резерв)</span></div>
+    <div class="f-sep">Статистика</div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">~10 117 шт. на 3 складах</span></div>
+    <div class="f-row"><span class="f-reg">  </span><span class="f-name">Метод списания: FIFO</span></div>
+  </div>
+</div>
+
+</div><!-- #canvas -->
+</div><!-- .scroll-wrap -->
+
+<script>
+// ─── Определение всех связей ────────────────────────────────────────────────
+// { from, to, label, primary }
+// primary=true → красная линия (рабочая); false → серая пунктир (потенциальная)
+const RELS = [
+  // Внешние источники
+  { from:'E_SITE',    to:'E_LID',     label:'b24-lead→Лид',      primary:true  },
+  { from:'E_SITE',    to:'E_HOST',    label:'b24-lead→Ведущий',  primary:true  },
+  { from:'E_SITE',    to:'E_DEAL',    label:'b24-order→Сделка',  primary:true  },
+  { from:'E_CARD',    to:'E_CONTACT', label:'OCR→Контакт',       primary:true  },
+  { from:'E_CARD',    to:'E_CONSENT', label:'QR→Согласие',       primary:true  },
+
+  // Стандартный CRM
+  { from:'E_LID',     to:'E_CONTACT', label:'конвертация',       primary:true  },
+  { from:'E_LID',     to:'E_DEAL',    label:'конвертация',       primary:true  },
+  { from:'E_LID',     to:'E_COMPANY', label:'COMPANY_ID',        primary:false },
+  { from:'E_CONTACT', to:'E_COMPANY', label:'COMPANY_ID',        primary:true  },
+  { from:'E_COMPANY', to:'E_CONTACT', label:'CONTACT_ID',        primary:false },
+
+  // Сделки → Выставки, Ведущие
+  { from:'E_DEAL',    to:'E_EXH',     label:'PARENT_ID_1048',    primary:true  },
+  { from:'E_DEAL',    to:'E_HOST',    label:'PARENT_ID_1052',    primary:true  },
+  { from:'E_DEAL',    to:'E_SHIFT',   label:'PARENT_ID_1056',    primary:false },
+  { from:'E_DEAL',    to:'E_LOG',     label:'PARENT_ID_1064',    primary:false },
+  { from:'E_DEAL',    to:'E_CAT',     label:'productRows',       primary:true  },
+  { from:'E_DEAL',    to:'E_CONTACT', label:'CONTACT_ID',        primary:false },
+  { from:'E_DEAL',    to:'E_COMPANY', label:'COMPANY_ID',        primary:false },
+
+  // Выставки (1048) ← дочерние записи
+  { from:'E_SHIFT',   to:'E_EXH',     label:'parentId1048',      primary:true  },
+  { from:'E_EXPENSE', to:'E_EXH',     label:'parentId1048',      primary:true  },
+  { from:'E_SESSION', to:'E_EXH',     label:'parentId1048',      primary:true  },
+  { from:'E_LOG',     to:'E_EXH',     label:'parentId1048',      primary:true  },
+  { from:'E_HOST',    to:'E_EXH',     label:'parentId1048',      primary:false },
+
+  // Ведущие (1052) связи
+  { from:'E_HOST',    to:'E_CONTACT', label:'contactId',         primary:true  },
+  { from:'E_SHIFT',   to:'E_HOST',    label:'parentId1052',      primary:true  },
+  { from:'E_SESSION', to:'E_HOST',    label:'parentId1052 ⭐',   primary:true  },
+
+  // Игровая сессия
+  { from:'E_SESSION', to:'E_SHIFT',   label:'parentId1056',      primary:false },
+
+  // Согласия
+  { from:'E_CONSENT', to:'E_CONTACT', label:'contactId',         primary:true  },
+
+  // Отдел разработки
+  { from:'E_DEV',     to:'E_CONTACT', label:'contactId',         primary:false },
+  { from:'E_DEV',     to:'E_COMPANY', label:'companyId',         primary:false },
+
+  // Склад
+  { from:'E_STOCK',   to:'E_CAT',     label:'productId',         primary:true  },
+  { from:'E_STOCK',   to:'E_STORE',   label:'storeId',           primary:true  },
+];
+
+// ─── Вычислить центральные точки и рисовать стрелки ─────────────────────────
+function getCenter(el) {
+  const rect = el.getBoundingClientRect();
+  const canvasRect = document.getElementById('canvas').getBoundingClientRect();
+  return {
+    x: rect.left - canvasRect.left + rect.width / 2,
+    y: rect.top  - canvasRect.top  + rect.height / 2,
+    l: rect.left - canvasRect.left,
+    r: rect.right - canvasRect.left,
+    t: rect.top  - canvasRect.top,
+    b: rect.bottom - canvasRect.top,
+    w: rect.width,
+    h: rect.height,
+  };
+}
+
+function closestEdge(from, to) {
+  // Pick the edge of 'from' closest to 'to', return {x,y} exit point and entry point on 'to'
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  let sx, sy, ex, ey;
+
+  if (Math.abs(dx) > Math.abs(dy)) {
+    // horizontal
+    if (dx > 0) { sx = from.r; sy = from.y; ex = to.l; ey = to.y; }
+    else         { sx = from.l; sy = from.y; ex = to.r; ey = to.y; }
+  } else {
+    // vertical
+    if (dy > 0) { sx = from.x; sy = from.b; ex = to.x; ey = to.t; }
+    else         { sx = from.x; sy = from.t; ex = to.x; ey = to.b; }
+  }
+  return { sx, sy, ex, ey };
+}
+
+function drawArrows() {
+  const svg = document.getElementById('arrows');
+  svg.innerHTML = '';
+
+  // Arrow marker definitions
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  ['primary','secondary'].forEach(k => {
+    const color = k === 'primary' ? '#dc2626' : '#9ca3af';
+    const m = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+    m.setAttribute('id', `arrow-${k}`);
+    m.setAttribute('markerWidth', '8');
+    m.setAttribute('markerHeight', '8');
+    m.setAttribute('refX', '6');
+    m.setAttribute('refY', '3');
+    m.setAttribute('orient', 'auto');
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', 'M0,0 L0,6 L8,3 z');
+    p.setAttribute('fill', color);
+    m.appendChild(p);
+    defs.appendChild(m);
+  });
+  svg.appendChild(defs);
+
+  RELS.forEach(rel => {
+    const fromEl = document.getElementById(rel.from);
+    const toEl   = document.getElementById(rel.to);
+    if (!fromEl || !toEl) return;
+
+    const f = getCenter(fromEl);
+    const t = getCenter(toEl);
+    const { sx, sy, ex, ey } = closestEdge(f, t);
+
+    const color  = rel.primary ? '#dc2626' : '#9ca3af';
+    const dash   = rel.primary ? '' : '5,4';
+    const marker = rel.primary ? 'arrow-primary' : 'arrow-secondary';
+    const opacity = rel.primary ? 0.85 : 0.5;
+
+    // Cubic bezier control points
+    const dx = ex - sx, dy = ey - sy;
+    const cx1 = sx + dx * 0.4;
+    const cy1 = sy + dy * 0.1;
+    const cx2 = ex - dx * 0.4;
+    const cy2 = ey - dy * 0.1;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M${sx},${sy} C${cx1},${cy1} ${cx2},${cy2} ${ex},${ey}`);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width', rel.primary ? '1.8' : '1.2');
+    path.setAttribute('stroke-dasharray', dash);
+    path.setAttribute('marker-end', `url(#${marker})`);
+    path.setAttribute('opacity', opacity);
+    svg.appendChild(path);
+
+    // Label
+    if (rel.label) {
+      const mx = (sx + ex) / 2;
+      const my = (sy + ey) / 2;
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', mx - 2);
+      rect.setAttribute('y', my - 8);
+      rect.setAttribute('width', rel.label.length * 5.5 + 4);
+      rect.setAttribute('height', 12);
+      rect.setAttribute('fill', 'rgba(255,255,255,0.85)');
+      rect.setAttribute('rx', '3');
+      svg.appendChild(rect);
+
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', mx);
+      text.setAttribute('y', my);
+      text.setAttribute('font-size', '9');
+      text.setAttribute('fill', color);
+      text.setAttribute('font-family', 'monospace');
+      text.setAttribute('opacity', rel.primary ? '1' : '0.7');
+      text.textContent = rel.label;
+      svg.appendChild(text);
+    }
+  });
+}
+
+// Draw after layout
+window.addEventListener('load', () => {
+  setTimeout(drawArrows, 100);
+});
+window.addEventListener('resize', drawArrows);
+</script>
 
 </body>
 </html>
