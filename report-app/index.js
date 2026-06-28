@@ -13,7 +13,7 @@ app.use(
   basicAuth({
     users: { [process.env.REPORT_USER || 'admin']: process.env.REPORT_PASSWORD || 'change_me' },
     challenge: true,
-    realm: 'Потолкуем? Дашборд',
+    realm: 'Potolkuem Dashboard',
   })
 );
 
