@@ -252,35 +252,56 @@
 
 ## report-app — Дашборд выставок (июнь 2026)
 
-- **URL:** `http://db-talk.bobp.ru/report` (Basic Auth)
-- **Порт:** 3002 · **PM2:** `npx pm2 restart report-app`
-- **Директория:** `/root/projects/talk/report-app/`
-- **Логин/пароль:** из `.env` (REPORT_USER / REPORT_PASSWORD)
-- Данные из Б24 API в реальном времени, кеш 5 мин, кнопка «Обновить»
-- Секции: KPI, графики Chart.js, расходы со ссылками на карточки Б24, сделки, выходы, P&L
+✅ **Задеплоен и работает:** `https://db-talk.bobp.ru/report`
+
+### Инфраструктура
+
+- **Сервер:** `155.212.143.68` (продакшн, там же CardScanner, b24proxy)
+- **SSH:** `ssh -p 2222 root@155.212.143.68`
+- **Директория на сервере:** `/root/projects/talk-report/`
+- **Порт:** 3002 · **PM2:** `pm2 restart report-app`
+- **Nginx:** `/etc/nginx/sites-available/db-talk-bobp` (включён, SSL от certbot)
+- **SSL:** Let's Encrypt, истекает 2026-09-26, автообновление настроено
+
+### Доступ
+
+- **URL:** `https://db-talk.bobp.ru/report`
+- **Логин:** `admin`
+- **Пароль:** `JGBDG7lVRqTjeTkg` (в `/root/projects/talk-report/.env`)
+
+### Исходники
+
+Код хранится в репозитории `/root/projects/talk` (текущая машина `46.173.20.187`).
+При изменениях — копировать на продакшн:
+```bash
+scp -P 2222 report-app/index.js report-app/b24.js report-app/render.js \
+    root@155.212.143.68:/root/projects/talk-report/
+ssh -p 2222 root@155.212.143.68 'pm2 restart report-app'
+```
 
 | Файл | Назначение |
 |---|---|
 | `report-app/index.js` | Express + Basic Auth + маршруты |
-| `report-app/b24.js` | Клиент Б24 API + in-memory кеш |
-| `report-app/render.js` | Генератор HTML дашборда |
-| `report-app/.env` | PORT, REPORT_USER, REPORT_PASSWORD, B24_WEBHOOK |
+| `report-app/b24.js` | Клиент Б24 API + in-memory кеш 5 мин |
+| `report-app/render.js` | Генератор HTML: KPI, Chart.js, расходы со ссылками на Б24, сделки, P&L |
+| `report-app/.env` | PORT=3002, REPORT_USER, REPORT_PASSWORD, B24_WEBHOOK |
 
-### ⚠️ SSL не выпущен — важно понять архитектуру сети
+### Функционал
 
-**Реальный IP VPS:** `46.173.20.187` (на интерфейсе eth0)
-**Floating/NAT IP:** `155.212.143.68` (DNS для всех *.bobp.ru)
+- Список выставок в dropdown (из СП Выставки, entityTypeId=1048)
+- Переключение между выставками → данные меняются
+- KPI: выручка, расходы, P&L, сделок, ведущих
+- Графики Chart.js: выручка по ведущим (bar), структура расходов (doughnut), выручка по дням (bar)
+- Таблица расходов со ссылками на карточки Б24 (`/crm/type/1070/details/{id}/`)
+- Таблица сделок по ведущим
+- Таблица выходов ведущих
+- Кнопка «Обновить данные» — сбрасывает кеш, тянет данные заново
 
-Когда Let's Encrypt (или любой внешний клиент) обращается к `db-talk.bobp.ru`:
-- DNS → `155.212.143.68` → Beget NAT → `46.173.20.187` → наш nginx ✅
+### Важные грабли
 
-Когда certbot пытался верифицировать HTTP-01 challenge — Let's Encrypt получал 404.
-**Причина неизвестна** (запросы не доходили до nginx-лога). Возможные решения:
-1. Изменить DNS `db-talk.bobp.ru` → `46.173.20.187` (прямой IP, без Beget NAT)
-2. Использовать DNS-01 challenge через API adminvps.ru
-3. Разобраться с Beget панелью: может требоваться регистрация домена в панели
-
-**Nginx конфиг:** `/etc/nginx/sites-available/db-talk-bobp` (уже создан, включён)
+- `realm` в express-basic-auth должен быть ASCII — кириллица вызывает ERR_INVALID_CHAR
+- Этот репозиторий (`46.173.20.187`) и продакшн-сервер (`155.212.143.68`) — **разные машины**
+- certbot нужно запускать именно на `155.212.143.68`
 
 ---
 
