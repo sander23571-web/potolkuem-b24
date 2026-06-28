@@ -250,6 +250,38 @@
 - Node.js/Express, `GET /consent?cid=X&src=source`
 - Записывает согласие в СП Согласия (1068), rate limit 10/min
 
+## report-app — Дашборд выставок (июнь 2026)
+
+- **URL:** `http://db-talk.bobp.ru/report` (Basic Auth)
+- **Порт:** 3002 · **PM2:** `npx pm2 restart report-app`
+- **Директория:** `/root/projects/talk/report-app/`
+- **Логин/пароль:** из `.env` (REPORT_USER / REPORT_PASSWORD)
+- Данные из Б24 API в реальном времени, кеш 5 мин, кнопка «Обновить»
+- Секции: KPI, графики Chart.js, расходы со ссылками на карточки Б24, сделки, выходы, P&L
+
+| Файл | Назначение |
+|---|---|
+| `report-app/index.js` | Express + Basic Auth + маршруты |
+| `report-app/b24.js` | Клиент Б24 API + in-memory кеш |
+| `report-app/render.js` | Генератор HTML дашборда |
+| `report-app/.env` | PORT, REPORT_USER, REPORT_PASSWORD, B24_WEBHOOK |
+
+### ⚠️ SSL не выпущен — важно понять архитектуру сети
+
+**Реальный IP VPS:** `46.173.20.187` (на интерфейсе eth0)
+**Floating/NAT IP:** `155.212.143.68` (DNS для всех *.bobp.ru)
+
+Когда Let's Encrypt (или любой внешний клиент) обращается к `db-talk.bobp.ru`:
+- DNS → `155.212.143.68` → Beget NAT → `46.173.20.187` → наш nginx ✅
+
+Когда certbot пытался верифицировать HTTP-01 challenge — Let's Encrypt получал 404.
+**Причина неизвестна** (запросы не доходили до nginx-лога). Возможные решения:
+1. Изменить DNS `db-talk.bobp.ru` → `46.173.20.187` (прямой IP, без Beget NAT)
+2. Использовать DNS-01 challenge через API adminvps.ru
+3. Разобраться с Beget панелью: может требоваться регистрация домена в панели
+
+**Nginx конфиг:** `/etc/nginx/sites-available/db-talk-bobp` (уже создан, включён)
+
 ---
 
 ## GOTOVO 2026 — импорт (июнь 2026)
