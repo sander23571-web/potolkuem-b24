@@ -1,8 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const basicAuth = require('express-basic-auth');
-const { fetchExhibitionData, fetchExhibitionList, cacheInvalidate } = require('./b24');
-const { renderDashboard } = require('./render');
+const { fetchExhibitionData, fetchExhibitionList, cacheInvalidate, fetchAllSummaries } = require('./b24');
+const { renderDashboard, renderComparison } = require('./render');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -35,6 +35,18 @@ app.get('/report', async (req, res) => {
   } catch (err) {
     console.error('[ERR] /report:', err.message);
     res.status(500).send('Ошибка подключения к Bitrix24: ' + err.message);
+  }
+});
+
+// Comparison page — must be before /report/:id to avoid matching 'compare' as id
+app.get('/report/compare', async (req, res) => {
+  try {
+    const { exhibitions, summaries } = await fetchAllSummaries();
+    const html = renderComparison(exhibitions, summaries);
+    res.send(html);
+  } catch (err) {
+    console.error('[ERR] /report/compare:', err.message);
+    res.status(500).send('Ошибка загрузки данных: ' + err.message);
   }
 });
 

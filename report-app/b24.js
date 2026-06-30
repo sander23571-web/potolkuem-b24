@@ -109,14 +109,26 @@ async function fetchExhibitionData(id) {
   const hostMap = Object.fromEntries(hosts.map(h => [String(h.id), h.title]));
 
   // 6. Deals — two queries in parallel
-  // a) deals linked to exhibition via PARENT_ID_1048 (employee/Anna deals)
+  // a) deals linked to exhibition via PARENT_ID_1048
+  //    (работает если при создании сделки был вызван crm.deal.update с uppercase-ключом)
   // b) deals linked to external hosts via PARENT_ID_1052
+  //    фильтруем по датам выставки чтобы не тащить сделки других выставок
   const dealSelect = ['ID', 'TITLE', 'OPPORTUNITY', 'CONTACT_ID', 'PARENT_ID_1052', 'CLOSEDATE'];
+
+  // Даты выставки для фильтра сделок ведущих
+  const exhBegin = exhibition.begindate ? exhibition.begindate.slice(0, 10) : null;
+  const exhEnd   = (exhibition.closedate || exhibition.begindate)
+    ? (exhibition.closedate || exhibition.begindate).slice(0, 10)
+    : null;
+
+  const hostDealFilter = { PARENT_ID_1052: hostIds, CATEGORY_ID: 18 };
+  if (exhBegin) hostDealFilter['>=CLOSEDATE'] = exhBegin;
+  if (exhEnd)   hostDealFilter['<=CLOSEDATE'] = exhEnd;
 
   const [dealsExh, dealsHosts] = await Promise.all([
     fetchAllDeals({ PARENT_ID_1048: id, CATEGORY_ID: 18 }, dealSelect),
     hostIds.length > 0
-      ? fetchAllDeals({ PARENT_ID_1052: hostIds, CATEGORY_ID: 18 }, dealSelect)
+      ? fetchAllDeals(hostDealFilter, dealSelect)
       : Promise.resolve([]),
   ]);
 
@@ -150,4 +162,45 @@ async function fetchExhibitionList() {
   );
 }
 
-module.exports = { fetchExhibitionData, fetchExhibitionList, cacheInvalidate };
+// ── Lightweight summary for comparison page ───────────────────────────────────
+async function fetchExhibitionSummary(id) {
+  // Reuse full cache if available
+  const full = cacheGet(id);
+  if (full) {
+    return {
+      revenue:   full.deals.reduce((s, d) => s + parseFloat(d.OPPORTUNITY || 0), 0),
+      expenses:  full.expenses.reduce((s, e) => s + parseFloat(e.ufCrm24Amount || 0), 0),
+      dealCount: full.deals.length,
+    };
+  }
+  // Light fetch (только выручка через прямую связь с выставкой + расходы)
+  const summaryKey = 'sum_' + id;
+  const cached = cacheGet(summaryKey);
+  if (cached) return cached;
+
+  const [expensesRaw, dealsRaw] = await Promise.all([
+    fetchAllItems(1070, { parentId1048: id }, ['ufCrm24Amount']),
+    fetchAllDeals({ PARENT_ID_1048: id, CATEGORY_ID: 18 }, ['OPPORTUNITY']),
+  ]);
+  const summary = {
+    revenue:   dealsRaw.reduce((s, d) => s + parseFloat(d.OPPORTUNITY || 0), 0),
+    expenses:  expensesRaw.reduce((s, e) => s + parseFloat(e.ufCrm24Amount || 0), 0),
+    dealCount: dealsRaw.length,
+  };
+  cacheSet(summaryKey, summary);
+  return summary;
+}
+
+// ── Summaries for all exhibitions (parallel) ──────────────────────────────────
+async function fetchAllSummaries() {
+  const exhibitions = await fetchExhibitionList();
+  const pairs = await Promise.all(
+    exhibitions.map(async e => [e.id, await fetchExhibitionSummary(e.id)])
+  );
+  return {
+    exhibitions,
+    summaries: Object.fromEntries(pairs),
+  };
+}
+
+module.exports = { fetchExhibitionData, fetchExhibitionList, cacheInvalidate, fetchAllSummaries };
