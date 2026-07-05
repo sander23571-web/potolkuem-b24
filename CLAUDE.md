@@ -12,7 +12,7 @@
 
 **Портал:** `potolkuem.bitrix24.ru` · тариф «Профессиональный»
 **Вебхук:** `https://potolkuem.bitrix24.ru/rest/134/gj6y27ehe0f42jeb/`
-**Период работ:** апрель — июнь 2026
+**Период работ:** апрель — июль 2026
 
 ---
 
@@ -281,10 +281,17 @@ ssh -p 2222 root@155.212.143.68 'pm2 restart report-app'
 
 | Файл | Назначение |
 |---|---|
-| `report-app/index.js` | Express + Basic Auth + маршруты |
+| `report-app/index.js` | Express + Basic Auth + маршруты (+ /social, /tasks, /tasks/member/:id) |
 | `report-app/b24.js` | Клиент Б24 API + in-memory кеш 5 мин |
 | `report-app/render.js` | Генератор HTML: KPI, Chart.js, расходы со ссылками на Б24, сделки, P&L |
+| `report-app/livedune.js` | LiveDune API: fetchSocialData, fetchAccounts, fetchHistory; кеш 30 мин |
+| `report-app/render-social.js` | HTML-дашборд соцсетей: KPI-карточки, графики подписчиков, период 7/14/30/60/90 дн |
+| `report-app/tasks-b24.js` | Задачи из Б24: активные + просроченные + зависшие 14+ дн + без дедлайна |
+| `report-app/tasks-render.js` | HTML-дашборд задач: командный обзор + детальный разбор по сотруднику |
 | `report-app/.env` | PORT=3002, REPORT_USER, REPORT_PASSWORD, B24_WEBHOOK |
+
+⚠️ **Новые файлы (livedune.js, render-social.js, tasks-b24.js, tasks-render.js) ещё не задеплоены на 155.212.143.68**
+Деплой: `scp -P 2222 report-app/index.js report-app/livedune.js report-app/render-social.js report-app/tasks-b24.js report-app/tasks-render.js report-app/render.js root@155.212.143.68:/root/projects/talk-report/ && ssh -p 2222 root@155.212.143.68 'pm2 restart report-app'`
 
 ### Функционал (актуально на 30.06.2026)
 
@@ -379,13 +386,47 @@ Polling через cron раз в минуту (`tasks.task.list` за посл�
 
 ## Маркетинговая аналитика — архитектура (июль 2026, в работе)
 
-**Статус:** ожидаем данных от маркетолога
+**Статус:** данные от маркетолога не получены (файл пустой); Яндекс.Директ API работает; VK токен невалидный
 
 **Файлы:**
 | Файл | Содержание |
 |---|---|
 | `analytics/Пример отчета.xlsx` | Образец маркетингового отчёта (еженедельные задачи + бюджет) |
-| `analytics/запрос данных.xlsx` | Запрос данных от маркетолога (отправлен 01.07.2026) |
+| `analytics/запрос данных.xlsx` | Запрос данных от маркетолога (отправлен 01.07.2026) — **ПУСТОЙ** |
+| `analytics/запрос-маркетологу-v2.xlsx` | Обновлённый запрос данных (июль 2026) |
+| `analytics/запрос-маркетологу.xlsx` | Первый вариант запроса |
+| `analytics/marketing-audit-2026-07.md` | **Маркетинговый аудит** — полный анализ за май 2025–июль 2026 |
+| `analytics/marketing-audit-2026-07.docx` | То же в формате DOCX для передачи клиенту |
+| `analytics/dialekty-souvenir-channels.md` | Исследование: каналы распространения «Диалектов» в региональных сувенирных магазинах |
+
+**Ключевые выводы аудита (marketing-audit-2026-07.md):**
+- Суммарные расходы за период: ~3 238 000 ₽ (Директ + VK + TG + посевы)
+- Единственные работающие каналы: `klassika_master-auto` CPO 29 ₽, `dialekti_master-auto` CPO 33 ₽, `ng-rolik_rsya` CPO 24 ₽
+- 391 лид в CRM — **все** с корпоративных event-агрегаторов, ни одного из таргета/посевов
+- Настолку покупает «организатор ситуации», а не «любитель темы» — ошибка таргетинга по интересам
+- Гипотеза «игра для интровертов» — нерабочая: покупатель экстраверт-организатор
+
+**API статусы (на 05.07.2026):**
+| Сервис | Статус | Где токен |
+|--------|--------|-----------|
+| Яндекс.Директ | ✅ Работает, 42 кампании видны | `/root/projects/talk-report/yandex-direct.env` на 155.212.143.68 |
+| Яндекс OAuth | ✅ Токен сохранён | `/root/projects/talk-report/yandex-oauth.env` |
+| VK Ads | ❌ Токен невалидный | `/root/projects/talk-report/vk.env` — нужно перепросить у маркетолога |
+| LiveDune | ⏳ API-ключ не получен | — |
+
+**Яндекс.Директ API — паттерн запроса:**
+```bash
+# Reports API v5 — POST, возвращает TSV
+curl -X POST "https://api.direct.yandex.com/json/v5/reports" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Client-Login: potolkuem" \
+  -H "processingMode: auto" \
+  -H "returnMoneyInMicros: false" \
+  -H "skipReportHeader: true" \
+  -H "skipColumnHeader: false" \
+  -d '{"params": {"SelectionCriteria": {}, "FieldNames": ["CampaignName","Impressions","Clicks","Cost","Conversions"], "ReportType": "CAMPAIGN_PERFORMANCE_REPORT", "DateRangeType": "LAST_30_DAYS", "Format": "TSV", "IncludeVAT": "NO"}}'
+# Если 201 — данные готовятся, повторить запрос через 5–8 сек с тем же reportName
+```
 
 **Согласованная архитектура Б24:**
 
@@ -410,8 +451,8 @@ Polling через cron раз в минуту (`tasks.task.list` за посл�
 | Канал | Способ | Статус |
 |---|---|---|
 | LiveDune | API (все тарифы, ~3300 ₽/мес = Business, 10к запросов) | Ждём API-ключ |
-| VK Реклама | B24 BI Конструктор (нативно) + VK API | Ждём токен |
-| Яндекс.Директ | API v5 (OAuth2) | Ждём токен |
+| VK Реклама | B24 BI Конструктор (нативно) + VK API | Токен невалидный — переспросить |
+| Яндекс.Директ | API v5 (OAuth2) | ✅ Работает |
 | Яндекс.Метрика | B24 BI Конструктор (нативно) | Ждём ID счётчика |
 | Telegram Ads | Нет API → ручной ввод | — |
 | Посевы, Блоги, Сервисы | Ручной ввод маркетолога (до 5-го числа месяца) | — |
@@ -421,6 +462,23 @@ Polling через cron раз в минуту (`tasks.task.list` за посл�
 - Cron-скрипты для записи статистики
 - Дашборд /report/marketing
 - Гипотезы/A-B тесты: шаблон задачи с requireResult (концепция согласована)
+
+---
+
+## Серия «Диалекты» — региональные каналы сбыта (июль 2026)
+
+5 версий игры: Юг, Дальний Восток, Сибирь, Поморье, Урал. Формат 7.5×4×11 см, 280 г, ~1 300 ₽.
+
+**Идея:** продавать как сувенир в точках регионального туризма (не на маркетплейсах).
+
+**Приоритетные контакты:**
+- **Якорь** (Владивосток, yakor.store) — флагман местного сувенира ДВ
+- **Байкал Продукт** (baikpro.ru, Иркутск) — уже продаёт региональную игру «Прогулка по Иркутску»
+- **Сделано в Хабаровском крае** (sdelanovkhv.ru) — государственный бренд, 140 партнёров, есть московский флагман
+- **Поморские штучки** (Архангельск, Троицкий 37) — главный сувенирный магазин Поморья
+- **ЭтноСибирь** (Новосибирск, Красный пр. 29) — специализация на сибирских сувенирах
+
+Полное исследование: `analytics/dialekty-souvenir-channels.md`
 
 ---
 

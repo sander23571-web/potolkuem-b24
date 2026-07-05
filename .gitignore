@@ -1,3 +1,10 @@
 .env
 .env.local
 .env*.local
+node_modules/
+*.~lock.*
+Снимок*
+VK_Potolkuem
+*.xlsx
+*.docx
+*.png

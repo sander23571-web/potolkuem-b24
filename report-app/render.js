@@ -146,14 +146,23 @@ function renderDashboard(data, allExhibitions, currentId) {
   }
   const hostRevEntries = Object.entries(revenueByHost).sort((a, b) => b[1].amount - a[1].amount);
 
-  // Revenue by date
+  // Revenue by date — только если даты попадают в период выставки
+  const exhBeginStr  = exhibition.begindate ? exhibition.begindate.slice(0, 10) : null;
+  const exhCloseStr  = (exhibition.closedate || exhibition.begindate)
+    ? (exhibition.closedate || exhibition.begindate).slice(0, 10) : null;
+
   const revenueByDate = {};
   for (const d of deals) {
     const dt = d.CLOSEDATE ? d.CLOSEDATE.slice(0, 10) : 'unknown';
     revenueByDate[dt] = (revenueByDate[dt] || 0) + parseFloat(d.OPPORTUNITY || 0);
   }
   const dayEntries = Object.entries(revenueByDate)
-    .filter(([k]) => k !== 'unknown')
+    .filter(([k]) => {
+      if (k === 'unknown') return false;
+      // Показываем только даты внутри периода выставки
+      if (!exhBeginStr) return true;
+      return k >= exhBeginStr && k <= (exhCloseStr || exhBeginStr);
+    })
     .sort(([a], [b]) => a.localeCompare(b));
 
   // Shifts by date
@@ -190,8 +199,38 @@ function renderDashboard(data, allExhibitions, currentId) {
   const expenseChartColors = JSON.stringify(expensesSorted.map((_, i) => PALETTE[i % PALETTE.length]));
   const expenseChartIds    = JSON.stringify(expensesSorted.map(e => e.id));
 
-  const dayChartLabels = JSON.stringify(dayEntries.map(([dt]) => fmtShortDate(dt)));
-  const dayChartData   = JSON.stringify(dayEntries.map(([, v]) => Math.round(v)));
+  // Выручка по дням — расчётная:
+  // CLOSEDATE сделок = дата импорта, не продажи. Поэтому распределяем выручку
+  // каждого ведущего равномерно по его выходам (begindate из Выходов ведущего).
+  const shiftDayKeys = Object.keys(shiftsByDate).filter(k => k !== 'unknown').sort();
+
+  // Карта: hid → массив дат выходов
+  const hostShiftDates = {};
+  for (const dt of shiftDayKeys) {
+    for (const s of shiftsByDate[dt]) {
+      const hid = s.parentId1052 ? String(s.parentId1052) : null;
+      if (!hid) continue;
+      if (!hostShiftDates[hid]) hostShiftDates[hid] = [];
+      hostShiftDates[hid].push(dt);
+    }
+  }
+
+  // Распределяем выручку ведущих по дням
+  const revenueByDayCalc = {};
+  for (const dt of shiftDayKeys) revenueByDayCalc[dt] = 0;
+  for (const [hid, revInfo] of hostRevEntries) {
+    if (hid === '__employee__') continue;
+    const dates = hostShiftDates[hid];
+    if (!dates || !dates.length) continue;
+    const perDay = revInfo.amount / dates.length;
+    for (const dt of dates) {
+      revenueByDayCalc[dt] = (revenueByDayCalc[dt] || 0) + perDay;
+    }
+  }
+
+  const dayChartLabels  = JSON.stringify(shiftDayKeys.map(dt => fmtShortDate(dt)));
+  const dayChartData    = JSON.stringify(shiftDayKeys.map(dt => Math.round(revenueByDayCalc[dt] || 0)));
+  const shiftsChartData = JSON.stringify(shiftDayKeys.map(dt => shiftsByDate[dt].length));
 
   // ── P&L bars ─────────────────────────────────────────────────────────────────
   const maxAmount = Math.max(totalRevenue, totalExpenses, 1);
@@ -328,10 +367,14 @@ function renderDashboard(data, allExhibitions, currentId) {
         <canvas id="expenseChart" height="220"></canvas>
       </div>
     </div>
-    <div style="margin-top:24px">
+    <div class="two-col" style="margin-top:24px">
       <div class="chart-card">
-        <h3>Выручка по дням</h3>
-        <canvas id="dayChart" height="120"></canvas>
+        <h3>Выручка по дням <span class="chart-hint">(расчётная — равномерно по выходам)</span></h3>
+        <canvas id="dayChart" height="160"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Выходы ведущих по дням</h3>
+        <canvas id="shiftsChart" height="160"></canvas>
       </div>
     </div>
   </div>
@@ -387,6 +430,11 @@ function renderDashboard(data, allExhibitions, currentId) {
   <!-- DEALS TABLE -->
   <div class="section">
     <div class="section-title">Сделки${deals.length > 100 ? ' (первые 100)' : ''}</div>
+    <div style="margin-bottom:14px;font-size:13px;color:var(--muted)">
+      Итого выручка по сделкам:
+      <strong style="font-size:17px;color:var(--green);margin-left:6px">+ ${fmt(totalRevenue)} руб.</strong>
+      <span style="margin-left:12px">${deals.length} сделок</span>
+    </div>
     <table class="data-table">
       <thead>
         <tr>
@@ -399,6 +447,14 @@ function renderDashboard(data, allExhibitions, currentId) {
       <tbody>
         ${dealRows}
       </tbody>
+      <tfoot>
+        <tr>
+          <td><strong>Итого</strong></td>
+          <td class="num" style="color:var(--green)"><strong>+ ${fmt(totalRevenue)}</strong></td>
+          <td><strong>${deals.length} сделок</strong></td>
+          <td></td>
+        </tr>
+      </tfoot>
     </table>
   </div>
 
@@ -468,7 +524,7 @@ new Chart(document.getElementById('expenseChart'), {
   }
 });
 
-// Chart 3 — Выручка по дням
+// Chart 3 — Выручка по дням (расчётная)
 new Chart(document.getElementById('dayChart'), {
   type: 'bar',
   data: {
@@ -484,6 +540,26 @@ new Chart(document.getElementById('dayChart'), {
     scales: {
       x: { grid: { display: false }, ticks: { font: { size: 12 } } },
       y: { grid: { color: '#ece8f8' }, ticks: { callback: v => (v/1000).toFixed(0)+'k', font: { size: 11 } } }
+    }
+  }
+});
+
+// Chart 4 — Выходы ведущих по дням
+new Chart(document.getElementById('shiftsChart'), {
+  type: 'bar',
+  data: {
+    labels: ${dayChartLabels},
+    datasets: [{ data: ${shiftsChartData}, backgroundColor: P[0], borderRadius: 3 }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ' ' + ctx.raw + ' ' + (ctx.raw === 1 ? 'выход' : 'выхода') } }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 12 } } },
+      y: { grid: { color: '#ece8f8' }, ticks: { precision: 0, font: { size: 11 } } }
     }
   }
 });

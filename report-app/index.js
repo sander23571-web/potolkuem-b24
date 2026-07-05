@@ -3,19 +3,23 @@ const express = require('express');
 const basicAuth = require('express-basic-auth');
 const { fetchExhibitionData, fetchExhibitionList, cacheInvalidate, fetchAllSummaries } = require('./b24');
 const { renderDashboard, renderComparison } = require('./render');
+const { fetchSocialData, invalidate: socialInvalidate } = require('./livedune');
+const { renderSocial } = require('./render-social');
+const { fetchTasksData, cacheInvalidateTasks } = require('./tasks-b24');
+const { renderTasksDashboard, renderMemberDetail } = require('./tasks-render');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
 
 // ── Basic Auth ────────────────────────────────────────────────────────────────
-app.use(
-  '/report',
-  basicAuth({
-    users: { [process.env.REPORT_USER || 'admin']: process.env.REPORT_PASSWORD || 'change_me' },
-    challenge: true,
-    realm: 'Potolkuem Dashboard',
-  })
-);
+const authMiddleware = basicAuth({
+  users: { [process.env.REPORT_USER || 'admin']: process.env.REPORT_PASSWORD || 'change_me' },
+  challenge: true,
+  realm: 'Potolkuem Dashboard',
+});
+
+app.use('/report', authMiddleware);
+app.use('/tasks',  authMiddleware);
 
 // ── POST body parsing (for refresh) ──────────────────────────────────────────
 app.use(express.urlencoded({ extended: false }));
@@ -74,6 +78,61 @@ app.post('/report/:id/refresh', (req, res) => {
   if (!id) return res.status(400).send('Некорректный ID');
   cacheInvalidate(id);
   res.redirect(`/report/${id}`);
+});
+
+// ── Tasks dashboard ───────────────────────────────────────────────────────────
+
+app.get('/tasks', async (req, res) => {
+  try {
+    const data = await fetchTasksData();
+    res.send(renderTasksDashboard(data));
+  } catch (err) {
+    console.error('[ERR] /tasks:', err.message);
+    res.status(500).send('Ошибка загрузки данных задач: ' + err.message);
+  }
+});
+
+app.get('/tasks/member/:userId', async (req, res) => {
+  const userId = req.params.userId;
+  try {
+    const data = await fetchTasksData();
+    res.send(renderMemberDetail(data, userId));
+  } catch (err) {
+    console.error(`[ERR] /tasks/member/${userId}:`, err.message);
+    res.status(500).send('Ошибка загрузки данных: ' + err.message);
+  }
+});
+
+app.post('/tasks/refresh', (req, res) => {
+  cacheInvalidateTasks();
+  res.redirect('/tasks');
+});
+
+// ── SMM Dashboard ─────────────────────────────────────────────────────────────
+app.use(
+  '/social',
+  basicAuth({
+    users: { [process.env.REPORT_USER || 'admin']: process.env.REPORT_PASSWORD || 'change_me' },
+    challenge: true,
+    realm: 'Potolkuem Dashboard',
+  })
+);
+
+app.get('/social', async (req, res) => {
+  try {
+    const days = Math.min(365, Math.max(7, parseInt(req.query.days, 10) || 30));
+    const data = await fetchSocialData(days);
+    res.send(renderSocial(data));
+  } catch (err) {
+    console.error('[ERR] /social:', err.message);
+    res.status(500).send('Ошибка загрузки данных LiveDune: ' + err.message);
+  }
+});
+
+app.post('/social/refresh', (req, res) => {
+  const days = Math.min(365, Math.max(7, parseInt(req.body.days, 10) || 30));
+  socialInvalidate();
+  res.redirect(`/social?days=${days}`);
 });
 
 // ── Healthcheck ───────────────────────────────────────────────────────────────
