@@ -435,7 +435,7 @@ Polling через cron раз в минуту (`tasks.task.list` за посл�
 | Яндекс.Директ | ✅ Работает, 42 кампании видны | `/root/projects/talk-report/yandex-direct.env` на 155.212.143.68 |
 | Яндекс OAuth | ✅ Токен сохранён | `/root/projects/talk-report/yandex-oauth.env` |
 | VK Ads | ❌ Токен невалидный | `/root/projects/talk-report/vk.env` — нужно перепросить у маркетолога |
-| LiveDune | ⏳ API-ключ не получен | — |
+| LiveDune | ✅ API-ключ получен | На сервере: `/root/projects/talk-report/.env` → `LIVEDUNE_API_KEY` |
 
 **Яндекс.Директ API — паттерн запроса:**
 ```bash
@@ -473,7 +473,7 @@ curl -X POST "https://api.direct.yandex.com/json/v5/reports" \
 **Интеграции:**
 | Канал | Способ | Статус |
 |---|---|---|
-| LiveDune | API (все тарифы, ~3300 ₽/мес = Business, 10к запросов) | Ждём API-ключ |
+| LiveDune | API (все тарифы, ~3300 ₽/мес = Business, 10к запросов) | ✅ Ключ получен, на сервере |
 | VK Реклама | B24 BI Конструктор (нативно) + VK API | Токен невалидный — переспросить |
 | Яндекс.Директ | API v5 (OAuth2) | ✅ Работает |
 | Яндекс.Метрика | B24 BI Конструктор (нативно) | Ждём ID счётчика |
