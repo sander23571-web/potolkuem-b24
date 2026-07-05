@@ -933,6 +933,10 @@ POST /crm.product.add
 | 578 | UF_CRM_24_QTY | double | Количество |
 | 580 | UF_CRM_24_PRICE_UNIT | double | Цена за единицу, руб. |
 | 582 | UF_CRM_24_AMOUNT | double | Сумма, руб. |
+| 610 | UF_CRM_24_DOCS | file (multiple) | Подтверждающий документ |
+
+> ⚠️ Поле 608 (UF_CRM_24_1782188083520, single-file) удалено — заменено полем 610 (multiple).
+> Создать через API не получалось пока не добавили полный префикс в fieldName (см. п.11 «Важных находок»).
 
 **Значения EXPENSE_TYPE:**
 - Аренда стенда
@@ -974,6 +978,29 @@ POST /crm.product.add
 - `PARENT_ID_1052` (uppercase) — работает в `crm.deal.update` для привязки к Ведущим
 - `parentId1052` (camelCase) — **НЕ работает** в `crm.deal.add` (молча игнорируется)
 - `CATEGORY_ID` в `crm.deal.update` — **НЕ работает** (возвращает true, но воронку не меняет)
+
+11. **⚠️ `fieldName` в `userfieldconfig.add` — обязателен полный префикс**
+
+   Ошибка `{"error": "0", "error_description": "Некорректный код поля"}` возникает когда
+   `fieldName` задан без полного префикса `UF_CRM_{typeId}_`.
+
+   ```
+   ❌ fieldName = "DOCS"                   → Некорректный код поля
+   ❌ fieldName = "TEST_STRING"            → Некорректный код поля
+   ❌ fieldName = "UF_CRM_1070_DOCS"      → неверно: 1070 это entityTypeId, не typeId!
+   ✅ fieldName = "UF_CRM_24_DOCS"        → ок: 24 это typeId из crm.type.list
+   ```
+
+   Обе составляющие (`entityId` и `fieldName`) должны использовать **typeId**, а не entityTypeId.
+   Ошибка `"error": "0"` (не `"error_description": ""`) — нестандартный формат ответа Битрикс для этой ошибки.
+
+12. **⚠️ Флаг `multiple` у UF-поля нельзя изменить после создания**
+
+   `userfieldconfig.update` с `multiple: "Y"` возвращает успешный ответ, но поле остаётся с `multiple: "N"` — значение игнорируется. Это ограничение платформы.
+
+   **Решение:** удалить поле (`userfieldconfig.delete {"id": XXX}`) и создать заново с нужным флагом.
+
+   > При воссоздании не забудь полный префикс в `fieldName` (см. п.11).
 
 ---
 
