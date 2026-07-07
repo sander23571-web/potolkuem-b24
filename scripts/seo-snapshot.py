@@ -20,8 +20,9 @@ import urllib.error
 
 # ── Конфигурация ──────────────────────────────────────────────────────────────
 
-OAUTH_TOKEN   = os.environ.get('YANDEX_OAUTH_TOKEN', '')   # Метрика + Вебмастер
-DIRECT_TOKEN  = os.environ.get('YANDEX_DIRECT_TOKEN', '')  # Директ (Wordstat)
+OAUTH_TOKEN   = os.environ.get('YANDEX_OAUTH_TOKEN', '')     # Метрика + Вебмастер
+AI_STUDIO_KEY = os.environ.get('YA_AI_STUDIO_API_KEY', '')  # Search API v2 (Wordstat)
+FOLDER_ID     = os.environ.get('YA_FOLDER_ID', '')          # Яндекс Облако folder_id
 DATA_DIR      = '/root/projects/talk-report/data/seo'
 
 # Вебмастер
@@ -178,40 +179,33 @@ def fetch_metrica():
 
 # ── 3. Wordstat ───────────────────────────────────────────────────────────────
 
-# Последние известные значения (из кешированных запросов 07.07.2026).
-# Wordstat v4 требует специального OAuth-токена с правами Директа;
-# при изменении токена — раскомментировать live-вызов ниже.
-WORDSTAT_CACHE_DATE = '2026-07-07'
-WORDSTAT_CACHE = {
-    'потолкуем':                     491,
-    'имаджинариум':               32295,
-    'бункер настольная игра':     13716,
-    'элиас настольная игра':        233,
-    'настольная игра для взрослых': 5663,
-    'настольные игры':            741105,
-    'настольная игра':            741107,
-    'настолки':                    58484,
-    'купить настольную игру':      39354,
-    'мафия настольная игра':        3077,
-}
-
-# Константа для рабочего Wordstat-токена (если будет доступен отдельный Direct-аккаунт)
-# WORDSTAT_TOKEN = os.environ.get('WORDSTAT_TOKEN', DIRECT_TOKEN)
-
 def fetch_wordstat():
     """
-    Возвращает Wordstat данные.
-    Пока Direct API v4 недоступен для этого токена — возвращает кешированные
-    значения с меткой даты, когда они были получены.
+    Спрос по брендовым и конкурентным запросам.
+    Яндекс Search API v2 (AI Studio) — не привязан к Direct-аккаунту.
+    Endpoint: POST https://searchapi.api.cloud.yandex.net/v2/wordstat/topRequests
+    Auth: Api-Key (AI Studio)
     """
-    # TODO: когда токен будет исправлен — раскомментировать live-вызов.
-    # Текущий токен возвращает error_code 53 (Authorization error) на Wordstat.
-    return {
-        '_source':    'cache',
-        '_cache_date': WORDSTAT_CACHE_DATE,
-        '_note':      'Wordstat API error 53 — используются кешированные данные; обновить при смене токена',
-        **WORDSTAT_CACHE,
-    }
+    url = 'https://searchapi.api.cloud.yandex.net/v2/wordstat/topRequests'
+
+    results = {}
+    for phrase in WORDSTAT_PHRASES:
+        body = json.dumps({
+            'folderId':   FOLDER_ID,
+            'phrase':     phrase,
+            'numPhrases': 1,  # нам нужен только totalCount
+        }).encode('utf-8')
+        req = urllib.request.Request(url, data=body)
+        req.add_header('Authorization', 'Api-Key ' + AI_STUDIO_KEY)
+        req.add_header('Content-Type', 'application/json')
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                d = json.loads(r.read())
+                results[phrase] = int(d.get('totalCount', 0))
+        except Exception as e:
+            results[phrase] = f'error: {e}'
+
+    return {'_source': 'live', **results}
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
