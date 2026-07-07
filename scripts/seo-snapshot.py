@@ -179,33 +179,58 @@ def fetch_metrica():
 
 # ── 3. Wordstat ───────────────────────────────────────────────────────────────
 
+def _ws_request(endpoint, payload):
+    """Выполняет запрос к Yandex Search API v2 Wordstat."""
+    url  = f'https://searchapi.api.cloud.yandex.net/v2/wordstat/{endpoint}'
+    body = json.dumps({**payload, 'folderId': FOLDER_ID}).encode('utf-8')
+    req  = urllib.request.Request(url, data=body)
+    req.add_header('Authorization', 'Api-Key ' + AI_STUDIO_KEY)
+    req.add_header('Content-Type', 'application/json')
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.loads(r.read())
+
+
 def fetch_wordstat():
     """
-    Спрос по брендовым и конкурентным запросам.
+    Спрос по брендовым и конкурентным запросам + история за 18 месяцев.
     Яндекс Search API v2 (AI Studio) — не привязан к Direct-аккаунту.
-    Endpoint: POST https://searchapi.api.cloud.yandex.net/v2/wordstat/topRequests
-    Auth: Api-Key (AI Studio)
     """
-    url = 'https://searchapi.api.cloud.yandex.net/v2/wordstat/topRequests'
-
-    results = {}
+    # 1. Текущие значения (topRequests)
+    current = {}
     for phrase in WORDSTAT_PHRASES:
-        body = json.dumps({
-            'folderId':   FOLDER_ID,
-            'phrase':     phrase,
-            'numPhrases': 1,  # нам нужен только totalCount
-        }).encode('utf-8')
-        req = urllib.request.Request(url, data=body)
-        req.add_header('Authorization', 'Api-Key ' + AI_STUDIO_KEY)
-        req.add_header('Content-Type', 'application/json')
         try:
-            with urllib.request.urlopen(req, timeout=30) as r:
-                d = json.loads(r.read())
-                results[phrase] = int(d.get('totalCount', 0))
+            d = _ws_request('topRequests', {'phrase': phrase, 'numPhrases': 1})
+            current[phrase] = int(d.get('totalCount', 0))
         except Exception as e:
-            results[phrase] = f'error: {e}'
+            current[phrase] = f'error: {e}'
 
-    return {'_source': 'live', **results}
+    # 2. История «потолкуем» по месяцам (dynamics, последние 18 мес)
+    history = []
+    try:
+        today     = datetime.date.today()
+        # from: первое число 18 месяцев назад
+        from_year  = today.year - 1 if today.month <= 6 else today.year
+        from_month = (today.month - 6) % 12 or 12
+        # Упрощаем: берём с 01.01 предыдущего года
+        from_dt   = f'{today.year - 1}-01-01T00:00:00Z'
+        # to: последний день прошлого месяца
+        first_this = today.replace(day=1)
+        last_prev  = first_this - datetime.timedelta(days=1)
+        to_dt      = f'{last_prev.isoformat()}T23:59:59Z'
+        d = _ws_request('dynamics', {
+            'phrase':   'потолкуем',
+            'period':   'PERIOD_MONTHLY',
+            'fromDate': from_dt,
+            'toDate':   to_dt,
+        })
+        history = [
+            {'month': row['date'][:7], 'count': int(row['count'])}
+            for row in d.get('results', [])
+        ]
+    except Exception as e:
+        history = [{'error': str(e)}]
+
+    return {'_source': 'live', 'current': current, 'brand_history': history}
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
@@ -247,7 +272,10 @@ def main():
     print('Wordstat...')
     try:
         snapshot['wordstat'] = fetch_wordstat()
-        print(f"  Данные: {snapshot['wordstat']}")
+        ws = snapshot['wordstat']
+        cur = ws.get('current', {})
+        hist = ws.get('brand_history', [])
+        print(f"  потолкуем: {cur.get('потолкуем','?')} / история: {len(hist)} мес")
     except Exception as e:
         snapshot['wordstat'] = {'error': str(e)}
         print(f'  ОШИБКА: {e}')
