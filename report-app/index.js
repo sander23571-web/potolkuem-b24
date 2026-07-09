@@ -7,6 +7,8 @@ const { fetchSocialData, invalidate: socialInvalidate } = require('./livedune');
 const { renderSocial } = require('./render-social');
 const { fetchTasksData, cacheInvalidateTasks } = require('./tasks-b24');
 const { renderTasksDashboard, renderMemberDetail } = require('./tasks-render');
+const { fetchMarketingData, cacheInvalidateMarketing } = require('./marketing-data');
+const { renderMarketing } = require('./render-marketing');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -52,6 +54,22 @@ app.get('/report/compare', async (req, res) => {
     console.error('[ERR] /report/compare:', err.message);
     res.status(500).send('Ошибка загрузки данных: ' + err.message);
   }
+});
+
+// Marketing dashboard — must be before /report/:id
+app.get('/report/marketing', async (req, res) => {
+  try {
+    const data = await fetchMarketingData();
+    res.send(renderMarketing(data));
+  } catch (err) {
+    console.error('[ERR] /report/marketing:', err.message);
+    res.status(500).send('Ошибка загрузки данных маркетинга: ' + err.message);
+  }
+});
+
+app.post('/report/marketing/refresh', (req, res) => {
+  cacheInvalidateMarketing();
+  res.redirect('/report/marketing');
 });
 
 // Dashboard for specific exhibition
@@ -109,14 +127,7 @@ app.post('/tasks/refresh', (req, res) => {
 });
 
 // ── SMM Dashboard ─────────────────────────────────────────────────────────────
-app.use(
-  '/social',
-  basicAuth({
-    users: { [process.env.REPORT_USER || 'admin']: process.env.REPORT_PASSWORD || 'change_me' },
-    challenge: true,
-    realm: 'Potolkuem Dashboard',
-  })
-);
+app.use('/social', authMiddleware);
 
 app.get('/social', async (req, res) => {
   try {

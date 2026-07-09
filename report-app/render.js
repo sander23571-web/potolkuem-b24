@@ -316,6 +316,7 @@ function renderDashboard(data, allExhibitions, currentId) {
       <button type="submit" class="refresh-btn">Обновить данные</button>
     </form>
     <a href="/report/compare" class="nav-btn">Все выставки</a>
+    <a href="/report/marketing" class="nav-btn">Маркетинг</a>
     <span class="fetched-at">Данные: ${fetchedAt ? fetchedAt.slice(0, 16).replace('T', ' ') : '—'}</span>
   </div>
 </div>

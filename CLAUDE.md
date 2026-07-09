@@ -29,6 +29,7 @@
 | Согласия | 22 | 1068 | 30 | CRM_22 |
 | **Расходы** | **24** | **1070** | **32** | **CRM_24** |
 | **Точки продаж** | **26** | **1072** | **44** | **CRM_26** |
+| **Статистика площадок** | **28** | **1074** | **34** | **CRM_28** |
 
 > ⚠️ `entityId` для `userfieldconfig.add` = `CRM_{typeId}`, **НЕ** `CRM_{entityTypeId}`.
 > Полные API-паттерны: **`b24-api-patterns.md`**
@@ -311,10 +312,11 @@ ssh -p 2222 root@155.212.143.68 'pm2 restart report-app'
 | `report-app/render-social.js` | HTML-дашборд соцсетей: KPI-карточки, графики подписчиков, период 7/14/30/60/90 дн |
 | `report-app/tasks-b24.js` | Задачи из Б24: активные + просроченные + зависшие 14+ дн + без дедлайна |
 | `report-app/tasks-render.js` | HTML-дашборд задач: командный обзор + детальный разбор по сотруднику |
+| `report-app/marketing-data.js` | Фетчер данных из СП «Статистика площадок» (entityTypeId=1074) + SEO-снапшоты |
+| `report-app/render-marketing.js` | HTML-дашборд маркетинга: Wordstat 18 мес, Метрика, LiveDune, Вебмастер |
 | `report-app/.env` | PORT=3002, REPORT_USER, REPORT_PASSWORD, B24_WEBHOOK |
 
-⚠️ **Новые файлы (livedune.js, render-social.js, tasks-b24.js, tasks-render.js) ещё не задеплоены на 155.212.143.68**
-Деплой: `scp -P 2222 report-app/index.js report-app/livedune.js report-app/render-social.js report-app/tasks-b24.js report-app/tasks-render.js report-app/render.js root@155.212.143.68:/root/projects/talk-report/ && ssh -p 2222 root@155.212.143.68 'pm2 restart report-app'`
+Деплой: `scp -P 2222 report-app/index.js report-app/livedune.js report-app/render-social.js report-app/tasks-b24.js report-app/tasks-render.js report-app/render.js report-app/marketing-data.js report-app/render-marketing.js root@155.212.143.68:/root/projects/talk-report/ && ssh -p 2222 root@155.212.143.68 'pm2 restart report-app'`
 
 ### Функционал (актуально на 30.06.2026)
 
@@ -404,6 +406,101 @@ Polling через cron раз в минуту (`tasks.task.list` за посл�
 | `scripts/task_require_result_cron.py` | Cron: ставит requireResult=True на задачи Алины |
 | На сервере: `/root/Bitrix24/ENVPro/proxy/task_require_result_cron.py` | Задеплоено на 155.212.143.68 |
 | Лог: `/var/log/task_require_result.log` | На продакшн-сервере |
+
+---
+
+## Маркетинговый дашборд `/report/marketing` — реализован (июль 2026)
+
+**URL:** `https://db-talk.bobp.ru/report/marketing`
+**Статус:** ✅ задеплоен и работает
+
+### Что сделано (сессия 08–09.07.2026)
+
+1. **UF-поля в СП Расходы (CRM_24)** — добавлены два поля:
+   - `UF_CRM_24_DIRECTION` (id=642, enum: 224=Выставки, 226=Маркетинг, 228=Операционные)
+   - `UF_CRM_24_CHANNEL` (id=644, enum: 230=Директ, 232=VK Реклама, 234=Посевы, 236=Агентство, 238=SEO, 240=Другое)
+   - ⚠️ enum в `userfieldconfig.add` — ключи строго lowercase `{value, def, sort}`. Uppercase игнорируются молча. `update` не меняет enum — только delete+recreate.
+
+2. **СП «Статистика площадок»** (typeId=28, entityTypeId=1074) — создан, 13 UF-полей.
+
+3. **Импорт маркетинговых расходов** — `scripts/import-marketing-expenses.py`:
+   - 149 записей из «Отчет расходы.xlsx» (май 2025 — июнь 2026), id 66–362
+   - Direction=226 (Маркетинг), каналы проставлены
+   - Поддерживает `--dry-run` и `--month=YYYY-MM`
+
+4. **Cron заполнения СП** — `scripts/platform-stats-cron.py`:
+   - Читает SEO JSON снапшоты + LiveDune API
+   - Запускается 2-го числа каждого месяца в 10:00 на 155.212.143.68
+
+5. **Дашборд** — файлы `report-app/marketing-data.js` + `report-app/render-marketing.js`:
+   - 5 блоков: Бренд (Wordstat 18 мес), Сайт (Метрика donut), Соцсети (VK/TG/Дзен), SEO (топ Вебмастера), Расходы (с кликабельными ссылками на Б24)
+   - Маршруты в `index.js` — ОБЯЗАТЕЛЬНО до `/report/:id`, иначе 400
+
+### Аналитика расходов (итог по «Отчет расходы.xlsx»)
+
+| Категория | Сумма |
+|---|---|
+| Реклама (агентство + СМБ) | 4 429 931 ₽ |
+| Посевы (TG, VK, MAX) | 3 762 037 ₽ |
+| SEO | 1 124 290 ₽ |
+| Блоги | 378 180 ₽ |
+| Сервисы | 160 334 ₽ |
+| **ИТОГО май 2025 – июнь 2026** | **9 854 772 ₽** |
+
+> ⚠️ В аудите фигурировало ~3.2 млн — там считался только прямой ad spend без агентской комиссии (2.1 млн) и SEO (1.1 млн).
+
+### Оценка агентства (отчёт «Отчет о выполненных маркетинговых работах.pdf»)
+
+**Итог: 3/10.** 73 задекларированных действия — ни одной цифры результата.
+- CPO 29–33 ₽ в отчёте агентства = «вовлечённый пользователь», НЕ покупка
+- Реальный CPO продажи: диалекты ~8 300 ₽, классика ~36 000 ₽
+- Сентябрь 2025: расходы ×17 → продажи упали до минимума (59 шт)
+- 4 кампании под отключение: экономия ~237 000 ₽/квартал, 0 потерянных продаж
+- Сквозная аналитика реклама → маркетплейс не построена за 14 месяцев
+
+### Файлы новые
+
+| Файл | Назначение |
+|---|---|
+| `scripts/setup-expense-fields.js` | Создал UF-поля Direction+Channel в CRM_24 |
+| `scripts/setup-platform-stats-sp.js` | Создал СП Статистика площадок |
+| `scripts/platform-stats-cron.py` | Cron: заполнение Б24 из снапшотов + LiveDune |
+| `scripts/import-marketing-expenses.py` | Импорт расходов из Excel в Б24 |
+| `scripts/upload-dogovory.py` | Загрузка ДОГОВОРЫ.zip на Общий диск Б24 |
+| `report-app/marketing-data.js` | Фетчер данных для /report/marketing |
+| `report-app/render-marketing.js` | HTML-рендерер маркетингового дашборда |
+
+### Деплой marketing-файлов
+
+```bash
+scp -P 2222 report-app/index.js report-app/marketing-data.js report-app/render-marketing.js \
+    root@155.212.143.68:/root/projects/talk-report/
+ssh -p 2222 root@155.212.143.68 'pm2 restart report-app'
+```
+
+---
+
+## Общий диск Б24 — ДОГОВОРЫ (июль 2026)
+
+**Storage ID:** 3 (Общий диск), ROOT_OBJECT_ID=3
+**Папка ДОГОВОРЫ:** id=11726 · `https://potolkuem.bitrix24.ru/docs/path/ДОГОВОРЫ`
+
+### Синхронизация ДОГОВОРЫ.zip → Б24 (09.07.2026)
+
+- Сравнены 193 файла из zip с 150 файлами на Б24
+- **89 совпадают** (размер байт-в-байт)
+- **104 загружены** из zip (все успешно, 0 ошибок)
+- **61 есть только на Б24** (СКЕЛЕТ, СТАРОЕ, ЮЛИЯ КОХАН, переименованные файлы) — не трогали
+- Создано 14 новых папок: PR, ДОГОВОРЫ БИТРИКС И ТОРГОВЫХ ПЛОЩАДОК, ПАТЕНТЫ И ТОВАРНЫЕ ЗНАКИ, СИГНАЛЬНЫЕ ОБРАЗЦЫ, МЕРКУРИЙ, Стас Магазины, ТЕРРИТОРИАЛЬНЫЕ КЛУБЫ, и др.
+
+**Скрипт:** `scripts/upload-dogovory.py` — загружает из zip, создаёт папки, пропускает дубли по имени.
+
+**Б24 Disk API паттерны:**
+- `disk.storage.getlist` — список хранилищ
+- `disk.folder.getchildren` — содержимое папки (пагинация по 50)
+- `disk.folder.addsubfolder` — создать подпапку `{id: parent_id, data: {NAME: '...'}}`
+- `disk.folder.uploadfile` — загрузить файл, multipart/form-data, `?id=folder_id`, parts: `data` (JSON с NAME) + `file` (binary)
+- `disk.folder.deletetree` — удалить папку
 
 ---
 
