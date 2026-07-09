@@ -27,7 +27,7 @@ DATA_DIR      = '/root/projects/talk-report/data/seo'
 
 # Вебмастер
 WM_USER_ID    = '1993756186'
-WM_HOST       = 'https:potolkuem.pro:443'
+WM_HOST       = 'https://potolkuem.pro:443'
 
 # Метрика
 MC_COUNTER    = '97696821'

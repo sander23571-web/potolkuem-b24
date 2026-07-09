@@ -773,6 +773,54 @@ curl -X POST "https://api.direct.yandex.com/json/v5/reports" \
 
 ---
 
+## Маркетинговый дашборд `/report/marketing`
+
+> Создан: июль 2026. Ревью и исправления: 09.07.2026.
+
+### URL и доступ
+
+`https://db-talk.bobp.ru/report/marketing` — Basic Auth (те же credentials, что у остальных дашбордов).
+
+### Структура (5 блоков)
+
+| Блок | Источник данных |
+|---|---|
+| Бренд (Wordstat) | СП «Статистика площадок» (1074), платформа `Wordstat_потолкуем` |
+| Сайт (Метрика) | СП 1074, платформа `Метрика_сайт` |
+| Соцсети | СП 1074, платформы `VK_potolkuem`, `TG_potolkuem`, `Дзен_potolkuem` |
+| SEO (Вебмастер) | СП 1074 (`Вебмастер_SEO`) + JSON-снапшоты `/root/projects/talk-report/data/seo/` |
+| Расходы | СП «Расходы» (1070), фильтр `ufCrm24Direction = 226` (Маркетинг) |
+
+### Файлы
+
+| Файл | Роль |
+|---|---|
+| `report-app/marketing-data.js` | Фетчер данных из B24 + снапшотов |
+| `report-app/render-marketing.js` | HTML-рендерер (Chart.js: line, bar, doughnut) |
+| `scripts/platform-stats-cron.py` | Кронтаска: LiveDune → B24. Запуск: `python3 scripts/platform-stats-cron.py [--backfill]`. Cron: `0 10 2 * * ...` |
+| `scripts/seo-snapshot.py` | Еженедельный SEO-срез. Cron: `0 9 * * 1 ...`. Пишет в `/root/projects/talk-report/data/seo/YYYY-MM-DD.json` |
+| `scripts/import-marketing-expenses.py` | Разовый импорт расходов из xlsx |
+
+### Поля СП «Статистика площадок» (CRM_28, entityTypeId=1074)
+
+`ufCrm28Platform`, `ufCrm28Period`, `ufCrm28Followers`, `ufCrm28FollowersDiff`, `ufCrm28Er`, `ufCrm28Reach`, `ufCrm28VisitsTotal`, `ufCrm28VisitsOrganic`, `ufCrm28VisitsPaid`, `ufCrm28BounceRate`, `ufCrm28Clicks`, `ufCrm28Impressions`, `ufCrm28BrandDemand`
+
+### Исправления 09.07.2026
+
+1. `scripts/seo-snapshot.py` — `WM_HOST` исправлен с `https:` на `https://` (данные Вебмастера не доходили)
+2. `report-app/render-marketing.js` — SMM-график теперь строит объединённую шкалу времени (`_smmPeriods`); при разном кол-ве точек у VK и TG пробелы заполняются `null` + `spanGaps: true`
+3. `report-app/index.js` — `/social` использует общий `authMiddleware` вместо дублированного блока
+4. `DASHBOARDS.md` — добавлен раздел с URL маркетингового дашборда
+
+### Известные пробелы данных
+
+- **Яндекс.Метрика** — нет OAuth-токена и ID счётчика → блок «Сайт» пустой
+- **Маркетплейсы** (OZON/WB/ЯМ) — нет API → реальные продажи не видны, ROMI посчитать невозможно
+- **Данные от маркетолога (Мельников)** — файл «запрос данных» не заполнен
+- Расходы в B24 не все помечены direction=226 → блок расходов может быть неполным
+
+---
+
 ## Важные грабли (не наступай снова)
 
 1. `entityId` для полей = `CRM_{typeId}`, не `CRM_{entityTypeId}` → подробности в b24-api-patterns.md п.10
