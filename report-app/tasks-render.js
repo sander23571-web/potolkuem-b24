@@ -16,6 +16,14 @@ const STATUS_COLORS = {
   '4': '#95a5a6',
 };
 
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function taskUrl(b24Url, t) {
   return `${b24Url}/company/personal/user/${t.responsibleId || 0}/tasks/task/view/${t.id}/`;
 }
@@ -153,7 +161,7 @@ function renderTasksDashboard(data) {
         ? `${u.avgCloseDays} д.`
         : `<span class="muted-val">—</span>`;
       return `<tr class="${hasProblems ? 'row-warn' : ''}">
-        <td><a href="/tasks/member/${uid}" class="b24-link-inline">${u.name}</a></td>
+        <td><a href="/tasks/member/${uid}" class="b24-link-inline">${escHtml(u.name)}</a></td>
         <td class="num">${u.active}</td>
         <td class="num">${overdueCell}</td>
         <td class="num">${staleCell}</td>
@@ -166,9 +174,9 @@ function renderTasksDashboard(data) {
   // Просроченные (топ 20)
   const overdueRows = overdueList.slice(0, 20).map(t => {
     const uid  = String(t.responsibleId || '0');
-    const name = data.userMap[uid] || `#${uid}`;
+    const name = escHtml(data.userMap[uid] || `#${uid}`);
     return `<tr>
-      <td><a href="${taskUrl(b24Url, t)}" target="_blank" class="b24-link-inline">${t.title || `Задача #${t.id}`}</a></td>
+      <td><a href="${taskUrl(b24Url, t)}" target="_blank" class="b24-link-inline">${escHtml(t.title || `Задача #${t.id}`)}</a></td>
       <td>${name}</td>
       <td>${fmtDate(t.deadline)}</td>
       <td class="num red-val">${t.overdueDays} дн.</td>
@@ -179,10 +187,10 @@ function renderTasksDashboard(data) {
   // Зависшие (топ 20)
   const staleRows = staleList.slice(0, 20).map(t => {
     const uid   = String(t.responsibleId || '0');
-    const name  = data.userMap[uid] || `#${uid}`;
+    const name  = escHtml(data.userMap[uid] || `#${uid}`);
     const label = STATUS_LABELS[String(t.status)] || `Статус ${t.status}`;
     return `<tr>
-      <td><a href="${taskUrl(b24Url, t)}" target="_blank" class="b24-link-inline">${t.title || `Задача #${t.id}`}</a></td>
+      <td><a href="${taskUrl(b24Url, t)}" target="_blank" class="b24-link-inline">${escHtml(t.title || `Задача #${t.id}`)}</a></td>
       <td>${name}</td>
       <td><span class="status-badge status-${t.status}">${label}</span></td>
       <td class="num orange-val">${t.staleDays} дн.</td>
@@ -396,7 +404,7 @@ new Chart(document.getElementById('statusChart'), {
 function renderMemberDetail(data, userId) {
   const uid  = String(userId);
   const { userMap, b24Url, fetchedAt } = data;
-  const name = userMap[uid] || `Пользователь #${uid}`;
+  const name = escHtml(userMap[uid] || `Пользователь #${uid}`);
   const u    = data.byUser[uid];
 
   if (!u) {
@@ -430,7 +438,7 @@ function renderMemberDetail(data, userId) {
     const rows = tasks.map(t => {
       const isOverdue = t.deadline && new Date(t.deadline) < now;
       return `<tr class="${isOverdue ? 'row-warn' : ''}">
-        <td><a href="${taskUrl(b24Url, t)}" target="_blank" class="b24-link-inline">${t.title || `Задача #${t.id}`}</a></td>
+        <td><a href="${taskUrl(b24Url, t)}" target="_blank" class="b24-link-inline">${escHtml(t.title || `Задача #${t.id}`)}</a></td>
         <td>${t.deadline
           ? `<span class="${isOverdue ? 'red-val' : ''}">${fmtDate(t.deadline)}${isOverdue ? ' ⚠' : ''}</span>`
           : '<span class="muted-val">—</span>'}</td>
@@ -450,7 +458,7 @@ function renderMemberDetail(data, userId) {
   }).join('');
 
   const overdueRows = myOverdue.map(t => `<tr>
-    <td><a href="${taskUrl(b24Url, t)}" target="_blank" class="b24-link-inline">${t.title || `Задача #${t.id}`}</a></td>
+    <td><a href="${taskUrl(b24Url, t)}" target="_blank" class="b24-link-inline">${escHtml(t.title || `Задача #${t.id}`)}</a></td>
     <td>${fmtDate(t.deadline)}</td>
     <td class="num red-val">${t.overdueDays} дн.</td>
     <td><a href="${taskUrl(b24Url, t)}" target="_blank" class="b24-link">Открыть</a></td>
@@ -459,7 +467,7 @@ function renderMemberDetail(data, userId) {
   const staleRows = myStale.map(t => {
     const label = STATUS_LABELS[String(t.status)] || String(t.status);
     return `<tr>
-      <td><a href="${taskUrl(b24Url, t)}" target="_blank" class="b24-link-inline">${t.title || `Задача #${t.id}`}</a></td>
+      <td><a href="${taskUrl(b24Url, t)}" target="_blank" class="b24-link-inline">${escHtml(t.title || `Задача #${t.id}`)}</a></td>
       <td><span class="status-badge status-${t.status}">${label}</span></td>
       <td class="num orange-val">${t.staleDays} дн.</td>
       <td><a href="${taskUrl(b24Url, t)}" target="_blank" class="b24-link">Открыть</a></td>
@@ -471,7 +479,7 @@ function renderMemberDetail(data, userId) {
       ? Math.round((new Date(t.closedDate) - new Date(t.createdDate)) / 86400000)
       : null;
     return `<tr>
-      <td><a href="${taskUrl(b24Url, t)}" target="_blank" class="b24-link-inline">${t.title || `Задача #${t.id}`}</a></td>
+      <td><a href="${taskUrl(b24Url, t)}" target="_blank" class="b24-link-inline">${escHtml(t.title || `Задача #${t.id}`)}</a></td>
       <td>${fmtDate(t.closedDate)}</td>
       <td class="num muted-val">${days !== null ? days + ' д.' : '—'}</td>
       <td><a href="${taskUrl(b24Url, t)}" target="_blank" class="b24-link">Открыть</a></td>

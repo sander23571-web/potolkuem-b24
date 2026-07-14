@@ -7,18 +7,31 @@ const { fetchSocialData, invalidate: socialInvalidate } = require('./livedune');
 const { renderSocial } = require('./render-social');
 const { fetchTasksData, cacheInvalidateTasks } = require('./tasks-b24');
 const { renderTasksDashboard, renderMemberDetail } = require('./tasks-render');
-const { fetchMarketingData, cacheInvalidateMarketing } = require('./marketing-data');
-const { renderMarketing } = require('./render-marketing');
+const { fetchMarketingData, cacheInvalidateMarketing, fetchMarketingExpensesData, cacheInvalidateExpenses } = require('./marketing-data');
+const { renderMarketing, renderMarketingExpenses } = require('./render-marketing');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
 
 // ── Basic Auth ────────────────────────────────────────────────────────────────
-const authMiddleware = basicAuth({
-  users: { [process.env.REPORT_USER || 'admin']: process.env.REPORT_PASSWORD || 'change_me' },
-  challenge: true,
-  realm: 'Potolkuem Dashboard',
-});
+// Один realm для всех маршрутов. Оба пользователя (admin + director) принимаются.
+const _authUsers = { [process.env.REPORT_USER || 'admin']: process.env.REPORT_PASSWORD || 'change_me' };
+if (process.env.REPORT_ADMIN_USER && process.env.REPORT_ADMIN_PASSWORD) {
+  _authUsers[process.env.REPORT_ADMIN_USER] = process.env.REPORT_ADMIN_PASSWORD;
+}
+const authMiddleware = basicAuth({ users: _authUsers, challenge: true, realm: 'Potolkuem Dashboard' });
+
+// Доступ к расходам — только для руководства.
+// 403 (не 401!) чтобы браузер не показывал повторный диалог при неверном пользователе.
+const requireAdmin = (req, res, next) => {
+  if (!process.env.REPORT_ADMIN_USER) {
+    return res.status(503).send('Не настроены учётные данные руководителя (REPORT_ADMIN_USER в .env)');
+  }
+  if (req.auth?.user !== process.env.REPORT_ADMIN_USER) {
+    return res.status(403).send('Доступ запрещён. Войдите с учётными данными руководителя.');
+  }
+  next();
+};
 
 app.use('/report', authMiddleware);
 app.use('/tasks',  authMiddleware);
@@ -40,7 +53,7 @@ app.get('/report', async (req, res) => {
     res.redirect(`/report/${list[0].id}`);
   } catch (err) {
     console.error('[ERR] /report:', err.message);
-    res.status(500).send('Ошибка подключения к Bitrix24: ' + err.message);
+    res.status(500).send('Внутренняя ошибка сервера');
   }
 });
 
@@ -52,7 +65,7 @@ app.get('/report/compare', async (req, res) => {
     res.send(html);
   } catch (err) {
     console.error('[ERR] /report/compare:', err.message);
-    res.status(500).send('Ошибка загрузки данных: ' + err.message);
+    res.status(500).send('Внутренняя ошибка сервера');
   }
 });
 
@@ -63,13 +76,32 @@ app.get('/report/marketing', async (req, res) => {
     res.send(renderMarketing(data));
   } catch (err) {
     console.error('[ERR] /report/marketing:', err.message);
-    res.status(500).send('Ошибка загрузки данных маркетинга: ' + err.message);
+    res.status(500).send('Внутренняя ошибка сервера');
   }
 });
 
 app.post('/report/marketing/refresh', (req, res) => {
   cacheInvalidateMarketing();
   res.redirect('/report/marketing');
+});
+
+// ── Marketing expenses (только для руководства) ───────────────────────────────
+// adminAuthMiddleware применяется дополнительно поверх основного authMiddleware
+app.use('/report/marketing/expenses', requireAdmin);
+
+app.get('/report/marketing/expenses', async (req, res) => {
+  try {
+    const data = await fetchMarketingExpensesData();
+    res.send(renderMarketingExpenses(data));
+  } catch (err) {
+    console.error('[ERR] /report/marketing/expenses:', err.message);
+    res.status(500).send('Внутренняя ошибка сервера');
+  }
+});
+
+app.post('/report/marketing/expenses/refresh', (req, res) => {
+  cacheInvalidateExpenses();
+  res.redirect('/report/marketing/expenses');
 });
 
 // Dashboard for specific exhibition
@@ -86,7 +118,7 @@ app.get('/report/:id', async (req, res) => {
     res.send(html);
   } catch (err) {
     console.error(`[ERR] /report/${id}:`, err.message);
-    res.status(500).send('Ошибка загрузки данных: ' + err.message);
+    res.status(500).send('Внутренняя ошибка сервера');
   }
 });
 
@@ -106,18 +138,19 @@ app.get('/tasks', async (req, res) => {
     res.send(renderTasksDashboard(data));
   } catch (err) {
     console.error('[ERR] /tasks:', err.message);
-    res.status(500).send('Ошибка загрузки данных задач: ' + err.message);
+    res.status(500).send('Внутренняя ошибка сервера');
   }
 });
 
 app.get('/tasks/member/:userId', async (req, res) => {
   const userId = req.params.userId;
+  if (!/^\d+$/.test(userId)) return res.status(400).send('Некорректный ID');
   try {
     const data = await fetchTasksData();
     res.send(renderMemberDetail(data, userId));
   } catch (err) {
     console.error(`[ERR] /tasks/member/${userId}:`, err.message);
-    res.status(500).send('Ошибка загрузки данных: ' + err.message);
+    res.status(500).send('Внутренняя ошибка сервера');
   }
 });
 
@@ -136,7 +169,7 @@ app.get('/social', async (req, res) => {
     res.send(renderSocial(data));
   } catch (err) {
     console.error('[ERR] /social:', err.message);
-    res.status(500).send('Ошибка загрузки данных LiveDune: ' + err.message);
+    res.status(500).send('Внутренняя ошибка сервера');
   }
 });
 

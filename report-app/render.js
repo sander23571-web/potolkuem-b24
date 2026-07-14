@@ -16,6 +16,14 @@ function fmtShortDate(iso) {
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
 }
 
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 // Colour palette
 const PALETTE = ['#1e2eb5', '#3d4de6', '#4a5df9', '#7b8ef9', '#9eabfa', '#bbc5fc', '#dde2fc', '#6c3483', '#117a65', '#b7950b'];
 
@@ -123,7 +131,7 @@ const BASE_CSS = `
 function renderDashboard(data, allExhibitions, currentId) {
   const { exhibition, expenses, shifts, hostMap, deals, fetchedAt, b24Url } = data;
 
-  const exhTitle = exhibition.title || `Выставка #${exhibition.id}`;
+  const exhTitle = escHtml(exhibition.title || `Выставка #${exhibition.id}`);
   const exhBegin = fmtDate(exhibition.begindate);
   const exhEnd   = fmtDate(exhibition.closedate);
   const exhUrl   = exhibition.id ? `${b24Url}/crm/type/1048/details/${exhibition.id}/` : null;
@@ -181,7 +189,7 @@ function renderDashboard(data, allExhibitions, currentId) {
   // ── Dropdown ─────────────────────────────────────────────────────────────────
   const dropdownOptions = allExhibitions
     .sort((a, b) => (b.begindate || '').localeCompare(a.begindate || ''))
-    .map(e => `<option value="${e.id}" ${String(e.id) === String(currentId) ? 'selected' : ''}>${e.title || `#${e.id}`}</option>`)
+    .map(e => `<option value="${e.id}" ${String(e.id) === String(currentId) ? 'selected' : ''}>${escHtml(e.title || `#${e.id}`)}</option>`)
     .join('\n');
 
   // ── Chart data ────────────────────────────────────────────────────────────────
@@ -245,7 +253,7 @@ function renderDashboard(data, allExhibitions, currentId) {
     const barW = Math.round((amt / maxExpAmt) * 80);
     const url  = `${b24Url}/crm/type/1070/details/${e.id}/`;
     return `<tr>
-      <td><span class="exp-bar" style="width:${barW}px"></span>${e.title || `Расход #${e.id}`}</td>
+      <td><span class="exp-bar" style="width:${barW}px"></span>${escHtml(e.title || `Расход #${e.id}`)}</td>
       <td class="num">${fmt(amt)}</td>
       <td class="num">${pct}%</td>
       <td><a href="${url}" target="_blank" class="b24-link">Открыть</a></td>
@@ -257,10 +265,10 @@ function renderDashboard(data, allExhibitions, currentId) {
     .slice(0, 100)
     .map(d => {
       const hid      = d.PARENT_ID_1052 ? String(d.PARENT_ID_1052) : null;
-      const hostName = hid ? (hostMap[hid] || `Ведущий #${hid}`) : 'Сотрудник';
+      const hostName = escHtml(hid ? (hostMap[hid] || `Ведущий #${hid}`) : 'Сотрудник');
       const dealUrl  = `${b24Url}/crm/deal/details/${d.ID}/`;
       return `<tr>
-        <td>${d.TITLE || '—'}</td>
+        <td>${escHtml(d.TITLE || '—')}</td>
         <td class="num">${fmt(d.OPPORTUNITY)}</td>
         <td>${hostName}</td>
         <td><a href="${dealUrl}" target="_blank" class="b24-link">Открыть</a></td>
@@ -271,7 +279,7 @@ function renderDashboard(data, allExhibitions, currentId) {
   const shiftRows = shiftDateKeys.flatMap(dt =>
     shiftsByDate[dt].map(s => {
       const hid      = s.parentId1052 ? String(s.parentId1052) : null;
-      const hostName = hid ? (hostMap[hid] || `Ведущий #${hid}`) : s.title || '—';
+      const hostName = escHtml(hid ? (hostMap[hid] || `Ведущий #${hid}`) : s.title || '—');
       const hostLink = hid
         ? `<a href="${b24Url}/crm/type/1052/details/${hid}/" target="_blank" class="b24-link-inline">${hostName}</a>`
         : hostName;
@@ -279,7 +287,7 @@ function renderDashboard(data, allExhibitions, currentId) {
       return `<div class="tl-row">
         <div class="tl-date">${fmtShortDate(dt)}</div>
         <div><span class="tl-dot"></span>${hostLink}</div>
-        <div><a href="${shiftUrl}" target="_blank" class="b24-link-inline">${s.title || '—'}</a></div>
+        <div><a href="${shiftUrl}" target="_blank" class="b24-link-inline">${escHtml(s.title || '—')}</a></div>
       </div>`;
     })
   ).join('\n');
@@ -595,7 +603,7 @@ function renderComparison(allExhibitions, summaries) {
     const dateStr = fmtShortDate(e.begindate) +
       (e.closedate && e.closedate !== e.begindate ? ' — ' + fmtShortDate(e.closedate) : '');
     return `<tr>
-      <td><a href="/report/${e.id}" class="b24-link-inline">${e.title || `#${e.id}`}</a></td>
+      <td><a href="/report/${e.id}" class="b24-link-inline">${escHtml(e.title || `#${e.id}`)}</a></td>
       <td style="color:var(--muted);font-size:13px">${dateStr}</td>
       <td class="num green">+${fmt(s.revenue)}</td>
       <td class="num red">−${fmt(s.expenses)}</td>

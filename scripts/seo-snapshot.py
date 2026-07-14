@@ -17,6 +17,7 @@ import json
 import datetime
 import urllib.request
 import urllib.error
+import urllib.parse
 
 # ── Конфигурация ──────────────────────────────────────────────────────────────
 
@@ -27,7 +28,7 @@ DATA_DIR      = '/root/projects/talk-report/data/seo'
 
 # Вебмастер
 WM_USER_ID    = '1993756186'
-WM_HOST       = 'https://potolkuem.pro:443'
+WM_HOST_ID    = 'https:potolkuem.pro:443'    # формат Яндекс host_id: protocol:host:port (без //)
 
 # Метрика
 MC_COUNTER    = '97696821'
@@ -81,9 +82,10 @@ def fetch_webmaster():
     date_to    = today.isoformat()
     date_from  = (today - datetime.timedelta(days=14)).isoformat()
 
+    encoded_host = urllib.parse.quote(WM_HOST_ID, safe='')
     url  = (
         f'https://api.webmaster.yandex.net/v4/user/{WM_USER_ID}'
-        f'/hosts/{WM_HOST}/query-analytics/list'
+        f'/hosts/{encoded_host}/query-analytics/list'
     )
     body = {
         'limit':                 50,
@@ -96,26 +98,45 @@ def fetch_webmaster():
     }
     data = post_json(url, body, token=OAUTH_TOKEN)
 
-    # API возвращает text_indicator_to_statistics, каждый элемент — запрос с
-    # побайтовой статистикой по дням. Суммируем клики и показы за период.
+    # API возвращает statistics по дням: каждая запись = {date, field, value}.
+    # POSITION присутствует только в дни с показами.
+    # Вычисляем взвешенную среднюю позицию: sum(pos*impr) / sum(impr).
     raw = data.get('text_indicator_to_statistics', [])
 
     result = []
     for item in raw:
         query = item.get('text_indicator', {}).get('value', '')
         stats = item.get('statistics', [])
-        clicks = impressions = 0
+
+        # Группируем по дате чтобы связать POSITION с IMPRESSIONS за тот же день
+        by_date = {}
         for s in stats:
-            field = s.get('field', '')
-            val   = s.get('value', 0) or 0
-            if field == 'CLICKS':      clicks      += val
-            elif field == 'IMPRESSIONS': impressions += val
-        ctr = round(clicks / impressions, 4) if impressions else 0.0
+            date = s.get('date', '')
+            if date not in by_date:
+                by_date[date] = {}
+            by_date[date][s.get('field', '')] = s.get('value', 0) or 0
+
+        total_clicks = total_impressions = 0
+        pos_weighted_sum = 0.0
+        pos_impressions_sum = 0
+
+        for day in by_date.values():
+            total_clicks      += day.get('CLICKS', 0)
+            day_impr           = day.get('IMPRESSIONS', 0)
+            total_impressions += day_impr
+            if 'POSITION' in day and day_impr > 0:
+                pos_weighted_sum  += day['POSITION'] * day_impr
+                pos_impressions_sum += day_impr
+
+        ctr      = round(total_clicks / total_impressions, 4) if total_impressions else 0.0
+        position = round(pos_weighted_sum / pos_impressions_sum, 1) if pos_impressions_sum > 0 else None
+
         result.append({
             'query':       query,
-            'clicks':      int(clicks),
-            'impressions': int(impressions),
+            'clicks':      int(total_clicks),
+            'impressions': int(total_impressions),
             'ctr':         ctr,
+            'position':    position,
         })
 
     # Сортируем по кликам (API уже должен был, но на всякий случай)
@@ -131,10 +152,13 @@ def fetch_webmaster():
 # ── 2. Метрика ────────────────────────────────────────────────────────────────
 
 def fetch_metrica():
-    """Органический трафик: визиты, заказы, конверсии — за текущий месяц."""
-    today      = datetime.date.today()
-    month_from = today.replace(day=1).isoformat()
-    date_to    = today.isoformat()
+    """Органический трафик за ПРЕДЫДУЩИЙ завершённый месяц."""
+    today        = datetime.date.today()
+    first_this   = today.replace(day=1)
+    last_prev    = first_this - datetime.timedelta(days=1)
+    month_from   = last_prev.replace(day=1).isoformat()
+    date_to      = last_prev.isoformat()
+    period_label = month_from[:7]  # 'YYYY-MM'
 
     def mc_get(metrics, filters=None):
         params = (
@@ -144,7 +168,6 @@ def fetch_metrica():
             f'&accuracy=full'
         )
         if filters:
-            import urllib.parse
             params += '&filters=' + urllib.parse.quote(filters)
         return get_json('https://api-metrica.yandex.net/stat/v1/data' + params, token=OAUTH_TOKEN)
 
@@ -167,7 +190,9 @@ def fetch_metrica():
     paid = paid_r.get('totals', [0, 0])
 
     return {
-        'period':         f'{month_from} — {date_to}',
+        'period':         period_label,   # 'YYYY-MM' — период данных, не дата снапшота
+        'date_from':      month_from,
+        'date_to':        date_to,
         'total_visits':   int(total[0]) if total else 0,
         'total_users':    int(total[1]) if len(total) > 1 else 0,
         'bounce_rate':    round(total[2], 1) if len(total) > 2 else None,
@@ -207,13 +232,10 @@ def fetch_wordstat():
     # 2. История «потолкуем» по месяцам (dynamics, последние 18 мес)
     history = []
     try:
-        today     = datetime.date.today()
-        # from: первое число 18 месяцев назад
-        from_year  = today.year - 1 if today.month <= 6 else today.year
-        from_month = (today.month - 6) % 12 or 12
-        # Упрощаем: берём с 01.01 предыдущего года
-        from_dt   = f'{today.year - 1}-01-01T00:00:00Z'
-        # to: последний день прошлого месяца
+        today      = datetime.date.today()
+        # История с 01.01 прошлого года (~18 месяцев)
+        from_dt    = f'{today.year - 1}-01-01T00:00:00Z'
+        # До последнего дня прошлого месяца
         first_this = today.replace(day=1)
         last_prev  = first_this - datetime.timedelta(days=1)
         to_dt      = f'{last_prev.isoformat()}T23:59:59Z'

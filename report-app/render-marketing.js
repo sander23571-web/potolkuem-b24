@@ -7,6 +7,23 @@ const B24_URL = 'https://potolkuem.bitrix24.ru';
 const TYPE_ID  = 28;
 const ENTITY_TYPE_ID = 1074;
 
+const CHANNEL_COLORS = {
+  '230': '#c0392b',  // Директ
+  '232': '#2787f5',  // VK Реклама
+  '234': '#2aabee',  // Посевы
+  '236': '#e67e22',  // Агентство
+  '238': '#27ae60',  // SEO
+  '240': '#7b79a0',  // Другое
+};
+const CHANNEL_BG = {
+  '230': '#fdf0ee',
+  '232': '#e8f0ff',
+  '234': '#e8f6ff',
+  '236': '#fef3e2',
+  '238': '#eafaf1',
+  '240': '#f5f4f8',
+};
+
 function fmt(n) {
   return Math.round(n || 0).toLocaleString('ru-RU');
 }
@@ -133,7 +150,7 @@ function b24ItemLink(id) {
 
 // ── Main renderer ─────────────────────────────────────────────────────────────
 function renderMarketing(data) {
-  const { platforms, topQueries, snapDate, wordstatHistory, expenses, expensesTagged, fetchedAt } = data;
+  const { platforms, topQueries, snapDate, wordstatHistory, queryDynamics, wordstatCompetitors, fetchedAt } = data;
 
   // ── Бренд: Wordstat ──────────────────────────────────────────────────────
   const wsItems = platforms['Wordstat_потолкуем'] || [];
@@ -150,8 +167,10 @@ function renderMarketing(data) {
   const wsLabels = JSON.stringify(wsSource.map(r => fmtShortDate(r.period)));
   const wsData   = JSON.stringify(wsSource.map(r => r.brandDemand || 0));
 
-  // ── Бренд: конкуренты из последнего снапшота ──────────────────────────────
-  // (если нет данных из Б24, просто не показываем)
+  // ── Бренд: конкуренты из последнего снапшота (wordstat.current) ──────────
+  const cmpImagin = wordstatCompetitors['имаджинариум'] || null;
+  const cmpBunker = wordstatCompetitors['бункер настольная игра'] || null;
+  const cmpElias  = wordstatCompetitors['элиас настольная игра'] || null;
 
   // ── Сайт: Метрика ─────────────────────────────────────────────────────────
   const metItems = platforms['Метрика_сайт'] || [];
@@ -224,6 +243,7 @@ function renderMarketing(data) {
     <a class="nav-btn" href="/report/compare">Сравнение</a>
     <a class="nav-btn" href="/social">SMM</a>
     <a class="nav-btn active" href="/report/marketing">Маркетинг</a>
+    <a class="nav-btn" href="/report/marketing/expenses" style="border-color:var(--orange);color:var(--orange)">Расходы</a>
     <a class="nav-btn" href="/tasks">Задачи</a>
     <form method="POST" action="/report/marketing/refresh" style="margin-left:auto">
       <button class="refresh-btn" type="submit">Обновить данные</button>
@@ -241,7 +261,7 @@ function renderMarketing(data) {
   <div class="section-title">Уровень 1 — Бренд (ведущий индикатор)</div>
 
   <!-- KPI строка Wordstat -->
-  <div class="kpi-grid kpi-grid-3">
+  <div class="kpi-grid kpi-grid-${cmpImagin ? '3' : '2'}">
     <div class="kpi-card">
       <div class="kpi-label">«Потолкуем» (последний мес.)</div>
       <div class="kpi-value">${wsLast ? fmt(wsLast.brandDemand) : '—'}</div>
@@ -252,12 +272,24 @@ function renderMarketing(data) {
       <div class="kpi-value">${fmt(wsPeak)}</div>
       <div class="kpi-note">${wsPeakMo ? fmtDate(wsPeakMo.period) : '—'}</div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Имаджинариум (ориент.)</div>
-      <div class="kpi-value">~32 295</div>
-      <div class="kpi-note">×${wsLast ? Math.round(32295 / Math.max(wsLast.brandDemand || 1, 1)) : '?'} больше «Потолкуем»</div>
-    </div>
+    ${cmpImagin ? `<div class="kpi-card">
+      <div class="kpi-label">Имаджинариум (конкурент)</div>
+      <div class="kpi-value">${fmt(cmpImagin)}</div>
+      <div class="kpi-note">×${wsLast ? Math.round(cmpImagin / Math.max(wsLast.brandDemand || 1, 1)) : '?'} больше «Потолкуем» · ${snapDate || ''}</div>
+    </div>` : ''}
   </div>
+  ${(cmpBunker || cmpElias) ? `<div class="kpi-grid kpi-grid-2" style="margin-top:12px">
+    ${cmpBunker ? `<div class="kpi-card">
+      <div class="kpi-label">Бункер (конкурент)</div>
+      <div class="kpi-value">${fmt(cmpBunker)}</div>
+      <div class="kpi-note">×${wsLast ? Math.round(cmpBunker / Math.max(wsLast.brandDemand || 1, 1)) : '?'} больше «Потолкуем»</div>
+    </div>` : ''}
+    ${cmpElias ? `<div class="kpi-card">
+      <div class="kpi-label">Элиас (конкурент)</div>
+      <div class="kpi-value">${fmt(cmpElias)}</div>
+      <div class="kpi-note">×${wsLast ? Math.round(cmpElias / Math.max(wsLast.brandDemand || 1, 1)) : '?'} больше «Потолкуем»</div>
+    </div>` : ''}
+  </div>` : ''}
 
   <!-- График Wordstat -->
   <div class="chart-card" style="margin-top:20px">
@@ -383,24 +415,40 @@ function renderMarketing(data) {
   </table>`
     : '<div class="no-data">Нет данных SEO-снапшота</div>'
   }
+
+  ${queryDynamics && (queryDynamics.gainers.length || queryDynamics.losers.length) ? `
+  <div class="two-col" style="margin-top:24px">
+    <div class="chart-card">
+      <h3>Растут в выдаче · ${queryDynamics.dateFrom} → ${queryDynamics.dateTo} · ${queryDynamics.weeks} нед.</h3>
+      <table class="data-table" style="margin-top:12px">
+        <thead><tr><th>Запрос</th><th>Было</th><th>Стало</th><th>Изм.</th></tr></thead>
+        <tbody>
+          ${queryDynamics.gainers.map(d => `<tr>
+            <td>${escHtml(d.query)}</td>
+            <td class="num" style="color:var(--muted)">${fmtFloat(d.posBase)}</td>
+            <td class="num">${fmtFloat(d.posNow)}</td>
+            <td class="num" style="color:var(--green)">▲ ${fmtFloat(d.delta)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="chart-card">
+      <h3>Падают в выдаче</h3>
+      <table class="data-table" style="margin-top:12px">
+        <thead><tr><th>Запрос</th><th>Было</th><th>Стало</th><th>Изм.</th></tr></thead>
+        <tbody>
+          ${queryDynamics.losers.map(d => `<tr>
+            <td>${escHtml(d.query)}</td>
+            <td class="num" style="color:var(--muted)">${fmtFloat(d.posBase)}</td>
+            <td class="num">${fmtFloat(d.posNow)}</td>
+            <td class="num" style="color:var(--red)">▼ ${fmtFloat(Math.abs(d.delta))}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>` : ''}
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════════════ -->
-<!-- БЛОК 5: РАСХОДЫ -->
-<!-- ══════════════════════════════════════════════════════════════════════ -->
-<div class="section">
-  <div class="section-title">
-    Расходы · маркетинг
-    ${!expensesTagged && expenses && expenses.length
-      ? '<span style="color:var(--orange);font-size:11px;font-weight:normal;margin-left:8px">расходы пока без метки «Маркетинг» — показаны все незакреплённые</span>'
-      : ''}
-  </div>
-
-  ${expenses && expenses.length
-    ? `${renderExpensesTable(expenses)}`
-    : '<div class="no-data">Нет расходов с направлением «Маркетинг» — отметьте нужные расходы в CRM → Смарт-процессы → Расходы</div>'
-  }
-</div>
 
 </div><!-- /container -->
 
@@ -496,44 +544,6 @@ new Chart(document.getElementById('smmChart'), {
 </html>`;
 }
 
-// ── Expenses table ────────────────────────────────────────────────────────────
-function renderExpensesTable(expenses) {
-  const total = expenses.reduce((s, e) => s + e.amount, 0);
-  const maxAmt = expenses[0]?.amount || 1;
-
-  const rows = expenses.map(e => {
-    const barW = Math.round(e.amount / maxAmt * 100);
-    return `<tr>
-      <td>${escHtml(e.title || `#${e.id}`)}</td>
-      <td>
-        <span class="exp-bar" style="width:${barW}px"></span>
-        ${fmt(e.amount)} ₽
-      </td>
-      <td style="color:var(--muted);font-size:13px">${e.begindate ? e.begindate.slice(0,10) : '—'}</td>
-      <td><a class="b24-link" href="${e.b24Url}" target="_blank">Открыть</a></td>
-    </tr>`;
-  }).join('');
-
-  return `<table class="data-table">
-    <thead>
-      <tr>
-        <th>Расход</th>
-        <th>Сумма</th>
-        <th>Дата</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>${rows}</tbody>
-    <tfoot>
-      <tr>
-        <td><strong>Итого</strong></td>
-        <td><strong>${fmt(total)} ₽</strong></td>
-        <td colspan="2"></td>
-      </tr>
-    </tfoot>
-  </table>`;
-}
-
 // ── SMM card helper ───────────────────────────────────────────────────────────
 function renderSmmCard(name, cssClass, last, count) {
   if (!last) {
@@ -562,4 +572,175 @@ function escHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-module.exports = { renderMarketing };
+// ── Channel badge ─────────────────────────────────────────────────────────────
+function renderChannelBadge(channelId, label) {
+  const color = CHANNEL_COLORS[channelId] || '#7b79a0';
+  const bg    = CHANNEL_BG[channelId]    || '#f5f4f8';
+  return `<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:11px;background:${bg};color:${color};white-space:nowrap">${escHtml(label)}</span>`;
+}
+
+// ── Expenses dashboard (management-only) ──────────────────────────────────────
+function renderMarketingExpenses(data) {
+  const { expenses, byChannel, byMonth, total, totalYear, totalMonth, fetchedAt } = data;
+
+  // Каналы: сортировка по убыванию суммы
+  const channelEntries = Object.entries(byChannel)
+    .sort((a, b) => b[1].total - a[1].total);
+  const chLabels = JSON.stringify(channelEntries.map(([, v]) => v.label));
+  const chData   = JSON.stringify(channelEntries.map(([, v]) => Math.round(v.total)));
+  const chColors = JSON.stringify(channelEntries.map(([k]) => CHANNEL_COLORS[k] || '#7b79a0'));
+
+  // Месяцы: хронологически
+  const months   = Object.keys(byMonth).sort();
+  const moLabels = JSON.stringify(months.map(m => fmtShortDate(m + '-01')));
+  const moData   = JSON.stringify(months.map(m => Math.round(byMonth[m].total)));
+
+  // Строки таблицы (уже отсортированы по дате DESC)
+  const tableRows = expenses.map(e => `<tr>
+    <td style="color:var(--muted);font-size:13px;white-space:nowrap">${e.date || '—'}</td>
+    <td>${escHtml(e.title || `#${e.id}`)}</td>
+    <td>${renderChannelBadge(e.channel, e.channelLabel)}</td>
+    <td class="num">${fmt(e.amount)} ₽</td>
+    <td><a class="b24-link" href="${e.b24Url}" target="_blank">Открыть</a></td>
+  </tr>`).join('');
+
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Расходы · Маркетинг · Потолкуем?</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>
+  <style>${BASE_CSS}</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-label">Потолкуем? · Только для руководства</div>
+  <h1>Маркетинговые расходы</h1>
+  <div class="hero-sub">СП «Расходы» · направление «Маркетинг» · ${expenses.length} записей</div>
+  <nav class="hero-nav">
+    <a class="nav-btn" href="/report/marketing">← Маркетинг</a>
+    <form method="POST" action="/report/marketing/expenses/refresh" style="margin-left:auto">
+      <button class="refresh-btn" type="submit">Обновить данные</button>
+    </form>
+    <span class="fetched-at">обновлено ${new Date(fetchedAt).toLocaleString('ru-RU')}</span>
+  </nav>
+</div>
+
+<div class="container">
+
+<!-- KPI -->
+<div class="section">
+  <div class="section-title">Итого</div>
+  <div class="kpi-grid kpi-grid-3">
+    <div class="kpi-card red">
+      <div class="kpi-label">Всего за период</div>
+      <div class="kpi-value">${fmt(total)} ₽</div>
+      <div class="kpi-note">${expenses.length} записей</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Текущий год (${new Date().getFullYear()})</div>
+      <div class="kpi-value">${fmt(totalYear)} ₽</div>
+      <div class="kpi-note">маркетинговые расходы</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Текущий месяц</div>
+      <div class="kpi-value">${fmt(totalMonth)} ₽</div>
+      <div class="kpi-note">${new Date().toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
+    </div>
+  </div>
+</div>
+
+<!-- CHARTS -->
+${(channelEntries.length >= 2 || months.length >= 2) ? `
+<div class="section">
+  <div class="section-title">Аналитика</div>
+  <div class="two-col">
+    <div class="chart-card">
+      <h3>По каналам</h3>
+      ${channelEntries.length >= 2
+        ? '<canvas id="chChart" height="180"></canvas>'
+        : '<div class="no-data">Недостаточно данных</div>'}
+    </div>
+    <div class="chart-card">
+      <h3>По месяцам</h3>
+      ${months.length >= 2
+        ? '<canvas id="moChart" height="180"></canvas>'
+        : '<div class="no-data">Недостаточно данных</div>'}
+    </div>
+  </div>
+</div>` : ''}
+
+<!-- TABLE -->
+<div class="section">
+  <div class="section-title">Детализация</div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Дата</th>
+        <th>Название</th>
+        <th>Канал</th>
+        <th>Сумма</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${tableRows || '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Нет данных — отметьте расходы в CRM направлением «Маркетинг»</td></tr>'}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3"><strong>Итого</strong></td>
+        <td class="num"><strong>${fmt(total)} ₽</strong></td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+</div>
+
+<div class="footer">Потолкуем? · Маркетинговые расходы · только для руководства · БюроОБП</div>
+
+<script>
+${channelEntries.length >= 2 ? `
+new Chart(document.getElementById('chChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ${chLabels},
+    datasets: [{ data: ${chData}, backgroundColor: ${chColors}, borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: {
+    responsive: true,
+    cutout: '60%',
+    plugins: {
+      legend: { position: 'right', labels: { font: { size: 12 }, boxWidth: 12, padding: 8 } },
+      tooltip: { callbacks: { label: ctx => ' ' + ctx.raw.toLocaleString('ru-RU') + ' ₽' } }
+    }
+  }
+});` : ''}
+${months.length >= 2 ? `
+new Chart(document.getElementById('moChart'), {
+  type: 'bar',
+  data: {
+    labels: ${moLabels},
+    datasets: [{ data: ${moData}, backgroundColor: '#c0392b', borderRadius: 2 }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ' ' + ctx.raw.toLocaleString('ru-RU') + ' ₽' } }
+    },
+    scales: {
+      y: { beginAtZero: true, grid: { color: '#e0daf7' }, ticks: { callback: v => (v/1000).toFixed(0)+'k', font: { size: 11 } } },
+      x: { grid: { display: false }, ticks: { font: { size: 11 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 18 } }
+    }
+  }
+});` : ''}
+<\/script>
+</body>
+</html>`;
+}
+
+module.exports = { renderMarketing, renderMarketingExpenses };

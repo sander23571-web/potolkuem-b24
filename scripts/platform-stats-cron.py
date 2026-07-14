@@ -197,10 +197,13 @@ def process_seo_snapshots(monthly_snaps, target_months=None):
         period_iso = f'{ym}-01'
         print(f'\n  [{ym}]')
 
-        # Метрика
+        # Метрика — period берём из данных (предыдущий завершённый месяц),
+        # а не из даты снапшота, чтобы не писать июльские данные в запись июля
         m = snap.get('metrica', {})
         if m and 'error' not in m:
-            b24_upsert('Метрика_сайт', period_iso, {
+            metrica_ym   = m.get('period', ym)        # 'YYYY-MM' из данных
+            metrica_iso  = f'{metrica_ym[:7]}-01'     # → 'YYYY-MM-01'
+            b24_upsert('Метрика_сайт', metrica_iso, {
                 'visits_total':   m.get('total_visits'),
                 'visits_organic': m.get('organic_visits'),
                 'visits_paid':    m.get('paid_visits'),

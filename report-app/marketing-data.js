@@ -50,28 +50,6 @@ async function fetchAllItems(entityTypeId, filter = {}, select = []) {
   return items;
 }
 
-// ── Expenses (Расходы, маркетинговые) ─────────────────────────────────────────
-async function fetchMarketingExpenses() {
-  // Сначала пробуем расходы с Direction=Маркетинг
-  const tagged = await fetchAllItems(EXPENSE_ENTITY_TYPE_ID,
-    { ufCrm24Direction: DIRECTION_MARKETING_ID },
-    ['id', 'title', 'ufCrm24ExpenseType', 'ufCrm24Description', 'ufCrm24Amount',
-     'ufCrm24Direction', 'ufCrm24Channel', 'parentId1048', 'begindate']
-  );
-
-  // Если ещё ничего не размечено — показываем расходы без parentId1048 (не выставочные)
-  // Это служит подсказкой для разметки
-  if (tagged.length === 0) {
-    const unlinked = await fetchAllItems(EXPENSE_ENTITY_TYPE_ID,
-      { '=parentId1048': null },
-      ['id', 'title', 'ufCrm24ExpenseType', 'ufCrm24Description', 'ufCrm24Amount',
-       'ufCrm24Direction', 'ufCrm24Channel', 'parentId1048', 'begindate']
-    );
-    return { expenses: unlinked, isTagged: false };
-  }
-  return { expenses: tagged, isTagged: true };
-}
-
 // ── Field name helpers ────────────────────────────────────────────────────────
 // Битрикс возвращает UF-поля в camelCase: ufCrm28Platform, ufCrm28Period и т.д.
 const pf = (suffix) => `ufCrm${TYPE_ID}${suffix}`;
@@ -112,63 +90,82 @@ function groupByPlatform(items) {
   return map;
 }
 
-// ── Latest SEO snapshot for Webmaster top queries ─────────────────────────────
-function loadLatestSnapshot() {
+// ── SEO snapshots ─────────────────────────────────────────────────────────────
+function loadSnapshotHistory(n = 6) {
   try {
-    if (!fs.existsSync(SEO_DIR)) return null;
-    const files = fs.readdirSync(SEO_DIR)
-      .filter(f => f.endsWith('.json'))
-      .sort();
-    if (!files.length) return null;
-    const latest = files[files.length - 1];
-    return JSON.parse(fs.readFileSync(path.join(SEO_DIR, latest), 'utf8'));
+    if (!fs.existsSync(SEO_DIR)) return [];
+    const files = fs.readdirSync(SEO_DIR).filter(f => f.endsWith('.json')).sort();
+    return files.slice(-n).map(f => {
+      try { return JSON.parse(fs.readFileSync(path.join(SEO_DIR, f), 'utf8')); }
+      catch (e) { return null; }
+    }).filter(Boolean);
   } catch (e) {
-    console.error('[marketing-data] snapshot read error:', e.message);
-    return null;
+    console.error('[marketing-data] snapshot error:', e.message);
+    return [];
   }
 }
 
-// ── Main aggregator ───────────────────────────────────────────────────────────
+// Самые динамичные запросы: сравниваем позиции первого и последнего снапшота
+function computeQueryDynamics(snapshots) {
+  if (snapshots.length < 2) return null;
+  const latest   = snapshots[snapshots.length - 1];
+  const baseline = snapshots[0];
+  const baseMap  = {};
+  for (const row of (baseline.webmaster?.rows || [])) {
+    baseMap[row.query] = row.position;
+  }
+  const dynamics = [];
+  for (const row of (latest.webmaster?.rows || [])) {
+    const basePos = baseMap[row.query];
+    if (basePos === undefined) continue;
+    const delta = Math.round((basePos - row.position) * 10) / 10; // + = поднялся в выдаче
+    dynamics.push({
+      query:   row.query,
+      posNow:  Math.round(row.position * 10) / 10,
+      posBase: Math.round(basePos * 10) / 10,
+      delta,
+      clicks:  row.clicks || 0,
+    });
+  }
+  return {
+    gainers:  [...dynamics].sort((a, b) => b.delta - a.delta).filter(d => d.delta > 0).slice(0, 8),
+    losers:   [...dynamics].sort((a, b) => a.delta - b.delta).filter(d => d.delta < 0).slice(0, 8),
+    weeks:    snapshots.length - 1,
+    dateFrom: baseline.date || '',
+    dateTo:   latest.date || '',
+  };
+}
+
+// ── Main aggregator (платформенная статистика — без расходов) ─────────────────
 async function fetchMarketingData() {
   if (_cache && Date.now() - _cacheTs < CACHE_TTL) return _cache;
 
-  // Fetch all platform stats items + marketing expenses in parallel
-  const [raw, expensesData] = await Promise.all([
-    fetchAllItems(ENTITY_TYPE_ID, {}, [
-      'id', 'title',
-      pf('Platform'), pf('Period'),
-      pf('Followers'), pf('FollowersDiff'), pf('Er'), pf('Reach'),
-      pf('VisitsTotal'), pf('VisitsOrganic'), pf('VisitsPaid'), pf('BounceRate'),
-      pf('Clicks'), pf('Impressions'), pf('BrandDemand'),
-    ]),
-    fetchMarketingExpenses(),
+  const raw = await fetchAllItems(ENTITY_TYPE_ID, {}, [
+    'id', 'title',
+    pf('Platform'), pf('Period'),
+    pf('Followers'), pf('FollowersDiff'), pf('Er'), pf('Reach'),
+    pf('VisitsTotal'), pf('VisitsOrganic'), pf('VisitsPaid'), pf('BounceRate'),
+    pf('Clicks'), pf('Impressions'), pf('BrandDemand'),
   ]);
 
-  const items    = raw.map(parseItem);
+  const items     = raw.map(parseItem);
   const platforms = groupByPlatform(items);
 
-  // Latest snapshot for Webmaster top queries
-  const snap       = loadLatestSnapshot();
-  const topQueries = snap?.webmaster?.rows?.slice(0, 20) || [];
-  const snapDate   = snap?.date || null;
-
-  // Wordstat history — use brand history from latest snapshot as fallback
-  // (СП данные приоритетнее — они уже в platforms['Wordstat_потолкуем'])
+  const snapshots       = loadSnapshotHistory(6);
+  const snap            = snapshots[snapshots.length - 1] || null;
+  const topQueries      = snap?.webmaster?.rows?.slice(0, 20) || [];
+  const snapDate        = snap?.date || null;
   const wordstatHistory = snap?.wordstat?.brand_history || [];
+  const queryDynamics   = computeQueryDynamics(snapshots);
 
-  // Enrich expenses with B24 link
-  const expenses = expensesData.expenses.map(e => ({
-    ...e,
-    amount: parseFloat(e.ufCrm24Amount || 0),
-    b24Url: `${B24_URL}/crm/type/1070/details/${e.id}/`,
-  }));
-  expenses.sort((a, b) => b.amount - a.amount);
+  // Текущие значения конкурентов из последнего снапшота (wordstat.current).
+  // При ошибке API сохраняется строка 'error: ...' — фильтруем только числа.
+  const rawCompetitors = snap?.wordstat?.current || {};
+  const wordstatCompetitors = Object.fromEntries(
+    Object.entries(rawCompetitors).filter(([, v]) => typeof v === 'number' && v > 0)
+  );
 
-  _cache   = {
-    platforms, topQueries, snapDate, wordstatHistory,
-    expenses, expensesTagged: expensesData.isTagged,
-    fetchedAt: new Date().toISOString(),
-  };
+  _cache   = { platforms, topQueries, snapDate, wordstatHistory, queryDynamics, wordstatCompetitors, fetchedAt: new Date().toISOString() };
   _cacheTs = Date.now();
   return _cache;
 }
@@ -178,4 +175,82 @@ function cacheInvalidateMarketing() {
   _cacheTs = 0;
 }
 
-module.exports = { fetchMarketingData, cacheInvalidateMarketing };
+// ── Marketing expenses — отдельный фетчер для страницы руководства ────────────
+
+const CHANNEL_LABELS = {
+  '230': 'Директ',
+  '232': 'VK Реклама',
+  '234': 'Посевы',
+  '236': 'Агентство',
+  '238': 'SEO',
+  '240': 'Другое',
+};
+
+let _expCache   = null;
+let _expCacheTs = 0;
+
+async function fetchMarketingExpensesData() {
+  if (_expCache && Date.now() - _expCacheTs < CACHE_TTL) return _expCache;
+
+  const raw = await fetchAllItems(EXPENSE_ENTITY_TYPE_ID,
+    { ufCrm24Direction: DIRECTION_MARKETING_ID },
+    ['id', 'title', 'ufCrm24Amount', 'ufCrm24Channel', 'ufCrm24Description', 'begindate']
+  );
+
+  const expenses = raw.map(e => {
+    const chId = e.ufCrm24Channel ? String(e.ufCrm24Channel) : '240';
+    return {
+      id:           e.id,
+      title:        e.title || '',
+      description:  e.ufCrm24Description || '',
+      amount:       parseFloat(e.ufCrm24Amount || 0),
+      channel:      chId,
+      channelLabel: CHANNEL_LABELS[chId] || 'Другое',
+      date:         e.begindate ? e.begindate.slice(0, 10) : null,
+      month:        e.begindate ? e.begindate.slice(0, 7) : null,
+      b24Url:       `${B24_URL}/crm/type/1070/details/${e.id}/`,
+    };
+  }).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  // Агрегация по каналам
+  const byChannel = {};
+  for (const e of expenses) {
+    if (!byChannel[e.channel]) {
+      byChannel[e.channel] = { label: e.channelLabel, total: 0, count: 0 };
+    }
+    byChannel[e.channel].total += e.amount;
+    byChannel[e.channel].count++;
+  }
+
+  // Агрегация по месяцам
+  const byMonth = {};
+  for (const e of expenses) {
+    if (!e.month) continue;
+    if (!byMonth[e.month]) byMonth[e.month] = { total: 0 };
+    byMonth[e.month].total += e.amount;
+  }
+
+  const total        = expenses.reduce((s, e) => s + e.amount, 0);
+  const currentYear  = new Date().getFullYear().toString();
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const totalYear    = expenses
+    .filter(e => e.date && e.date.startsWith(currentYear))
+    .reduce((s, e) => s + e.amount, 0);
+  const totalMonth   = expenses
+    .filter(e => e.month === currentMonth)
+    .reduce((s, e) => s + e.amount, 0);
+
+  _expCache   = { expenses, byChannel, byMonth, total, totalYear, totalMonth, fetchedAt: new Date().toISOString() };
+  _expCacheTs = Date.now();
+  return _expCache;
+}
+
+function cacheInvalidateExpenses() {
+  _expCache   = null;
+  _expCacheTs = 0;
+}
+
+module.exports = {
+  fetchMarketingData, cacheInvalidateMarketing,
+  fetchMarketingExpensesData, cacheInvalidateExpenses,
+};
