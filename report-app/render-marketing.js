@@ -397,20 +397,25 @@ function renderMarketing(data) {
       <tr>
         <th>#</th>
         <th>Запрос</th>
+        <th>Позиция</th>
         <th>Кликов</th>
         <th>Показов</th>
         <th>CTR</th>
       </tr>
     </thead>
     <tbody>
-      ${topRows.map((row, i) => `
-        <tr>
+      ${topRows.map((row, i) => {
+        const pos = row.position;
+        const posColor = pos === null ? 'var(--muted)' : pos <= 3 ? 'var(--green)' : pos <= 10 ? 'var(--accent)' : 'var(--muted)';
+        return `<tr>
           <td class="num" style="color:var(--muted)">${i + 1}</td>
           <td>${escHtml(row.query || '')}</td>
+          <td class="num" style="color:${posColor};font-weight:500">${pos !== null && pos !== undefined ? fmtFloat(pos) : '—'}</td>
           <td class="num">${fmt(row.clicks)}</td>
           <td class="num">${fmt(row.impressions)}</td>
           <td class="num">${fmtFloat((row.ctr || 0) * 100)}%</td>
-        </tr>`).join('')}
+        </tr>`;
+      }).join('')}
     </tbody>
   </table>`
     : '<div class="no-data">Нет данных SEO-снапшота</div>'
