@@ -9,6 +9,8 @@ const { fetchTasksData, cacheInvalidateTasks } = require('./tasks-b24');
 const { renderTasksDashboard, renderMemberDetail } = require('./tasks-render');
 const { fetchMarketingData, cacheInvalidateMarketing, fetchMarketingExpensesData, cacheInvalidateExpenses } = require('./marketing-data');
 const { renderMarketing, renderMarketingExpenses } = require('./render-marketing');
+const { fetchWarehouseData, cacheInvalidateWarehouse } = require('./warehouse-data');
+const { renderWarehouse } = require('./render-warehouse');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -67,6 +69,22 @@ app.get('/report/compare', async (req, res) => {
     console.error('[ERR] /report/compare:', err.message);
     res.status(500).send('Внутренняя ошибка сервера');
   }
+});
+
+// Warehouse dashboard — must be before /report/:id
+app.get('/report/warehouse', async (req, res) => {
+  try {
+    const data = await fetchWarehouseData();
+    res.send(renderWarehouse(data));
+  } catch (err) {
+    console.error('[ERR] /report/warehouse:', err.message);
+    res.status(500).send('Внутренняя ошибка сервера');
+  }
+});
+
+app.post('/report/warehouse/refresh', (req, res) => {
+  cacheInvalidateWarehouse();
+  res.redirect('/report/warehouse');
 });
 
 // Marketing dashboard — must be before /report/:id
