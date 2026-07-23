@@ -5,7 +5,8 @@ const API_KEY = process.env.LIVEDUNE_API_KEY;
 const BASE    = 'https://api.livedune.com';
 
 // Own account IDs (Потолкуем)
-const OWN_IDS = [2753311, 2753880, 3039674];
+// 2753311 = VK, 2753880 = Telegram, 3039674 = Дзен, 3466499 = TikTok, 3467355 = MAX
+const OWN_IDS = [2753311, 2753880, 3039674, 3466499, 3467355];
 
 // ── Cache (TTL 30 min) ────────────────────────────────────────────────────────
 const cache = new Map();

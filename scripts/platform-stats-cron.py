@@ -79,6 +79,8 @@ LD_ACCOUNTS = {
     2753311: 'VK_potolkuem',
     2753880: 'TG_potolkuem',
     3039674: 'Дзен_potolkuem',
+    3466499: 'TikTok_potolkuem',
+    3467355: 'MAX_potolkuem',
 }
 
 BACKFILL = '--backfill' in sys.argv
@@ -314,7 +316,8 @@ def process_livedune(target_months=None):
             followers_diff = followers - first_f
 
             # reach: может быть dict {'total': N, ...} или число
-            reach_raw = last_row.get('reach') or last_row.get('avg_reach') or None
+            # TikTok/MAX используют avg_views вместо reach
+            reach_raw = last_row.get('reach') or last_row.get('avg_reach') or last_row.get('avg_views') or None
             if isinstance(reach_raw, dict):
                 reach = reach_raw.get('total') or reach_raw.get('followers') or None
             else:
