@@ -13,7 +13,7 @@ platform-stats-cron.py — заполняет СП «Статистика пло
   python3 scripts/platform-stats-cron.py              # текущий месяц
 
 Cron (на сервере):
-  0 10 2 * * python3 /root/projects/talk-report/scripts/platform-stats-cron.py
+  0 10 * * 1 python3 /root/projects/talk-report/scripts/platform-stats-cron.py  # каждый пн 10:00
 """
 
 import os

@@ -53,6 +53,8 @@ const BASE_CSS = `
   .badge-vk { background: #e3eeff; color: #1a56c4; }
   .badge-tg { background: #e3f3ff; color: #0a84c1; }
   .badge-dz { background: #fff0e3; color: #c45a1a; }
+  .badge-tt { background: #e8f8ff; color: #010101; }
+  .badge-mx { background: #e8f0ff; color: #3b4aaa; }
   .refresh-btn { background: var(--accent); color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; display: inline-block; }
   .refresh-btn:hover { background: #3d4de6; }
   .fetched { font-size: 11px; color: var(--muted); }
@@ -69,6 +71,8 @@ function typeBadge(type) {
   if (type === 'vk_group') return '<span class="badge badge-vk">VK</span>';
   if (type === 'telegram')  return '<span class="badge badge-tg">TG</span>';
   if (type === 'dzen')      return '<span class="badge badge-dz">Дзен</span>';
+  if (type === 'tiktok')    return '<span class="badge badge-tt">TikTok</span>';
+  if (type === 'max')       return '<span class="badge badge-mx">MAX</span>';
   return `<span class="badge">${type}</span>`;
 }
 
