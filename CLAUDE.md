@@ -173,7 +173,8 @@ API-ключ и конфиг портала: `ssh -p 2222 root@155.212.143.68` �
 - **PM2:** `pm2 restart report-app` · Порт 3002
 - **URL:** `https://db-talk.bobp.ru` · SSL до 2026-09-26 (autocertbot)
 - **Этот репозиторий:** `46.173.20.187` — **разные машины**, certbot запускать на продакшне
-- **Логин/пароль:** `admin / JGBDG7lVRqTjeTkg` (в `/root/projects/talk-report/.env`)
+- **Логин/пароль (обычные дашборды):** `admin / JGBDG7lVRqTjeTkg` (в `/root/projects/talk-report/.env`)
+- **Логин/пароль (только `/report/marketing/expenses`):** `director / beFPuNMl5M4FI7X2` — отдельная пара `REPORT_ADMIN_USER`/`REPORT_ADMIN_PASSWORD`, `requireAdmin` в `index.js` проверяет именно имя пользователя `director`, с логином `admin` даст 403 независимо от пароля
 
 | Файл | Назначение |
 |---|---|
