@@ -59,9 +59,11 @@ async function fetchWarehouseData() {
   // Параллельно тянем всё нужное
   const [catalogProducts, crmProducts, rawStores, rawInventory, rawDocs] = await Promise.all([
     // purchasingPrice живёт в catalog.product
+    // iblockId обязателен и в select, и в filter — иначе Б24 возвращает ошибку
+    // "Required filter fields: iblockId", которая тут молча превращается в []
     fetchAllPages('catalog.product.list', {
-      select: ['id', 'name', 'purchasingPrice', 'active'],
-      filter: { active: 'Y' },
+      select: ['id', 'name', 'purchasingPrice', 'active', 'iblockId'],
+      filter: { active: 'Y', iblockId: CATALOG_ID },
     }, 'products'),
     // Розничная цена — только в crm.product
     b24('crm.product.list', { select: ['ID', 'PRICE'], start: 0 }),

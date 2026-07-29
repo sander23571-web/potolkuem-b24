@@ -9,8 +9,89 @@ const fmt      = n => Math.round(n).toLocaleString('ru-RU');
 const fmtPct   = n => (n >= 0 ? '+' : '') + Math.round(n) + '%';
 const escHtml  = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-const DOC_ICON = { S: '📥', A: '📦', M: '🔄', D: '🗑️', R: '↩️' };
-const DOC_COLOR = { S: 'var(--green)', A: 'var(--accent)', M: 'var(--muted)', D: 'var(--red)', R: 'var(--yellow)' };
+const DOC_LABEL_COLOR = { S: 'var(--green)', A: 'var(--accent)', M: 'var(--muted)', D: 'var(--red)', R: 'var(--orange)' };
+
+// ── Общий дизайн-язык (тот же BASE_CSS, что в render-marketing.js) ────────────
+const BASE_CSS = `
+  :root {
+    --black:   #0f0b2e;
+    --dark:    #1e1a3a;
+    --accent:  #4a5df9;
+    --accent2: #3d4de6;
+    --red:     #c0392b;
+    --green:   #27ae60;
+    --orange:  #e67e22;
+    --bg:      #f5f3ff;
+    --card:    #ffffff;
+    --border:  #e0daf7;
+    --text:    #1e1a3a;
+    --muted:   #7b79a0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia','Times New Roman',serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; }
+
+  .hero { background: var(--black); color: #fff; padding: 36px 60px 32px; }
+  .hero-label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+  .hero h1 { font-size: 36px; font-weight: 400; letter-spacing: 1px; line-height: 1.1; margin-bottom: 6px; }
+  .hero-sub { font-size: 14px; color: #888; margin-top: 6px; }
+  .hero-nav { margin-top: 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .nav-btn { color: #9eabfa; border: 1px solid #3a3460; border-radius: 4px; padding: 8px 14px; font-size: 13px; text-decoration: none; letter-spacing: 1px; }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .nav-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .refresh-btn { background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 8px 18px; font-size: 13px; cursor: pointer; letter-spacing: 1px; }
+  .refresh-btn:hover { background: var(--accent); color: #fff; }
+  .fetched-at { font-size: 11px; color: #666; margin-left: auto; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 32px 60px; }
+  .section { margin-top: 48px; }
+  .section-title { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent2); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .section h2 { font-size: 20px; font-weight: 400; margin-bottom: 20px; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 16px; margin-top: 24px; }
+  .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 24px 20px; position: relative; }
+  .kpi-card::after { content:''; position: absolute; top:0; left:0; right:0; height:3px; background: var(--accent); border-radius: 4px 4px 0 0; }
+  .kpi-card.orange::after { background: var(--orange); }
+  .kpi-card.green::after { background: var(--green); }
+  .kpi-card.red::after { background: var(--red); }
+  .kpi-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .kpi-value { font-size: 26px; font-weight: 400; line-height: 1; color: var(--black); }
+  .kpi-sub { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 28px 24px; }
+  .chart-card h3 { font-size: 13px; font-weight: 400; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin-bottom: 24px; }
+  .chart-wrap { height: 280px; position: relative; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 28px 24px; }
+
+  .data-table { background: var(--card); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; width: 100%; border-collapse: collapse; }
+  .data-table th { background: var(--dark); color: #ccc; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 14px; text-align: left; font-weight: 400; white-space: nowrap; }
+  .data-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: middle; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: #f9f7ff; }
+  .data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .data-table tfoot td { border-top: 2px solid var(--border); border-bottom: none; font-weight: 600; }
+
+  .b24-link { color: var(--accent); text-decoration: none; font-size: 12px; border: 1px solid var(--border); border-radius: 3px; padding: 2px 8px; white-space: nowrap; }
+  .b24-link:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .badge-green  { background: rgba(39,174,96,.12);  color: var(--green); }
+  .badge-orange { background: rgba(230,126,34,.12); color: var(--orange); }
+  .badge-red    { background: rgba(192,57,43,.12);  color: var(--red); }
+
+  .footer { text-align: center; font-size: 12px; color: var(--muted); padding: 32px; border-top: 1px solid var(--border); margin-top: 60px; letter-spacing: 1px; }
+
+  @media (max-width: 768px) {
+    .hero { padding: 24px 20px; }
+    .container { padding: 0 16px 40px; }
+    .two-col { grid-template-columns: 1fr; }
+  }
+`;
+
+function shortName(name) {
+  return (name || '').replace(/["""«»]/g, '').replace(/Потолкуем\??\s*/i, '').trim() || name;
+}
 
 function renderWarehouse(data) {
   const { products, stores, documents, totals } = data;
@@ -18,110 +99,73 @@ function renderWarehouse(data) {
   const mainStores   = stores.filter(s => s.isMain);
   const retailStores = stores.filter(s => s.isRetail);
 
-  // Данные для графика — топ 10 по заморозке
   const chartProducts = products.slice(0, 10);
   const chartLabels   = JSON.stringify(chartProducts.map(p => shortName(p.name)));
   const chartValues   = JSON.stringify(chartProducts.map(p => Math.round(p.totalValue)));
   const chartMargins  = JSON.stringify(chartProducts.map(p => p.cost ? Math.round((p.price - p.cost) / p.cost * 100) : 0));
+
+  const productRows = products.map((p, i) => {
+    const mgp = p.cost ? Math.round((p.price - p.cost) / p.cost * 100) : null;
+    const badgeClass = mgp === null ? '' : mgp >= 200 ? 'badge-green' : mgp >= 100 ? 'badge-orange' : 'badge-red';
+    return `<tr>
+      <td style="color:var(--muted)">${i + 1}</td>
+      <td><a class="b24-link" href="${escHtml(p.url)}" target="_blank">${escHtml(shortName(p.name))}</a></td>
+      <td class="num">${p.price ? fmt(p.price) + ' ₽' : '—'}</td>
+      <td class="num">${p.cost  ? fmt(p.cost)  + ' ₽' : '—'}</td>
+      <td class="num">${mgp !== null ? `<span class="badge ${badgeClass}">${fmtPct(mgp)}</span>` : '—'}</td>
+      <td class="num">${p.mainQty   ? fmt(p.mainQty)   : '—'}</td>
+      <td class="num">${p.retailQty ? fmt(p.retailQty) : '—'}</td>
+      <td class="num" style="font-weight:600">${fmt(p.totalQty)}</td>
+      <td class="num" style="color:var(--orange)">${p.totalValue ? fmt(p.totalValue) + ' ₽' : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  const storeRows = (list) => list.map(s => `<tr>
+    <td>${escHtml(s.title)}</td>
+    <td class="num" style="font-weight:600">${fmt(s.totalQty)}</td>
+    <td class="num" style="color:var(--orange)">${s.totalValue ? fmt(s.totalValue) + ' ₽' : '—'}</td>
+  </tr>`).join('');
+
+  const docRows = documents.map(d => `<tr>
+    <td><span class="badge" style="background:${DOC_LABEL_COLOR[d.docType] || 'var(--muted)'}22;color:${DOC_LABEL_COLOR[d.docType] || 'var(--muted)'}">${escHtml(d.type)}</span></td>
+    <td>${escHtml(d.title)}</td>
+    <td style="color:var(--muted)">${d.date}</td>
+    <td><a class="b24-link" href="${escHtml(d.url)}" target="_blank">Открыть</a></td>
+  </tr>`).join('');
 
   return `<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Склад — Потолкуем?</title>
+<title>Склад · Потолкуем?</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<style>
-:root {
-  --bg:     #0f1117;
-  --card:   #1a1d2e;
-  --border: #2a2d3e;
-  --text:   #e2e8f0;
-  --muted:  #64748b;
-  --accent: #6366f1;
-  --green:  #22c55e;
-  --red:    #ef4444;
-  --yellow: #f59e0b;
-  --teal:   #14b8a6;
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 14px; }
-
-/* Nav */
-.nav { background: var(--card); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.nav-brand { font-weight: 700; color: var(--text); margin-right: 8px; }
-.nav a { color: var(--muted); text-decoration: none; padding: 4px 12px; border-radius: 6px; font-size: 13px; white-space: nowrap; }
-.nav a:hover, .nav a.active { background: var(--border); color: var(--text); }
-.nav-sep { color: var(--border); }
-
-/* Layout */
-.page { max-width: 1400px; margin: 0 auto; padding: 24px; }
-h2 { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
-h3 { font-size: 15px; font-weight: 600; color: var(--muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: .05em; }
-
-/* KPI */
-.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
-.kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-.kpi-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
-.kpi-value { font-size: 28px; font-weight: 700; line-height: 1; }
-.kpi-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
-
-/* Grid 2 cols */
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
-@media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
-
-/* Card */
-.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-.card-chart { height: 300px; position: relative; }
-
-/* Tables */
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th { color: var(--muted); font-weight: 500; text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
-td { padding: 9px 10px; border-bottom: 1px solid #1e2235; vertical-align: middle; }
-tr:last-child td { border-bottom: none; }
-tr:hover td { background: rgba(255,255,255,.03); }
-.num { text-align: right; font-variant-numeric: tabular-nums; }
-.link { color: var(--accent); text-decoration: none; }
-.link:hover { text-decoration: underline; }
-
-/* Margin badge */
-.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-.badge-green  { background: rgba(34,197,94,.15);  color: var(--green); }
-.badge-yellow { background: rgba(245,158,11,.15); color: var(--yellow); }
-.badge-red    { background: rgba(239,68,68,.15);  color: var(--red); }
-
-/* Refresh */
-.refresh-bar { display: flex; justify-content: flex-end; margin-bottom: 20px; }
-.btn { background: var(--accent); color: #fff; border: none; padding: 8px 18px; border-radius: 8px; font-size: 13px; cursor: pointer; }
-.btn:hover { opacity: .85; }
-
-/* Doc type chip */
-.chip { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-</style>
+<style>${BASE_CSS}</style>
 </head>
 <body>
 
-<nav class="nav">
-  <span class="nav-brand">Потолкуем?</span>
-  <span class="nav-sep">|</span>
-  <a href="/report">Выставки</a>
-  <a href="/report/compare">Сравнение</a>
-  <a href="/report/marketing">Маркетинг</a>
-  <a href="/report/warehouse" class="active">Склад</a>
-  <a href="/tasks">Задачи</a>
-  <a href="/social">Соцсети</a>
-</nav>
-
-<div class="page">
-
-  <div class="refresh-bar">
-    <form method="POST" action="/report/warehouse/refresh">
-      <button class="btn" type="submit">Обновить данные</button>
+<div class="hero">
+  <div class="hero-label">Потолкуем?</div>
+  <h1>Склад</h1>
+  <div class="hero-sub">Остатки · Заморозка капитала · Маржа</div>
+  <nav class="hero-nav">
+    <a class="nav-btn" href="/report">Выставки</a>
+    <a class="nav-btn" href="/report/compare">Сравнение</a>
+    <a class="nav-btn" href="/social">SMM</a>
+    <a class="nav-btn" href="/report/marketing">Маркетинг</a>
+    <a class="nav-btn active" href="/report/warehouse">Склад</a>
+    <a class="nav-btn" href="/tasks">Задачи</a>
+    <form method="POST" action="/report/warehouse/refresh" style="margin-left:auto">
+      <button class="refresh-btn" type="submit">Обновить данные</button>
     </form>
-  </div>
+  </nav>
+</div>
 
-  <!-- KPI -->
-  <div class="kpi-row">
+<div class="container">
+
+<!-- KPI -->
+<div class="section" style="margin-top:32px">
+  <div class="kpi-grid">
     <div class="kpi-card">
       <div class="kpi-label">Наименований</div>
       <div class="kpi-value">${totals.skus}</div>
@@ -129,12 +173,12 @@ tr:hover td { background: rgba(255,255,255,.03); }
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Единиц товара</div>
-      <div class="kpi-value" style="color:var(--accent)">${fmt(totals.qty)}</div>
+      <div class="kpi-value">${fmt(totals.qty)}</div>
       <div class="kpi-sub">по всем складам и точкам</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card orange">
       <div class="kpi-label">Заморожено капитала</div>
-      <div class="kpi-value" style="color:var(--yellow)">${fmt(totals.value)} ₽</div>
+      <div class="kpi-value">${fmt(totals.value)} ₽</div>
       <div class="kpi-sub">по себестоимости</div>
     </div>
     <div class="kpi-card">
@@ -143,173 +187,106 @@ tr:hover td { background: rgba(255,255,255,.03); }
       <div class="kpi-sub">${mainStores.length} склада + ${retailStores.length} розничных</div>
     </div>
   </div>
+</div>
 
-  <!-- Графики -->
-  <div class="grid2" style="margin-bottom:24px">
-    <div class="card">
-      <h3>Заморозка по товарам (топ-10)</h3>
-      <div class="card-chart">
-        <canvas id="chartValue"></canvas>
-      </div>
+<!-- Графики -->
+<div class="section">
+  <div class="section-title">Топ-10 · заморозка и маржа</div>
+  <div class="two-col">
+    <div class="chart-card">
+      <h3>Заморозка по товарам</h3>
+      <div class="chart-wrap"><canvas id="chartValue"></canvas></div>
     </div>
-    <div class="card">
-      <h3>Маржа по товарам (%)</h3>
-      <div class="card-chart">
-        <canvas id="chartMargin"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <!-- Таблица товаров -->
-  <div class="card" style="margin-bottom:24px">
-    <h2>Остатки по товарам</h2>
-    <div style="overflow-x:auto">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Товар</th>
-            <th class="num">Цена</th>
-            <th class="num">Себест.</th>
-            <th class="num">Маржа</th>
-            <th class="num">Осн. склады</th>
-            <th class="num">Розница</th>
-            <th class="num">Всего шт</th>
-            <th class="num">Заморожено</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${products.map((p, i) => {
-            const mg  = p.cost ? p.price - p.cost : null;
-            const mgp = p.cost ? Math.round((p.price - p.cost) / p.cost * 100) : null;
-            const badgeClass = mgp === null ? '' : mgp >= 200 ? 'badge-green' : mgp >= 100 ? 'badge-yellow' : 'badge-red';
-            return `<tr>
-              <td style="color:var(--muted)">${i + 1}</td>
-              <td><a class="link" href="${escHtml(p.url)}" target="_blank">${escHtml(shortName(p.name))}</a></td>
-              <td class="num">${p.price ? fmt(p.price) + ' ₽' : '—'}</td>
-              <td class="num">${p.cost  ? fmt(p.cost)  + ' ₽' : '—'}</td>
-              <td class="num">${mgp !== null ? `<span class="badge ${badgeClass}">${fmtPct(mgp)}</span>` : '—'}</td>
-              <td class="num">${p.mainQty   ? fmt(p.mainQty)   : '—'}</td>
-              <td class="num">${p.retailQty ? fmt(p.retailQty) : '—'}</td>
-              <td class="num" style="font-weight:600">${fmt(p.totalQty)}</td>
-              <td class="num" style="color:var(--yellow)">${p.totalValue ? fmt(p.totalValue) + ' ₽' : '—'}</td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-        <tfoot>
-          <tr style="border-top:2px solid var(--border)">
-            <td colspan="7" style="font-weight:600;color:var(--muted)">ИТОГО</td>
-            <td class="num" style="font-weight:700">${fmt(totals.qty)}</td>
-            <td class="num" style="font-weight:700;color:var(--yellow)">${fmt(totals.value)} ₽</td>
-          </tr>
-        </tfoot>
-      </table>
+    <div class="chart-card">
+      <h3>Маржа по товарам, %</h3>
+      <div class="chart-wrap"><canvas id="chartMargin"></canvas></div>
     </div>
   </div>
+</div>
 
-  <!-- Склады и точки -->
-  <div class="grid2" style="margin-bottom:24px">
+<!-- Таблица товаров -->
+<div class="section">
+  <div class="section-title">Остатки по товарам</div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Товар</th>
+        <th class="num">Цена</th>
+        <th class="num">Себест.</th>
+        <th class="num">Маржа</th>
+        <th class="num">Осн. склады</th>
+        <th class="num">Розница</th>
+        <th class="num">Всего шт</th>
+        <th class="num">Заморожено</th>
+      </tr>
+    </thead>
+    <tbody>${productRows}</tbody>
+    <tfoot>
+      <tr>
+        <td colspan="7" style="color:var(--muted)">ИТОГО</td>
+        <td class="num">${fmt(totals.qty)}</td>
+        <td class="num" style="color:var(--orange)">${fmt(totals.value)} ₽</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<!-- Склады и точки -->
+<div class="section">
+  <div class="section-title">Склады и точки продаж</div>
+  <div class="two-col">
     <div class="card">
       <h2>Основные склады</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Склад</th>
-            <th class="num">Единиц</th>
-            <th class="num">Заморожено</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${mainStores.map(s => `<tr>
-            <td>${escHtml(s.title)}</td>
-            <td class="num" style="font-weight:600">${fmt(s.totalQty)}</td>
-            <td class="num" style="color:var(--yellow)">${s.totalValue ? fmt(s.totalValue) + ' ₽' : '—'}</td>
-          </tr>`).join('')}
-        </tbody>
+      <table class="data-table">
+        <thead><tr><th>Склад</th><th class="num">Единиц</th><th class="num">Заморожено</th></tr></thead>
+        <tbody>${storeRows(mainStores)}</tbody>
       </table>
     </div>
     <div class="card">
       <h2>Розничные точки</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Точка</th>
-            <th class="num">Единиц</th>
-            <th class="num">Заморожено</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${retailStores.map(s => `<tr>
-            <td>${escHtml(s.title)}</td>
-            <td class="num" style="font-weight:600">${fmt(s.totalQty)}</td>
-            <td class="num" style="color:var(--yellow)">${s.totalValue ? fmt(s.totalValue) + ' ₽' : '—'}</td>
-          </tr>`).join('')}
-        </tbody>
+      <table class="data-table">
+        <thead><tr><th>Точка</th><th class="num">Единиц</th><th class="num">Заморожено</th></tr></thead>
+        <tbody>${storeRows(retailStores)}</tbody>
       </table>
     </div>
   </div>
-
-  <!-- Последние документы -->
-  <div class="card">
-    <h2>Последние складские документы</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Тип</th>
-          <th>Документ</th>
-          <th>Дата</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        ${documents.map(d => `<tr>
-          <td><span class="chip" style="background:${DOC_COLOR[d.docType] || 'var(--muted)'}22;color:${DOC_COLOR[d.docType] || 'var(--muted)'}">${escHtml(d.type)}</span></td>
-          <td>${escHtml(d.title)}</td>
-          <td style="color:var(--muted)">${d.date}</td>
-          <td><a class="link" href="${escHtml(d.url)}" target="_blank">Открыть →</a></td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-  </div>
-
 </div>
 
+<!-- Последние документы -->
+<div class="section">
+  <div class="section-title">Последние складские документы</div>
+  <table class="data-table">
+    <thead><tr><th>Тип</th><th>Документ</th><th>Дата</th><th></th></tr></thead>
+    <tbody>${docRows}</tbody>
+  </table>
+</div>
+
+</div><!-- /container -->
+
+<div class="footer">Потолкуем? · Склад · БюроОБП</div>
+
 <script>
-// ── Chart: Заморозка по товарам ───────────────────────────────────────────────
 (function() {
   const labels  = ${chartLabels};
   const values  = ${chartValues};
   const margins = ${chartMargins};
 
-  const palette = [
-    '#6366f1','#22c55e','#f59e0b','#ef4444','#14b8a6',
-    '#a855f7','#ec4899','#0ea5e9','#84cc16','#f97316'
-  ];
-
   new Chart(document.getElementById('chartValue'), {
     type: 'bar',
     data: {
       labels,
-      datasets: [{
-        label: 'Заморожено ₽',
-        data: values,
-        backgroundColor: palette,
-        borderRadius: 6,
-      }]
+      datasets: [{ label: 'Заморожено ₽', data: values, backgroundColor: 'rgba(74,93,249,0.55)', borderColor: '#4a5df9', borderWidth: 1, borderRadius: 4 }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => ' ' + ctx.raw.toLocaleString('ru-RU') + ' ₽'
-          }
-        }
+        tooltip: { callbacks: { label: ctx => ' ' + ctx.raw.toLocaleString('ru-RU') + ' ₽' } }
       },
       scales: {
-        x: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: '#1e2235' } },
-        y: { ticks: { color: '#64748b', callback: v => (v/1000).toFixed(0) + 'к' }, grid: { color: '#1e2235' } }
+        x: { ticks: { color: '#7b79a0', font: { size: 11 } }, grid: { display: false } },
+        y: { ticks: { color: '#7b79a0', callback: v => (v/1000).toFixed(0) + 'к' }, grid: { color: '#e0daf7' } }
       }
     }
   });
@@ -321,10 +298,10 @@ tr:hover td { background: rgba(255,255,255,.03); }
       datasets: [{
         label: 'Маржа %',
         data: margins,
-        backgroundColor: margins.map(m => m >= 200 ? '#22c55e44' : m >= 100 ? '#f59e0b44' : '#ef444444'),
-        borderColor:     margins.map(m => m >= 200 ? '#22c55e'   : m >= 100 ? '#f59e0b'   : '#ef4444'),
+        backgroundColor: margins.map(m => m >= 200 ? 'rgba(39,174,96,0.35)' : m >= 100 ? 'rgba(230,126,34,0.35)' : 'rgba(192,57,43,0.35)'),
+        borderColor:     margins.map(m => m >= 200 ? '#27ae60' : m >= 100 ? '#e67e22' : '#c0392b'),
         borderWidth: 1,
-        borderRadius: 6,
+        borderRadius: 4,
       }]
     },
     options: {
@@ -334,21 +311,15 @@ tr:hover td { background: rgba(255,255,255,.03); }
         tooltip: { callbacks: { label: ctx => ' ' + ctx.raw + '%' } }
       },
       scales: {
-        x: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: '#1e2235' } },
-        y: { ticks: { color: '#64748b', callback: v => v + '%' }, grid: { color: '#1e2235' } }
+        x: { ticks: { color: '#7b79a0', font: { size: 11 } }, grid: { display: false } },
+        y: { ticks: { color: '#7b79a0', callback: v => v + '%' }, grid: { color: '#e0daf7' } }
       }
     }
   });
 })();
 </script>
-
 </body>
 </html>`;
-}
-
-// Убираем кавычки и "Потолкуем?" из названия для читабельности в графике
-function shortName(name) {
-  return (name || '').replace(/["""«»]/g, '').replace(/Потолкуем\??\s*/i, '').trim() || name;
 }
 
 module.exports = { renderWarehouse };
