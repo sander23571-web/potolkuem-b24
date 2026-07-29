@@ -1,0 +1,344 @@
+<title>Агентство «Потолкуем?» — расходы vs продажи vs бренд-спрос</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --surface-2:      #f3f2ef;
+    --border:         #e3e2dd;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #83817a;
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+    --s5: #e87ba4; --s6: #008300; --s7: #4a3aa7;
+    --gap-color: #c0392b;
+    --band-color: rgba(192,57,43,.08);
+    --band-line: rgba(192,57,43,.35);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1: #1a1a19; --surface-2: #232320; --border: #34342f;
+      --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #8f8d83;
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+      --s5: #d55181; --s6: #008300; --s7: #9085e9;
+      --gap-color: #e66767; --band-color: rgba(230,103,103,.10); --band-line: rgba(230,103,103,.4);
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --surface-2: #232320; --border: #34342f;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #8f8d83;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --s5: #d55181; --s6: #008300; --s7: #9085e9;
+    --gap-color: #e66767; --band-color: rgba(230,103,103,.10); --band-line: rgba(230,103,103,.4);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .viz-root {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--surface-1); color: var(--text-primary);
+    padding: 28px 24px 48px; max-width: 1000px; margin: 0 auto;
+  }
+  h1 { font-size: 19px; font-weight: 650; margin: 0 0 4px; }
+  .subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 26px; line-height: 1.5; }
+  .panel { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 20px 20px 12px; margin-bottom: 18px; overflow-x: auto; }
+  .panel h2 { font-size: 13px; font-weight: 650; text-transform: uppercase; letter-spacing: .04em; color: var(--text-secondary); margin: 0 0 14px; }
+  .chart-scroll { min-width: 820px; }
+  svg text { fill: var(--text-secondary); font-size: 11px; }
+  svg .axis-line { stroke: var(--border); stroke-width: 1; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 14px 0 4px; font-size: 12px; color: var(--text-secondary); }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+  .tooltip {
+    position: fixed; pointer-events: none; z-index: 50;
+    background: var(--text-primary); color: var(--surface-1);
+    font-size: 12px; padding: 8px 10px; border-radius: 6px;
+    line-height: 1.5; box-shadow: 0 6px 18px rgba(0,0,0,.25);
+    opacity: 0; transition: opacity .1s; max-width: 240px;
+  }
+  .tooltip b { display: block; margin-bottom: 2px; }
+  .tooltip .row { display: flex; justify-content: space-between; gap: 14px; }
+  .callout {
+    font-size: 12.5px; color: var(--text-secondary); background: var(--surface-2);
+    border: 1px solid var(--border); border-left: 3px solid var(--gap-color);
+    border-radius: 6px; padding: 12px 14px; margin: 10px 0 0;
+  }
+  .callout b { color: var(--text-primary); }
+  .note-list { margin: 18px 0 0; padding: 0; list-style: none; }
+  .note-list li { font-size: 13px; color: var(--text-secondary); padding: 10px 0; border-top: 1px solid var(--border); }
+  .note-list li:first-child { border-top: none; }
+  .note-list b { color: var(--text-primary); }
+  .toggle-btn {
+    font-size: 12px; color: var(--text-secondary); background: none;
+    border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; cursor: pointer; margin-top: 10px;
+  }
+  .toggle-btn:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+  table.data-table { width: 100%; border-collapse: collapse; font-size: 11.5px; margin-top: 12px; display: none; }
+  table.data-table.show { display: table; }
+  table.data-table th, table.data-table td { padding: 5px 7px; text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  table.data-table th:first-child, table.data-table td:first-child { text-align: left; color: var(--text-secondary); }
+  table.data-table th { color: var(--text-secondary); font-weight: 600; font-size: 10.5px; }
+  .gap-note { font-size: 11px; color: var(--text-muted); font-style: italic; }
+</style>
+
+<div class="viz-root">
+  <h1>Агентство «Потолкуем?» — расход, продажи и бренд-спрос</h1>
+  <div class="subtitle">Источники: «Агентство Потолкуем.xlsx» (листы «Итого», «Лист41», «Посевы»/«Посевыnew») + Яндекс.Wordstat из Б24 СП «Статистика площадок». Общая шкала месяцев (янв 2025 – июн 2026) — розовая полоса отмечает авг–окт 2025, когда расход резко вырос.</div>
+
+  <div class="panel">
+    <h2>Расход по каналам, ₽/мес</h2>
+    <div class="chart-scroll"><svg id="chartSpend" width="900" height="300"></svg></div>
+    <div class="legend" id="legendSpend"></div>
+    <div class="callout">
+      <b>Авг–окт 2025:</b> расход вырос с 27 тыс. до ~525 тыс. ₽/мес (×19), продажи (панель ниже) остались на уровне 59–75 шт./мес, а бренд-спрос (нижняя панель) в эти же месяцы упал до минимума года.
+    </div>
+    <button class="toggle-btn" data-target="tableSpend">Показать таблицей</button>
+    <table class="data-table" id="tableSpend"></table>
+  </div>
+
+  <div class="panel">
+    <h2>Продажи по площадкам, шт./мес</h2>
+    <div class="chart-scroll"><svg id="chartSales" width="900" height="240"></svg></div>
+    <div class="legend" id="legendSales"></div>
+    <div class="gap-note">Дек 2025 – июн 2026: в файле агентства нет данных о продажах за этот период (лист «Итого» обрывается на ноябре 2025) — заштриховано, не ноль.</div>
+    <button class="toggle-btn" data-target="tableSales">Показать таблицей</button>
+    <table class="data-table" id="tableSales"></table>
+  </div>
+
+  <div class="panel">
+    <h2>Бренд-спрос «потолкуем», запросов/мес (Wordstat)</h2>
+    <div class="chart-scroll"><svg id="chartWordstat" width="900" height="220"></svg></div>
+    <div class="callout">
+      <b>Ноябрь 2025 (4 967)</b> — единственный всплеск, но расход в этот месяц упал (не рос) — вероятно сезонность/выставка, не заслуга рекламы. Пунктир — средний спрос до кампании (2 659, янв–апр 2025). К июню 2026 спрос — <b>1 396, минимум за всю историю</b>, несмотря на рекордный расход на Директ в марте (196 534 ₽).
+    </div>
+    <button class="toggle-btn" data-target="tableWordstat">Показать таблицей</button>
+    <table class="data-table" id="tableWordstat"></table>
+  </div>
+
+  <ul class="note-list">
+    <li><b>Расхождение внутри файла агентства:</b> расход по VK Рекламе в «Лист41» систематически на ×1.20 выше, чем в «Итого» (похоже на НДС, не задокументировано). На графике — консервативные цифры из «Итого» там, где они есть.</li>
+    <li><b>Посевы (VK/TG/MAX)</b> — единственная категория с данными до июня 2026 (лист «Посевыnew»); реклама на маркетплейсах и данные о продажах такого продолжения не имеют — эти клетки после авг/ноя 2025 не «ноль», а «неизвестно».</li>
+    <li><b>Формула в самом файле агентства занижала расход на посевы:</b> `=SUM(L18:L41)` в листе «Посевы» не учитывала строки до L18, из-за чего выпал весь август 2025 (94 651 ₽ VK-посевов) — на графике это уже исправлено.</li>
+  </ul>
+
+  <div class="tooltip" id="tooltip"></div>
+</div>
+
+<script>
+(function() {
+  const months = ["Янв'25","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек","Янв'26","Фев","Мар","Апр","Май","Июн"];
+  const bandStart = 7, bandEnd = 9; // Авг-Окт 2025 (0-indexed)
+
+  const spendSeries = [
+    { label: 'Директ',                color: 'var(--s1)', values: [null,null,null,null,25135.58,41601.03,5263.39,12854.56,6652.86,41328.25,15560.70,90000.32,68883.26,113816.42,196533.78,null,null,null] },
+    { label: 'VK Реклама',            color: 'var(--s2)', values: [null,null,null,null,null,104896.23,36431.54,77672.22,91773.75,63439.75,13817.66,108458.46,61245.01,68899.40,46549.82,null,null,null] },
+    { label: 'Telegram Ads',          color: 'var(--s3)', values: [null,null,null,null,null,null,null,22439.02,69125.92,31660.12,0,55548.28,6782.65,null,null,null,null,null] },
+    { label: 'Посевы VK',             color: 'var(--s4)', values: [null,null,null,null,null,null,null,94651,106406,100049,150386,148982,148827,152400,148372,150000,104443,45025] },
+    { label: 'Посевы TG',             color: 'var(--s5)', values: [null,null,null,null,null,null,84883.42,167474.42,193163,288346,48346.25,42665,28308,0,20684,31818,49766,0] },
+    { label: 'Посевы MAX',            color: 'var(--s7)', values: [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,24491,91532,68248] },
+    { label: 'Реклама на маркетплейсах', color: 'var(--s6)', values: [null,null,null,null,2263.11,23395,71410.83,54211.92,null,null,null,null,null,null,null,null,null,null] },
+  ];
+
+  const salesSeries = [
+    { label: 'OZON',         color: 'var(--s1)', values: [null,null,null,null,66,54,54,32,21,26,41,null,null,null,null,null,null,null] },
+    { label: 'Wildberries',  color: 'var(--s2)', values: [null,null,null,null,0,10,34,39,35,29,35,null,null,null,null,null,null,null] },
+    { label: 'Яндекс Маркет',color: 'var(--s3)', values: [null,null,null,null,13,6,6,4,3,16,13,null,null,null,null,null,null,null] },
+    { label: 'Сайт',         color: 'var(--s4)', values: [null,null,null,null,0,0,0,0,0,1,1,null,null,null,null,null,null,null] },
+  ];
+
+  const wordstatValues = [2448,2839,2715,2632,2992,1909,1607,1276,1627,2293,4967,2656,1776,2043,2353,2254,1742,1396];
+  const wordstatBaseline = (2448+2839+2715+2632) / 4;
+
+  const tooltip = document.getElementById('tooltip');
+  function fmtMoney(v) { return Math.round(v).toLocaleString('ru-RU') + ' ₽'; }
+  function fmtUnits(v) { return Math.round(v).toLocaleString('ru-RU') + ' шт.'; }
+  function fmtQueries(v) { return Math.round(v).toLocaleString('ru-RU') + ' зап.'; }
+
+  const ns = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs) {
+    const e = document.createElementNS(ns, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  function drawBand(svg, padL, padR, padT, plotH, n, bw) {
+    const x0 = padL + bandStart * bw;
+    const x1 = padL + (bandEnd + 1) * bw;
+    svg.appendChild(el('rect', { x: x0, y: padT, width: x1 - x0, height: plotH, fill: 'var(--band-color)' }));
+    svg.appendChild(el('line', { x1: x0, x2: x0, y1: padT, y2: padT + plotH, stroke: 'var(--band-line)', 'stroke-width': 1, 'stroke-dasharray': '3,3' }));
+    svg.appendChild(el('line', { x1: x1, x2: x1, y1: padT, y2: padT + plotH, stroke: 'var(--band-line)', 'stroke-width': 1, 'stroke-dasharray': '3,3' }));
+  }
+
+  function renderChart(svgId, series, fmt, height) {
+    const svg = document.getElementById(svgId);
+    const W = 900, H = height, padL = 46, padR = 8, padT = 10, padB = 26;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+    const n = months.length;
+    const bw = plotW / n;
+    const barW = bw * 0.62;
+
+    let maxStack = 0;
+    for (let i = 0; i < n; i++) {
+      if (!series.some(s => s.values[i] !== null)) continue;
+      maxStack = Math.max(maxStack, series.reduce((a, s) => a + (s.values[i] || 0), 0));
+    }
+    const yMax = maxStack * 1.12 || 1;
+    const yScale = v => plotH - (v / yMax) * plotH;
+
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.innerHTML = '';
+
+    const defs = el('defs', {});
+    const pattern = el('pattern', { id: svgId + '-hatch', width: 6, height: 6, patternTransform: 'rotate(45)', patternUnits: 'userSpaceOnUse' });
+    pattern.appendChild(el('rect', { width: 6, height: 6, fill: 'none' }));
+    pattern.appendChild(el('line', { x1: 0, y1: 0, x2: 0, y2: 6, stroke: 'var(--border)', 'stroke-width': 2 }));
+    defs.appendChild(pattern);
+    svg.appendChild(defs);
+
+    drawBand(svg, padL, padR, padT, plotH, n, bw);
+
+    const ticks = 4;
+    for (let t = 0; t <= ticks; t++) {
+      const v = (yMax / ticks) * t;
+      const y = padT + yScale(v);
+      svg.appendChild(el('line', { x1: padL, x2: W - padR, y1: y, y2: y, class: 'axis-line' }));
+      const label = el('text', { x: padL - 6, y: y + 3, 'text-anchor': 'end' });
+      label.textContent = fmt === fmtMoney ? Math.round(v / 1000) + 'к' : Math.round(v);
+      svg.appendChild(label);
+    }
+
+    for (let i = 0; i < n; i++) {
+      const x = padL + i * bw + (bw - barW) / 2;
+      const hasAny = series.some(s => s.values[i] !== null);
+      if (!hasAny) {
+        const h = plotH * 0.5;
+        svg.appendChild(el('rect', { x, y: padT + plotH - h, width: barW, height: h, fill: `url(#${svgId}-hatch)`, rx: 3, opacity: 0.7 }));
+      } else {
+        let acc = 0;
+        series.forEach((s, si) => {
+          const v = s.values[i];
+          if (v === null) return;
+          const y0 = padT + yScale(acc);
+          const y1 = padT + yScale(acc + v);
+          const h = Math.max(0, y0 - y1);
+          if (h <= 0) { acc += v; return; }
+          const isTop = series.slice(si + 1).every(s2 => !s2.values[i]);
+          const rect = el('rect', { x, y: y1, width: barW, height: h, fill: s.color, rx: isTop ? 4 : 0 });
+          rect.style.cursor = 'pointer';
+          rect.addEventListener('mousemove', (e) => {
+            tooltip.innerHTML = `<b>${months[i]}</b><div class="row"><span>${s.label}</span><span>${fmt(v)}</span></div>`;
+            tooltip.style.left = (e.clientX + 14) + 'px';
+            tooltip.style.top = (e.clientY + 14) + 'px';
+            tooltip.style.opacity = 1;
+          });
+          rect.addEventListener('mouseleave', () => { tooltip.style.opacity = 0; });
+          svg.appendChild(rect);
+          acc += v;
+        });
+      }
+      const lbl = el('text', { x: x + barW / 2, y: H - 6, 'text-anchor': 'middle' });
+      lbl.textContent = months[i];
+      svg.appendChild(lbl);
+    }
+    svg.appendChild(el('line', { x1: padL, x2: W - padR, y1: padT + plotH, y2: padT + plotH, class: 'axis-line' }));
+  }
+
+  function renderLineChart(svgId, values, baseline, fmt, height) {
+    const svg = document.getElementById(svgId);
+    const W = 900, H = height, padL = 46, padR = 8, padT = 12, padB = 26;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+    const n = values.length;
+    const step = plotW / (n - 1);
+    const vMax = Math.max(...values) * 1.1;
+    const vMin = 0;
+    const yScale = v => plotH - ((v - vMin) / (vMax - vMin)) * plotH;
+    const xScale = i => padL + i * step;
+
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.innerHTML = '';
+
+    const bw = plotW / n;
+    drawBand(svg, padL, padR, padT, plotH, n, bw);
+
+    const ticks = 4;
+    for (let t = 0; t <= ticks; t++) {
+      const v = (vMax / ticks) * t;
+      const y = padT + yScale(v);
+      svg.appendChild(el('line', { x1: padL, x2: W - padR, y1: y, y2: y, class: 'axis-line' }));
+      const label = el('text', { x: padL - 6, y: y + 3, 'text-anchor': 'end' });
+      label.textContent = Math.round(v);
+      svg.appendChild(label);
+    }
+
+    // baseline reference (пунктир — средний спрос до кампании)
+    const by = padT + yScale(baseline);
+    svg.appendChild(el('line', { x1: padL, x2: W - padR, y1: by, y2: by, stroke: 'var(--text-muted)', 'stroke-width': 1, 'stroke-dasharray': '4,3' }));
+
+    // line path
+    const pts = values.map((v, i) => `${xScale(i)},${padT + yScale(v)}`).join(' ');
+    svg.appendChild(el('polyline', { points: pts, fill: 'none', stroke: 'var(--s1)', 'stroke-width': 2 }));
+
+    values.forEach((v, i) => {
+      const isAnomaly = i === 10; // ноябрь 2025
+      const cx = xScale(i), cy = padT + yScale(v);
+      const dot = el('circle', { cx, cy, r: isAnomaly ? 6 : 4, fill: isAnomaly ? 'var(--gap-color)' : 'var(--s1)', stroke: 'var(--surface-2)', 'stroke-width': 1.5 });
+      dot.style.cursor = 'pointer';
+      dot.addEventListener('mousemove', (e) => {
+        tooltip.innerHTML = `<b>${months[i]}</b><div class="row"><span>Wordstat «потолкуем»</span><span>${fmt(v)}</span></div>`;
+        tooltip.style.left = (e.clientX + 14) + 'px';
+        tooltip.style.top = (e.clientY + 14) + 'px';
+        tooltip.style.opacity = 1;
+      });
+      dot.addEventListener('mouseleave', () => { tooltip.style.opacity = 0; });
+      svg.appendChild(dot);
+      if (i % 2 === 0 || isAnomaly) {
+        const lbl = el('text', { x: cx, y: H - 6, 'text-anchor': 'middle' });
+        lbl.textContent = months[i];
+        svg.appendChild(lbl);
+      }
+    });
+    svg.appendChild(el('line', { x1: padL, x2: W - padR, y1: padT + plotH, y2: padT + plotH, class: 'axis-line' }));
+  }
+
+  function renderLegend(elId, series) {
+    document.getElementById(elId).innerHTML = series.map(s =>
+      `<div class="legend-item"><span class="swatch" style="background:${s.color}"></span>${s.label}</div>`).join('');
+  }
+
+  function renderTable(tableId, series, fmt) {
+    const t = document.getElementById(tableId);
+    let html = '<thead><tr><th>Месяц</th>' + series.map(s => `<th>${s.label}</th>`).join('') + '<th>Итого</th></tr></thead><tbody>';
+    months.forEach((m, i) => {
+      const total = series.reduce((a, s) => a + (s.values[i] || 0), 0);
+      html += `<tr><td>${m}</td>` + series.map(s => `<td>${s.values[i] === null ? '—' : fmt(s.values[i])}</td>`).join('') + `<td><b>${fmt(total)}</b></td></tr>`;
+    });
+    html += '</tbody>';
+    t.innerHTML = html;
+  }
+
+  function renderWordstatTable(tableId, values, fmt) {
+    const t = document.getElementById(tableId);
+    let html = '<thead><tr>' + months.map(m => `<th>${m}</th>`).join('') + '</tr></thead><tbody><tr>' +
+      values.map(v => `<td>${fmt(v)}</td>`).join('') + '</tr></tbody>';
+    t.innerHTML = html;
+  }
+
+  renderChart('chartSpend', spendSeries, fmtMoney, 300);
+  renderChart('chartSales', salesSeries, fmtUnits, 240);
+  renderLineChart('chartWordstat', wordstatValues, wordstatBaseline, fmtQueries, 220);
+  renderLegend('legendSpend', spendSeries);
+  renderLegend('legendSales', salesSeries);
+  renderTable('tableSpend', spendSeries, fmtMoney);
+  renderTable('tableSales', salesSeries, fmtUnits);
+  renderWordstatTable('tableWordstat', wordstatValues, fmtQueries);
+
+  document.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(btn.dataset.target);
+      target.classList.toggle('show');
+      btn.textContent = target.classList.contains('show') ? 'Скрыть таблицу' : 'Показать таблицей';
+    });
+  });
+})();
+</script>
