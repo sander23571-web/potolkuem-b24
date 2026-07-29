@@ -96,12 +96,14 @@ const BASE_CSS = `
   .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 28px 24px; }
   .chart-card h3 { font-size: 13px; font-weight: 400; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin-bottom: 24px; }
 
-  .smm-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 24px; }
+  .smm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr)); gap: 20px; margin-top: 24px; }
   .smm-card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 24px 20px; position: relative; }
   .smm-card::after { content:''; position: absolute; top:0; left:0; right:0; height:3px; border-radius: 4px 4px 0 0; }
-  .smm-card.vk::after    { background: #2787f5; }
-  .smm-card.tg::after    { background: #2aabee; }
-  .smm-card.dzen::after  { background: #ff6600; }
+  .smm-card.vk::after     { background: #2787f5; }
+  .smm-card.tg::after     { background: #2aabee; }
+  .smm-card.dzen::after   { background: #ff6600; }
+  .smm-card.tiktok::after { background: #010101; }
+  .smm-card.max::after    { background: #3b4aaa; }
   .smm-title { font-size: 13px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin-bottom: 16px; }
   .smm-big { font-size: 32px; font-weight: 400; color: var(--black); }
   .smm-meta { font-size: 12px; color: var(--muted); margin-top: 6px; }
@@ -193,25 +195,37 @@ function renderMarketing(data) {
   const metOrganics = JSON.stringify(metItems.map(r => r.visitsOrganic || 0));
 
   // ── Соцсети: LiveDune ─────────────────────────────────────────────────────
-  const vkItems   = platforms['VK_potolkuem']   || [];
-  const tgItems   = platforms['TG_potolkuem']   || [];
-  const dzenItems = platforms['Дзен_potolkuem'] || [];
+  const vkItems     = platforms['VK_potolkuem']     || [];
+  const tgItems     = platforms['TG_potolkuem']     || [];
+  const dzenItems   = platforms['Дзен_potolkuem']   || [];
+  const tiktokItems = platforms['TikTok_potolkuem'] || [];
+  const maxItems    = platforms['MAX_potolkuem']    || [];
 
-  const vkLast   = latestRecord(vkItems);
-  const tgLast   = latestRecord(tgItems);
-  const dzenLast = latestRecord(dzenItems);
+  const vkLast     = latestRecord(vkItems);
+  const tgLast     = latestRecord(tgItems);
+  const dzenLast   = latestRecord(dzenItems);
+  const tiktokLast = latestRecord(tiktokItems);
+  const maxLast    = latestRecord(maxItems);
 
-  // Динамика подписчиков — объединённая временная шкала (VK и TG могут не совпадать)
+  // Динамика подписчиков — объединённая временная шкала (площадки могут не совпадать по месяцам)
   const _smmPeriods = [...new Set([
     ...vkItems.map(r => r.period),
     ...tgItems.map(r => r.period),
+    ...tiktokItems.map(r => r.period),
+    ...maxItems.map(r => r.period),
   ])].sort();
-  const smmLabels   = JSON.stringify(_smmPeriods.map(p => fmtShortDate(p)));
-  const smmVkData   = JSON.stringify(_smmPeriods.map(p => {
+  const smmLabels     = JSON.stringify(_smmPeriods.map(p => fmtShortDate(p)));
+  const smmVkData     = JSON.stringify(_smmPeriods.map(p => {
     const r = vkItems.find(x => x.period === p); return r ? (r.followers || 0) : null;
   }));
-  const smmTgData   = JSON.stringify(_smmPeriods.map(p => {
+  const smmTgData     = JSON.stringify(_smmPeriods.map(p => {
     const r = tgItems.find(x => x.period === p); return r ? (r.followers || 0) : null;
+  }));
+  const smmTiktokData = JSON.stringify(_smmPeriods.map(p => {
+    const r = tiktokItems.find(x => x.period === p); return r ? (r.followers || 0) : null;
+  }));
+  const smmMaxData    = JSON.stringify(_smmPeriods.map(p => {
+    const r = maxItems.find(x => x.period === p); return r ? (r.followers || 0) : null;
   }));
 
   // ── SEO: Вебмастер ────────────────────────────────────────────────────────
@@ -358,11 +372,13 @@ function renderMarketing(data) {
     ${renderSmmCard('VK', 'vk', vkLast, vkItems.length)}
     ${renderSmmCard('Telegram', 'tg', tgLast, tgItems.length)}
     ${renderSmmCard('Дзен', 'dzen', dzenLast, dzenItems.length)}
+    ${renderSmmCard('TikTok', 'tiktok', tiktokLast, tiktokItems.length)}
+    ${renderSmmCard('MAX', 'max', maxLast, maxItems.length)}
   </div>
 
-  ${(vkItems.length >= 2 || tgItems.length >= 2)
+  ${(vkItems.length >= 2 || tgItems.length >= 2 || tiktokItems.length >= 2 || maxItems.length >= 2)
     ? `<div class="chart-card" style="margin-top:20px">
-    <h3>Динамика подписчиков VK и Telegram</h3>
+    <h3>Динамика подписчиков по площадкам</h3>
     <canvas id="smmChart" height="90"></canvas>
   </div>`
     : ''
@@ -525,7 +541,7 @@ new Chart(document.getElementById('metChart'), {
 });` : ''}
 
 // ── SMM подписчики ────────────────────────────────────────────────────────────
-${(vkItems.length >= 2 || tgItems.length >= 2) ? `
+${(vkItems.length >= 2 || tgItems.length >= 2 || tiktokItems.length >= 2 || maxItems.length >= 2) ? `
 new Chart(document.getElementById('smmChart'), {
   type: 'line',
   data: {
@@ -533,6 +549,8 @@ new Chart(document.getElementById('smmChart'), {
     datasets: [
       ${vkItems.length >= 2 ? `{ label: 'VK', data: ${smmVkData}, borderColor: '#2787f5', backgroundColor: 'rgba(39,135,245,0.06)', tension: 0.3, pointRadius: 3, fill: true, spanGaps: true },` : ''}
       ${tgItems.length >= 2 ? `{ label: 'Telegram', data: ${smmTgData}, borderColor: '#2aabee', backgroundColor: 'rgba(42,171,238,0.06)', tension: 0.3, pointRadius: 3, fill: true, spanGaps: true },` : ''}
+      ${tiktokItems.length >= 2 ? `{ label: 'TikTok', data: ${smmTiktokData}, borderColor: '#010101', backgroundColor: 'rgba(1,1,1,0.05)', tension: 0.3, pointRadius: 3, fill: true, spanGaps: true },` : ''}
+      ${maxItems.length >= 2 ? `{ label: 'MAX', data: ${smmMaxData}, borderColor: '#3b4aaa', backgroundColor: 'rgba(59,74,170,0.06)', tension: 0.3, pointRadius: 3, fill: true, spanGaps: true },` : ''}
     ]
   },
   options: {
