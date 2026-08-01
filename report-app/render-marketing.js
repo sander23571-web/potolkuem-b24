@@ -4,6 +4,7 @@
  */
 
 const { PRESETS, rangeQueryString } = require('./period');
+const { bxBootstrap } = require('./bx-embed');
 
 const B24_URL = 'https://potolkuem.bitrix24.ru';
 const TYPE_ID  = 28;
@@ -203,7 +204,7 @@ function renderPeriodBar(basePath, range) {
 }
 
 // ── Main renderer ─────────────────────────────────────────────────────────────
-function renderMarketing(data) {
+function renderMarketing(data, token) {
   const { platforms, topQueries, snapDate, wordstatHistory, queryDynamics, wordstatCompetitors, fetchedAt, range } = data;
 
   // ── Бренд: Wordstat ──────────────────────────────────────────────────────
@@ -617,6 +618,7 @@ new Chart(document.getElementById('smmChart'), {
   }
 });` : ''}
 <\/script>
+${bxBootstrap(token)}
 </body>
 </html>`;
 }
@@ -657,7 +659,7 @@ function renderChannelBadge(channelId, label) {
 }
 
 // ── Expenses dashboard (management-only) ──────────────────────────────────────
-function renderMarketingExpenses(data) {
+function renderMarketingExpenses(data, token) {
   const { expenses, byChannel, byMonth, total, totalYear, totalMonth, fetchedAt, range } = data;
 
   // Каналы: сортировка по убыванию суммы
@@ -818,6 +820,7 @@ new Chart(document.getElementById('moChart'), {
   }
 });` : ''}
 <\/script>
+${bxBootstrap(token)}
 </body>
 </html>`;
 }

@@ -24,9 +24,42 @@ scp -P 2222 report-app/index.js report-app/livedune.js report-app/render-social.
   report-app/tasks-b24.js report-app/tasks-render.js report-app/render.js \
   report-app/marketing-data.js report-app/render-marketing.js report-app/period.js \
   report-app/warehouse-data.js report-app/render-warehouse.js \
+  report-app/bx-auth.js report-app/bx-embed.js report-app/package.json \
   root@155.212.143.68:/root/projects/talk-report/ && \
-ssh -p 2222 root@155.212.143.68 'pm2 restart report-app'
+ssh -p 2222 root@155.212.143.68 'cd /root/projects/talk-report && npm install --omit=dev && pm2 restart report-app'
 ```
+
+---
+
+## Локальное приложение Б24 «Отчёты Потолкуем» (23.08.2026)
+
+Дашборды встроены как **локальное приложение Б24** — открываются из левого меню Б24
+(«Приложения») внутри iframe, авторизация по правам пользователя портала вместо отдельного
+логина. Basic Auth (`admin`/`director`) сохранён как fallback для прямого захода на
+`db-talk.bobp.ru` вне портала.
+
+**Как это работает:** Б24 при открытии приложения шлёт POST на `/bx/entry` с `AUTH_ID`/`DOMAIN`.
+`AUTH_ID` используется один раз — вызывается `user.current`, чтобы узнать, кто открыл
+приложение, и сразу забывается (полноценный OAuth token-exchange не нужен — данные для
+дашбордов как и раньше идут через постоянный `B24_WEBHOOK`). Личность/права дальше живут в
+собственном JWT (`?bxt=...`, 2 часа), который пробрасывается по ссылкам внутри iframe —
+cookie не используются (блокируются как third-party в iframe на чужом домене).
+
+| Параметр | Значение |
+|---|---|
+| Тип приложения в Б24 | Локальное, серверное |
+| Handler URL | `https://db-talk.bobp.ru/bx/entry` |
+| Права (scope) | `crm`, `user` |
+| client_id / client_secret | в `.env` на проде (`BX_CLIENT_ID`/`BX_CLIENT_SECRET`), в текущем потоке не используются в коде — сохранены на будущее |
+| Кто видит «Расходы руководству» | id 18 (Анна Агеева-Дзукаева), 116 (Александр Дзукаев), 12 (Мария Цакунова) — список в `BX_DIRECTOR_IDS` |
+
+Новые файлы: `report-app/bx-auth.js` (мост Б24 → сессия), `report-app/bx-embed.js`
+(bootstrap для iframe: `BX24.fitWindow()`, проброс `?bxt=` по ссылкам/формам).
+
+**Ручной шаг (сделать в Б24, потом задеплоить код):** `potolkuem.bitrix24.ru` → Настройки →
+Разработчикам → Другое → Локальные приложения → Добавить → тип «Серверное» → права `crm`,
+`user` → Handler URL как выше → скопировать `client_id`/`client_secret` в `.env` на проде →
+после первого открытия выдать доступ нужным сотрудникам на вкладке «Права» приложения.
 
 ---
 

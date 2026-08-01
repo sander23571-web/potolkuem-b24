@@ -1,5 +1,7 @@
 'use strict';
 
+const { bxBootstrap } = require('./bx-embed');
+
 const PALETTE = ['#1e2eb5','#3d4de6','#4a5df9','#7b8ef9','#9eabfa','#bbc5fc','#dde2fc','#6c3483','#117a65','#b7950b'];
 
 const STATUS_LABELS = {
@@ -133,7 +135,7 @@ const BASE_CSS = `
 `;
 
 // ── Главный дашборд /tasks ────────────────────────────────────────────────────
-function renderTasksDashboard(data) {
+function renderTasksDashboard(data, token) {
   const { stats, byStatus, byUser, activityByDay, overdueList, staleList, fetchedAt, b24Url, activeUserIds } = data;
   const activeSet = new Set(activeUserIds || []);
 
@@ -396,12 +398,13 @@ new Chart(document.getElementById('statusChart'), {
   }
 });
 </script>
+${bxBootstrap(token)}
 </body>
 </html>`;
 }
 
 // ── Детальная страница сотрудника /tasks/member/:userId ───────────────────────
-function renderMemberDetail(data, userId) {
+function renderMemberDetail(data, userId, token) {
   const uid  = String(userId);
   const { userMap, b24Url, fetchedAt } = data;
   const name = escHtml(userMap[uid] || `Пользователь #${uid}`);
@@ -413,6 +416,7 @@ function renderMemberDetail(data, userId) {
     <body><div class="hero"><div class="hero-label">Дашборд задач</div><h1>${name}</h1>
     <div class="hero-nav"><a href="/tasks" class="nav-btn">← К команде</a></div></div>
     <div class="container"><p style="margin-top:40px;color:var(--muted)">Нет данных по этому сотруднику.</p></div>
+    ${bxBootstrap(token)}
     </body></html>`;
   }
 
@@ -586,6 +590,7 @@ function renderMemberDetail(data, userId) {
   Потолкуем? · ${name} · potolkuem.bitrix24.ru · Обновлено: ${fetchedAt ? fetchedAt.slice(0, 16).replace('T', ' ') : '—'}
 </div>
 
+${bxBootstrap(token)}
 </body>
 </html>`;
 }

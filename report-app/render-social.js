@@ -1,5 +1,7 @@
 'use strict';
 
+const { bxBootstrap } = require('./bx-embed');
+
 // ── Shared with render.js ─────────────────────────────────────────────────────
 const BASE_CSS = `
   :root {
@@ -239,7 +241,7 @@ function renderWatchedTable(watched, days) {
 }
 
 // ── Main render ───────────────────────────────────────────────────────────────
-function renderSocial(data) {
+function renderSocial(data, token) {
   const { own, watched, fetchedAt, days, from } = data;
 
   const totalSubs   = own.reduce((s, a) => s + (a.ana30?.followers || 0), 0);
@@ -319,6 +321,7 @@ function renderSocial(data) {
   ${renderWatchedTable(watched, days)}
 
 </div>
+${bxBootstrap(token)}
 </body>
 </html>`;
 }

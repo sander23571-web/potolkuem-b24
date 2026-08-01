@@ -3,6 +3,8 @@
  * render-warehouse.js — HTML-рендерер дашборда склада /report/warehouse
  */
 
+const { bxBootstrap } = require('./bx-embed');
+
 const B24_URL = 'https://potolkuem.bitrix24.ru';
 
 const fmt      = n => Math.round(n).toLocaleString('ru-RU');
@@ -93,7 +95,7 @@ function shortName(name) {
   return (name || '').replace(/["""«»]/g, '').replace(/Потолкуем\??\s*/i, '').trim() || name;
 }
 
-function renderWarehouse(data) {
+function renderWarehouse(data, token) {
   const { products, stores, documents, totals } = data;
 
   const mainStores   = stores.filter(s => s.isMain);
@@ -318,6 +320,7 @@ function renderWarehouse(data) {
   });
 })();
 </script>
+${bxBootstrap(token)}
 </body>
 </html>`;
 }

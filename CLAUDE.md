@@ -187,6 +187,14 @@ API-ключ и конфиг портала: `ssh -p 2222 root@155.212.143.68` �
 | `report-app/tasks-render.js` | HTML дашборд задач |
 | `report-app/marketing-data.js` | Маркетинг: СП 1074 + SEO-снапшоты |
 | `report-app/render-marketing.js` | HTML маркетинговый дашборд |
+| `report-app/bx-auth.js` | Локальное приложение Б24: `POST /bx/entry`, `hybridAuth`, `requireDirector` |
+| `report-app/bx-embed.js` | Bootstrap для iframe Б24: `fitWindow()`, проброс `?bxt=` по ссылкам/формам |
+
+**Доступ теперь двойной:** основной — локальное приложение Б24 (открывается из левого меню
+«Приложения», авторизация по правам пользователя портала — см. STATUS.md); Basic Auth
+(`admin`/`director`) остаётся как fallback для прямого захода на `db-talk.bobp.ru` вне портала.
+`REPORT_ADMIN_USER`/`req.auth.user === director` больше не единственный признак руководителя —
+основной путь проверки: `req.viewer.isDirector` (список id в `BX_DIRECTOR_IDS`).
 
 **Маршруты в `index.js`:** `/report/marketing` и `/report/compare` — ОБЯЗАТЕЛЬНО до `/report/:id`, иначе 400.
 

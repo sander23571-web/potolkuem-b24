@@ -1,5 +1,7 @@
 'use strict';
 
+const { bxBootstrap } = require('./bx-embed');
+
 function fmt(n) {
   return Math.round(n || 0).toLocaleString('ru-RU');
 }
@@ -128,7 +130,7 @@ const BASE_CSS = `
 `;
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
-function renderDashboard(data, allExhibitions, currentId) {
+function renderDashboard(data, allExhibitions, currentId, token) {
   const { exhibition, expenses, shifts, hostMap, deals, fetchedAt, b24Url } = data;
 
   const exhTitle = escHtml(exhibition.title || `Выставка #${exhibition.id}`);
@@ -316,7 +318,7 @@ function renderDashboard(data, allExhibitions, currentId) {
   </div>
   <div class="hero-nav">
     <form method="get" action="" style="display:contents">
-      <select class="nav-select" onchange="location.href='/report/'+this.value">
+      <select class="nav-select" onchange="location.href=(window.__withBxt?window.__withBxt('/report/'+this.value):'/report/'+this.value)">
         ${dropdownOptions}
       </select>
     </form>
@@ -573,12 +575,13 @@ new Chart(document.getElementById('shiftsChart'), {
   }
 });
 </script>
+${bxBootstrap(token)}
 </body>
 </html>`;
 }
 
 // ── Comparison page ───────────────────────────────────────────────────────────
-function renderComparison(allExhibitions, summaries) {
+function renderComparison(allExhibitions, summaries, token) {
   const sorted = [...allExhibitions]
     .filter(e => summaries[e.id] !== undefined)
     .sort((a, b) => (a.begindate || '').localeCompare(b.begindate || ''));
@@ -716,7 +719,10 @@ new Chart(document.getElementById('cmpChart'), {
   options: {
     responsive: true,
     onClick: (e, els) => {
-      if (els.length) window.open(cmpUrls[els[0].index], '_self');
+      if (els.length) {
+        const url = cmpUrls[els[0].index];
+        window.open(window.__withBxt ? window.__withBxt(url) : url, '_self');
+      }
     },
     onHover: (e, els) => { e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
     plugins: {
@@ -730,6 +736,7 @@ new Chart(document.getElementById('cmpChart'), {
   }
 });
 </script>
+${bxBootstrap(token)}
 </body>
 </html>`;
 }

@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const basicAuth = require('express-basic-auth');
+const { bxEntry, createHybridAuth, requireDirector } = require('./bx-auth');
 const { fetchExhibitionData, fetchExhibitionList, cacheInvalidate, fetchAllSummaries } = require('./b24');
 const { renderDashboard, renderComparison } = require('./render');
 const { fetchSocialData, invalidate: socialInvalidate } = require('./livedune');
@@ -24,23 +25,27 @@ if (process.env.REPORT_ADMIN_USER && process.env.REPORT_ADMIN_PASSWORD) {
 }
 const authMiddleware = basicAuth({ users: _authUsers, challenge: true, realm: 'Potolkuem Dashboard' });
 
-// Доступ к расходам — только для руководства.
-// 403 (не 401!) чтобы браузер не показывал повторный диалог при неверном пользователе.
-const requireAdmin = (req, res, next) => {
-  if (!process.env.REPORT_ADMIN_USER) {
-    return res.status(503).send('Не настроены учётные данные руководителя (REPORT_ADMIN_USER в .env)');
-  }
-  if (req.auth?.user !== process.env.REPORT_ADMIN_USER) {
-    return res.status(403).send('Доступ запрещён. Войдите с учётными данными руководителя.');
-  }
+// ── Локальное приложение Б24 (внутренний доступ) + Basic Auth как фолбэк ──────
+// hybridAuth: если пришли из Б24 (?bxt=... в query, выданный /bx/entry) — пускает
+// по правам пользователя портала; иначе — старый Basic Auth (admin/director).
+// req.viewer.isDirector определяет доступ к закрытым разделам (см. requireDirector).
+const hybridAuth = createHybridAuth(authMiddleware);
+
+// ── CSP: разрешить встраивание в iframe только с портала Б24 ──────────────────
+app.use((req, res, next) => {
+  const domain = process.env.BX_PORTAL_DOMAIN || 'potolkuem.bitrix24.ru';
+  res.setHeader('Content-Security-Policy', `frame-ancestors https://${domain}`);
   next();
-};
+});
 
-app.use('/report', authMiddleware);
-app.use('/tasks',  authMiddleware);
-
-// ── POST body parsing (for refresh) ──────────────────────────────────────────
+// ── POST body parsing (for refresh + вход из Б24) ─────────────────────────────
 app.use(express.urlencoded({ extended: false }));
+
+// Вход из левого меню Б24: POST с AUTH_ID/DOMAIN → сессионный ?bxt= и редирект
+app.post('/bx/entry', bxEntry);
+
+app.use('/report', hybridAuth);
+app.use('/tasks',  hybridAuth);
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 
@@ -64,7 +69,7 @@ app.get('/report', async (req, res) => {
 app.get('/report/compare', async (req, res) => {
   try {
     const { exhibitions, summaries } = await fetchAllSummaries();
-    const html = renderComparison(exhibitions, summaries);
+    const html = renderComparison(exhibitions, summaries, req.viewer.token);
     res.send(html);
   } catch (err) {
     console.error('[ERR] /report/compare:', err.message);
@@ -76,7 +81,7 @@ app.get('/report/compare', async (req, res) => {
 app.get('/report/warehouse', async (req, res) => {
   try {
     const data = await fetchWarehouseData();
-    res.send(renderWarehouse(data));
+    res.send(renderWarehouse(data, req.viewer.token));
   } catch (err) {
     console.error('[ERR] /report/warehouse:', err.message);
     res.status(500).send('Внутренняя ошибка сервера');
@@ -93,7 +98,7 @@ app.get('/report/marketing', async (req, res) => {
   try {
     const range = resolveRange(req.query);
     const data = await fetchMarketingData(range);
-    res.send(renderMarketing(data));
+    res.send(renderMarketing(data, req.viewer.token));
   } catch (err) {
     console.error('[ERR] /report/marketing:', err.message);
     res.status(500).send('Внутренняя ошибка сервера');
@@ -107,14 +112,14 @@ app.post('/report/marketing/refresh', (req, res) => {
 });
 
 // ── Marketing expenses (только для руководства) ───────────────────────────────
-// adminAuthMiddleware применяется дополнительно поверх основного authMiddleware
-app.use('/report/marketing/expenses', requireAdmin);
+// requireDirector применяется дополнительно поверх hybridAuth (см. req.viewer.isDirector)
+app.use('/report/marketing/expenses', requireDirector);
 
 app.get('/report/marketing/expenses', async (req, res) => {
   try {
     const range = resolveRange(req.query);
     const data = await fetchMarketingExpensesData(range);
-    res.send(renderMarketingExpenses(data));
+    res.send(renderMarketingExpenses(data, req.viewer.token));
   } catch (err) {
     console.error('[ERR] /report/marketing/expenses:', err.message);
     res.status(500).send('Внутренняя ошибка сервера');
@@ -137,7 +142,7 @@ app.get('/report/:id', async (req, res) => {
       fetchExhibitionData(id),
       fetchExhibitionList(),
     ]);
-    const html = renderDashboard(data, allExhibitions, id);
+    const html = renderDashboard(data, allExhibitions, id, req.viewer.token);
     res.send(html);
   } catch (err) {
     console.error(`[ERR] /report/${id}:`, err.message);
@@ -158,7 +163,7 @@ app.post('/report/:id/refresh', (req, res) => {
 app.get('/tasks', async (req, res) => {
   try {
     const data = await fetchTasksData();
-    res.send(renderTasksDashboard(data));
+    res.send(renderTasksDashboard(data, req.viewer.token));
   } catch (err) {
     console.error('[ERR] /tasks:', err.message);
     res.status(500).send('Внутренняя ошибка сервера');
@@ -170,7 +175,7 @@ app.get('/tasks/member/:userId', async (req, res) => {
   if (!/^\d+$/.test(userId)) return res.status(400).send('Некорректный ID');
   try {
     const data = await fetchTasksData();
-    res.send(renderMemberDetail(data, userId));
+    res.send(renderMemberDetail(data, userId, req.viewer.token));
   } catch (err) {
     console.error(`[ERR] /tasks/member/${userId}:`, err.message);
     res.status(500).send('Внутренняя ошибка сервера');
@@ -183,13 +188,13 @@ app.post('/tasks/refresh', (req, res) => {
 });
 
 // ── SMM Dashboard ─────────────────────────────────────────────────────────────
-app.use('/social', authMiddleware);
+app.use('/social', hybridAuth);
 
 app.get('/social', async (req, res) => {
   try {
     const days = Math.min(365, Math.max(7, parseInt(req.query.days, 10) || 30));
     const data = await fetchSocialData(days);
-    res.send(renderSocial(data));
+    res.send(renderSocial(data, req.viewer.token));
   } catch (err) {
     console.error('[ERR] /social:', err.message);
     res.status(500).send('Внутренняя ошибка сервера');
