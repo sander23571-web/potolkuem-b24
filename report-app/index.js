@@ -11,6 +11,7 @@ const { fetchMarketingData, cacheInvalidateMarketing, fetchMarketingExpensesData
 const { renderMarketing, renderMarketingExpenses } = require('./render-marketing');
 const { fetchWarehouseData, cacheInvalidateWarehouse } = require('./warehouse-data');
 const { renderWarehouse } = require('./render-warehouse');
+const { resolveRange, rangeQueryString } = require('./period');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -90,7 +91,8 @@ app.post('/report/warehouse/refresh', (req, res) => {
 // Marketing dashboard — must be before /report/:id
 app.get('/report/marketing', async (req, res) => {
   try {
-    const data = await fetchMarketingData();
+    const range = resolveRange(req.query);
+    const data = await fetchMarketingData(range);
     res.send(renderMarketing(data));
   } catch (err) {
     console.error('[ERR] /report/marketing:', err.message);
@@ -100,7 +102,8 @@ app.get('/report/marketing', async (req, res) => {
 
 app.post('/report/marketing/refresh', (req, res) => {
   cacheInvalidateMarketing();
-  res.redirect('/report/marketing');
+  const range = resolveRange(req.query);
+  res.redirect('/report/marketing?' + rangeQueryString(range));
 });
 
 // ── Marketing expenses (только для руководства) ───────────────────────────────
@@ -109,7 +112,8 @@ app.use('/report/marketing/expenses', requireAdmin);
 
 app.get('/report/marketing/expenses', async (req, res) => {
   try {
-    const data = await fetchMarketingExpensesData();
+    const range = resolveRange(req.query);
+    const data = await fetchMarketingExpensesData(range);
     res.send(renderMarketingExpenses(data));
   } catch (err) {
     console.error('[ERR] /report/marketing/expenses:', err.message);
@@ -119,7 +123,8 @@ app.get('/report/marketing/expenses', async (req, res) => {
 
 app.post('/report/marketing/expenses/refresh', (req, res) => {
   cacheInvalidateExpenses();
-  res.redirect('/report/marketing/expenses');
+  const range = resolveRange(req.query);
+  res.redirect('/report/marketing/expenses?' + rangeQueryString(range));
 });
 
 // Dashboard for specific exhibition

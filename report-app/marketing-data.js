@@ -24,8 +24,6 @@ const EXPENSE_ENTITY_TYPE_ID = 1070;
 const DIRECTION_MARKETING_ID = '226';
 
 const CACHE_TTL = 10 * 60 * 1000; // 10 минут
-let _cache = null;
-let _cacheTs = 0;
 
 // ── B24 helper ────────────────────────────────────────────────────────────────
 async function b24(method, params = {}) {
@@ -91,11 +89,12 @@ function groupByPlatform(items) {
 }
 
 // ── SEO snapshots ─────────────────────────────────────────────────────────────
-function loadSnapshotHistory(n = 6) {
+// Загружаем всю историю снапшотов — фильтрация по периоду делается позже, при рендере.
+function loadSnapshotHistory() {
   try {
     if (!fs.existsSync(SEO_DIR)) return [];
     const files = fs.readdirSync(SEO_DIR).filter(f => f.endsWith('.json')).sort();
-    return files.slice(-n).map(f => {
+    return files.map(f => {
       try { return JSON.parse(fs.readFileSync(path.join(SEO_DIR, f), 'utf8')); }
       catch (e) { return null; }
     }).filter(Boolean);
@@ -103,6 +102,18 @@ function loadSnapshotHistory(n = 6) {
     console.error('[marketing-data] snapshot error:', e.message);
     return [];
   }
+}
+
+// ── Период: фильтр списков по полю с датой YYYY-MM-DD ────────────────────────
+function filterByRange(list, from, to, field) {
+  if (!from && !to) return list;
+  return list.filter(x => {
+    const v = x[field];
+    if (!v) return true; // без даты — не выбрасываем
+    if (from && v < from) return false;
+    if (to && v > to) return false;
+    return true;
+  });
 }
 
 // Самые динамичные запросы: сравниваем позиции первого и последнего снапшота
@@ -136,9 +147,12 @@ function computeQueryDynamics(snapshots) {
   };
 }
 
-// ── Main aggregator (платформенная статистика — без расходов) ─────────────────
-async function fetchMarketingData() {
-  if (_cache && Date.now() - _cacheTs < CACHE_TTL) return _cache;
+// ── Raw cache (без учёта периода) — фильтрация по диапазону идёт при каждом запросе ─
+let _rawCache   = null;
+let _rawCacheTs = 0;
+
+async function fetchRawMarketing() {
+  if (_rawCache && Date.now() - _rawCacheTs < CACHE_TTL) return _rawCache;
 
   const raw = await fetchAllItems(ENTITY_TYPE_ID, {}, [
     'id', 'title',
@@ -148,15 +162,26 @@ async function fetchMarketingData() {
     pf('Clicks'), pf('Impressions'), pf('BrandDemand'),
   ]);
 
-  const items     = raw.map(parseItem);
-  const platforms = groupByPlatform(items);
+  _rawCache   = { items: raw.map(parseItem), snapshots: loadSnapshotHistory() };
+  _rawCacheTs = Date.now();
+  return _rawCache;
+}
 
-  const snapshots       = loadSnapshotHistory(6);
-  const snap            = snapshots[snapshots.length - 1] || null;
-  const topQueries      = snap?.webmaster?.rows?.slice(0, 20) || [];
-  const snapDate        = snap?.date || null;
-  const wordstatHistory = snap?.wordstat?.brand_history || [];
-  const queryDynamics   = computeQueryDynamics(snapshots);
+// ── Main aggregator (платформенная статистика — без расходов) ─────────────────
+// range: { from: 'YYYY-MM-DD'|null, to: 'YYYY-MM-DD'|null }
+async function fetchMarketingData(range = {}) {
+  const { from = null, to = null } = range;
+  const { items, snapshots } = await fetchRawMarketing();
+
+  const filteredItems = filterByRange(items, from, to, 'period');
+  const platforms      = groupByPlatform(filteredItems);
+
+  const filteredSnapshots = filterByRange(snapshots, from, to, 'date');
+  const snap             = filteredSnapshots[filteredSnapshots.length - 1] || null;
+  const topQueries       = snap?.webmaster?.rows?.slice(0, 20) || [];
+  const snapDate         = snap?.date || null;
+  const wordstatHistory  = snap?.wordstat?.brand_history || [];
+  const queryDynamics    = computeQueryDynamics(filteredSnapshots);
 
   // Текущие значения конкурентов из последнего снапшота (wordstat.current).
   // При ошибке API сохраняется строка 'error: ...' — фильтруем только числа.
@@ -165,14 +190,16 @@ async function fetchMarketingData() {
     Object.entries(rawCompetitors).filter(([, v]) => typeof v === 'number' && v > 0)
   );
 
-  _cache   = { platforms, topQueries, snapDate, wordstatHistory, queryDynamics, wordstatCompetitors, fetchedAt: new Date().toISOString() };
-  _cacheTs = Date.now();
-  return _cache;
+  return {
+    platforms, topQueries, snapDate, wordstatHistory, queryDynamics, wordstatCompetitors,
+    range,
+    fetchedAt: new Date().toISOString(),
+  };
 }
 
 function cacheInvalidateMarketing() {
-  _cache   = null;
-  _cacheTs = 0;
+  _rawCache   = null;
+  _rawCacheTs = 0;
 }
 
 // ── Marketing expenses — отдельный фетчер для страницы руководства ────────────
@@ -186,19 +213,43 @@ const CHANNEL_LABELS = {
   '240': 'Другое',
 };
 
-let _expCache   = null;
-let _expCacheTs = 0;
+// ── Период расхода ────────────────────────────────────────────────────────────
+// ВНИМАНИЕ: поле begindate у всех записей СП «Расходы» (импорт 07.07.2026) содержит
+// дату импорта, а не реальный период расхода — реальный месяц зашит только в title
+// («Вендор · Июль 2025», «Вендор · Апр 2026»). Парсим период оттуда; begindate — fallback
+// только для записей, где в title месяц не распознан (например, созданных вручную без даты в названии).
+const MONTH_RU = {
+  'янв': 1, 'фев': 2, 'март': 3, 'мар': 3, 'апр': 4, 'май': 5, 'июнь': 6, 'июн': 6,
+  'июль': 7, 'июл': 7, 'август': 8, 'авг': 8, 'сент': 9, 'сен': 9, 'окт': 10, 'ноя': 11, 'дек': 12,
+};
 
-async function fetchMarketingExpensesData() {
-  if (_expCache && Date.now() - _expCacheTs < CACHE_TTL) return _expCache;
+function parsePeriodFromTitle(title) {
+  const m = /([А-Яа-я]+)\s+(\d{4})/.exec(title || '');
+  if (!m) return null;
+  const word = m[1].toLowerCase();
+  const year = parseInt(m[2], 10);
+  for (const key of Object.keys(MONTH_RU)) {
+    if (word.startsWith(key)) {
+      return `${year}-${String(MONTH_RU[key]).padStart(2, '0')}-01`;
+    }
+  }
+  return null;
+}
+
+let _rawExpCache   = null;
+let _rawExpCacheTs = 0;
+
+async function fetchRawExpenses() {
+  if (_rawExpCache && Date.now() - _rawExpCacheTs < CACHE_TTL) return _rawExpCache;
 
   const raw = await fetchAllItems(EXPENSE_ENTITY_TYPE_ID,
     { ufCrm24Direction: DIRECTION_MARKETING_ID },
     ['id', 'title', 'ufCrm24Amount', 'ufCrm24Channel', 'ufCrm24Description', 'begindate']
   );
 
-  const expenses = raw.map(e => {
+  _rawExpCache = raw.map(e => {
     const chId = e.ufCrm24Channel ? String(e.ufCrm24Channel) : '240';
+    const date = parsePeriodFromTitle(e.title) || (e.begindate ? e.begindate.slice(0, 10) : null);
     return {
       id:           e.id,
       title:        e.title || '',
@@ -206,11 +257,20 @@ async function fetchMarketingExpensesData() {
       amount:       parseFloat(e.ufCrm24Amount || 0),
       channel:      chId,
       channelLabel: CHANNEL_LABELS[chId] || 'Другое',
-      date:         e.begindate ? e.begindate.slice(0, 10) : null,
-      month:        e.begindate ? e.begindate.slice(0, 7) : null,
+      date,
+      month:        date ? date.slice(0, 7) : null,
       b24Url:       `${B24_URL}/crm/type/1070/details/${e.id}/`,
     };
   }).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  _rawExpCacheTs = Date.now();
+  return _rawExpCache;
+}
+
+// range: { from: 'YYYY-MM-DD'|null, to: 'YYYY-MM-DD'|null }
+async function fetchMarketingExpensesData(range = {}) {
+  const { from = null, to = null } = range;
+  const all      = await fetchRawExpenses();
+  const expenses = filterByRange(all, from, to, 'date');
 
   // Агрегация по каналам
   const byChannel = {};
@@ -233,21 +293,24 @@ async function fetchMarketingExpensesData() {
   const total        = expenses.reduce((s, e) => s + e.amount, 0);
   const currentYear  = new Date().getFullYear().toString();
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const totalYear    = expenses
+  // totalYear/totalMonth — фиксированные ориентиры (весь текущий год/месяц), не зависят от выбранного периода
+  const totalYear    = all
     .filter(e => e.date && e.date.startsWith(currentYear))
     .reduce((s, e) => s + e.amount, 0);
-  const totalMonth   = expenses
+  const totalMonth   = all
     .filter(e => e.month === currentMonth)
     .reduce((s, e) => s + e.amount, 0);
 
-  _expCache   = { expenses, byChannel, byMonth, total, totalYear, totalMonth, fetchedAt: new Date().toISOString() };
-  _expCacheTs = Date.now();
-  return _expCache;
+  return {
+    expenses, byChannel, byMonth, total, totalYear, totalMonth,
+    range,
+    fetchedAt: new Date().toISOString(),
+  };
 }
 
 function cacheInvalidateExpenses() {
-  _expCache   = null;
-  _expCacheTs = 0;
+  _rawExpCache   = null;
+  _rawExpCacheTs = 0;
 }
 
 module.exports = {

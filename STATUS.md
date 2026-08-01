@@ -22,7 +22,7 @@
 ```bash
 scp -P 2222 report-app/index.js report-app/livedune.js report-app/render-social.js \
   report-app/tasks-b24.js report-app/tasks-render.js report-app/render.js \
-  report-app/marketing-data.js report-app/render-marketing.js \
+  report-app/marketing-data.js report-app/render-marketing.js report-app/period.js \
   report-app/warehouse-data.js report-app/render-warehouse.js \
   root@155.212.143.68:/root/projects/talk-report/ && \
 ssh -p 2222 root@155.212.143.68 'pm2 restart report-app'

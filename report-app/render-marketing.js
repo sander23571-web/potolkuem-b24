@@ -3,6 +3,8 @@
  * render-marketing.js — HTML-рендерер дашборда /report/marketing
  */
 
+const { PRESETS, rangeQueryString } = require('./period');
+
 const B24_URL = 'https://potolkuem.bitrix24.ru';
 const TYPE_ID  = 28;
 const ENTITY_TYPE_ID = 1074;
@@ -122,6 +124,23 @@ const BASE_CSS = `
 
   .no-data { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 40px; text-align: center; color: var(--muted); font-size: 14px; }
 
+  .period-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 14px 18px; margin-top: 24px; }
+  .period-presets { display: flex; gap: 6px; flex-wrap: wrap; }
+  .period-btn { font-family: inherit; font-size: 12px; letter-spacing: .5px; color: var(--muted); text-decoration: none; border: 1px solid var(--border); border-radius: 3px; padding: 6px 12px; }
+  .period-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .period-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .period-custom { display: flex; align-items: center; gap: 6px; }
+  .period-custom input[type=date] { font-family: inherit; font-size: 12px; color: var(--text); border: 1px solid var(--border); border-radius: 3px; padding: 5px 8px; background: #fff; }
+  .period-custom span { color: var(--muted); font-size: 12px; }
+  .period-custom button { font-family: inherit; font-size: 12px; color: var(--accent); background: transparent; border: 1px solid var(--accent); border-radius: 3px; padding: 6px 12px; cursor: pointer; }
+  .period-custom button:hover { background: var(--accent); color: #fff; }
+  .period-label { margin-left: auto; font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+  @media (max-width: 768px) {
+    .period-bar { flex-direction: column; align-items: stretch; }
+    .period-label { margin-left: 0; }
+  }
+
   .footer { text-align: center; font-size: 12px; color: var(--muted); padding: 32px; border-top: 1px solid var(--border); margin-top: 60px; letter-spacing: 1px; }
 
   @media (max-width: 768px) {
@@ -150,9 +169,42 @@ function b24ItemLink(id) {
   return `${B24_URL}/crm/type/${ENTITY_TYPE_ID}/details/${id}/`;
 }
 
+function fmtRuDateFull(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function periodLabel(range) {
+  const from = fmtRuDateFull(range.from);
+  const to   = fmtRuDateFull(range.to);
+  if (!from && !to) return 'за всё время';
+  if (from && to)   return `${from} — ${to}`;
+  if (from)         return `с ${from}`;
+  return `по ${to}`;
+}
+
+// ── Панель выбора периода: пресеты + произвольный диапазон ─────────────────────
+function renderPeriodBar(basePath, range) {
+  const buttons = PRESETS.map(p => {
+    const active = range.preset === p.key;
+    return `<a class="period-btn${active ? ' active' : ''}" href="${basePath}?range=${p.key}">${p.label}</a>`;
+  }).join('');
+  return `<div class="period-bar">
+    <div class="period-presets">${buttons}</div>
+    <form class="period-custom" method="GET" action="${basePath}">
+      <input type="date" name="from" value="${range.from || ''}">
+      <span>—</span>
+      <input type="date" name="to" value="${range.to || ''}">
+      <button type="submit">Применить</button>
+    </form>
+    <div class="period-label">Период: ${periodLabel(range)}</div>
+  </div>`;
+}
+
 // ── Main renderer ─────────────────────────────────────────────────────────────
 function renderMarketing(data) {
-  const { platforms, topQueries, snapDate, wordstatHistory, queryDynamics, wordstatCompetitors, fetchedAt } = data;
+  const { platforms, topQueries, snapDate, wordstatHistory, queryDynamics, wordstatCompetitors, fetchedAt, range } = data;
 
   // ── Бренд: Wordstat ──────────────────────────────────────────────────────
   const wsItems = platforms['Wordstat_потолкуем'] || [];
@@ -259,7 +311,7 @@ function renderMarketing(data) {
     <a class="nav-btn active" href="/report/marketing">Маркетинг</a>
     <a class="nav-btn" href="/report/marketing/expenses" style="border-color:var(--orange);color:var(--orange)">Расходы</a>
     <a class="nav-btn" href="/tasks">Задачи</a>
-    <form method="POST" action="/report/marketing/refresh" style="margin-left:auto">
+    <form method="POST" action="/report/marketing/refresh?${rangeQueryString(range)}" style="margin-left:auto">
       <button class="refresh-btn" type="submit">Обновить данные</button>
     </form>
     <span class="fetched-at">обновлено ${new Date(fetchedAt).toLocaleString('ru-RU')}</span>
@@ -267,6 +319,8 @@ function renderMarketing(data) {
 </div>
 
 <div class="container">
+
+${renderPeriodBar('/report/marketing', range)}
 
 <!-- ══════════════════════════════════════════════════════════════════════ -->
 <!-- БЛОК 1: БРЕНД -->
@@ -604,7 +658,7 @@ function renderChannelBadge(channelId, label) {
 
 // ── Expenses dashboard (management-only) ──────────────────────────────────────
 function renderMarketingExpenses(data) {
-  const { expenses, byChannel, byMonth, total, totalYear, totalMonth, fetchedAt } = data;
+  const { expenses, byChannel, byMonth, total, totalYear, totalMonth, fetchedAt, range } = data;
 
   // Каналы: сортировка по убыванию суммы
   const channelEntries = Object.entries(byChannel)
@@ -644,7 +698,7 @@ function renderMarketingExpenses(data) {
   <div class="hero-sub">СП «Расходы» · направление «Маркетинг» · ${expenses.length} записей</div>
   <nav class="hero-nav">
     <a class="nav-btn" href="/report/marketing">← Маркетинг</a>
-    <form method="POST" action="/report/marketing/expenses/refresh" style="margin-left:auto">
+    <form method="POST" action="/report/marketing/expenses/refresh?${rangeQueryString(range)}" style="margin-left:auto">
       <button class="refresh-btn" type="submit">Обновить данные</button>
     </form>
     <span class="fetched-at">обновлено ${new Date(fetchedAt).toLocaleString('ru-RU')}</span>
@@ -652,6 +706,8 @@ function renderMarketingExpenses(data) {
 </div>
 
 <div class="container">
+
+${renderPeriodBar('/report/marketing/expenses', range)}
 
 <!-- KPI -->
 <div class="section">
