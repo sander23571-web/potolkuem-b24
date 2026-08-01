@@ -31,6 +31,14 @@ const authMiddleware = basicAuth({ users: _authUsers, challenge: true, realm: 'P
 // req.viewer.isDirector определяет доступ к закрытым разделам (см. requireDirector).
 const hybridAuth = createHybridAuth(authMiddleware);
 
+// Пробрасывает ?bxt= через серверные редиректы (иначе сессия из Б24 рвётся
+// на первом же res.redirect и запрос падает на Basic Auth фолбэк).
+function withBxt(path, req) {
+  if (!req.viewer || !req.viewer.token) return path;
+  const sep = path.includes('?') ? '&' : '?';
+  return path + sep + 'bxt=' + encodeURIComponent(req.viewer.token);
+}
+
 // ── CSP: разрешить встраивание в iframe только с портала Б24 ──────────────────
 app.use((req, res, next) => {
   const domain = process.env.BX_PORTAL_DOMAIN || 'potolkuem.bitrix24.ru';
@@ -58,7 +66,7 @@ app.get('/report', async (req, res) => {
     }
     // Sort by begin date desc, redirect to most recent
     list.sort((a, b) => (b.begindate || '').localeCompare(a.begindate || ''));
-    res.redirect(`/report/${list[0].id}`);
+    res.redirect(withBxt(`/report/${list[0].id}`, req));
   } catch (err) {
     console.error('[ERR] /report:', err.message);
     res.status(500).send('Внутренняя ошибка сервера');
@@ -69,7 +77,7 @@ app.get('/report', async (req, res) => {
 app.get('/report/compare', async (req, res) => {
   try {
     const { exhibitions, summaries } = await fetchAllSummaries();
-    const html = renderComparison(exhibitions, summaries, req.viewer.token);
+    const html = renderComparison(exhibitions, summaries, req.viewer);
     res.send(html);
   } catch (err) {
     console.error('[ERR] /report/compare:', err.message);
@@ -81,7 +89,7 @@ app.get('/report/compare', async (req, res) => {
 app.get('/report/warehouse', async (req, res) => {
   try {
     const data = await fetchWarehouseData();
-    res.send(renderWarehouse(data, req.viewer.token));
+    res.send(renderWarehouse(data, req.viewer));
   } catch (err) {
     console.error('[ERR] /report/warehouse:', err.message);
     res.status(500).send('Внутренняя ошибка сервера');
@@ -90,7 +98,7 @@ app.get('/report/warehouse', async (req, res) => {
 
 app.post('/report/warehouse/refresh', (req, res) => {
   cacheInvalidateWarehouse();
-  res.redirect('/report/warehouse');
+  res.redirect(withBxt('/report/warehouse', req));
 });
 
 // Marketing dashboard — must be before /report/:id
@@ -98,7 +106,7 @@ app.get('/report/marketing', async (req, res) => {
   try {
     const range = resolveRange(req.query);
     const data = await fetchMarketingData(range);
-    res.send(renderMarketing(data, req.viewer.token));
+    res.send(renderMarketing(data, req.viewer));
   } catch (err) {
     console.error('[ERR] /report/marketing:', err.message);
     res.status(500).send('Внутренняя ошибка сервера');
@@ -108,7 +116,7 @@ app.get('/report/marketing', async (req, res) => {
 app.post('/report/marketing/refresh', (req, res) => {
   cacheInvalidateMarketing();
   const range = resolveRange(req.query);
-  res.redirect('/report/marketing?' + rangeQueryString(range));
+  res.redirect(withBxt('/report/marketing?' + rangeQueryString(range), req));
 });
 
 // ── Marketing expenses (только для руководства) ───────────────────────────────
@@ -119,7 +127,7 @@ app.get('/report/marketing/expenses', async (req, res) => {
   try {
     const range = resolveRange(req.query);
     const data = await fetchMarketingExpensesData(range);
-    res.send(renderMarketingExpenses(data, req.viewer.token));
+    res.send(renderMarketingExpenses(data, req.viewer));
   } catch (err) {
     console.error('[ERR] /report/marketing/expenses:', err.message);
     res.status(500).send('Внутренняя ошибка сервера');
@@ -129,7 +137,7 @@ app.get('/report/marketing/expenses', async (req, res) => {
 app.post('/report/marketing/expenses/refresh', (req, res) => {
   cacheInvalidateExpenses();
   const range = resolveRange(req.query);
-  res.redirect('/report/marketing/expenses?' + rangeQueryString(range));
+  res.redirect(withBxt('/report/marketing/expenses?' + rangeQueryString(range), req));
 });
 
 // Dashboard for specific exhibition
@@ -142,7 +150,7 @@ app.get('/report/:id', async (req, res) => {
       fetchExhibitionData(id),
       fetchExhibitionList(),
     ]);
-    const html = renderDashboard(data, allExhibitions, id, req.viewer.token);
+    const html = renderDashboard(data, allExhibitions, id, req.viewer);
     res.send(html);
   } catch (err) {
     console.error(`[ERR] /report/${id}:`, err.message);
@@ -155,7 +163,7 @@ app.post('/report/:id/refresh', (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (!id) return res.status(400).send('Некорректный ID');
   cacheInvalidate(id);
-  res.redirect(`/report/${id}`);
+  res.redirect(withBxt(`/report/${id}`, req));
 });
 
 // ── Tasks dashboard ───────────────────────────────────────────────────────────
@@ -163,7 +171,7 @@ app.post('/report/:id/refresh', (req, res) => {
 app.get('/tasks', async (req, res) => {
   try {
     const data = await fetchTasksData();
-    res.send(renderTasksDashboard(data, req.viewer.token));
+    res.send(renderTasksDashboard(data, req.viewer));
   } catch (err) {
     console.error('[ERR] /tasks:', err.message);
     res.status(500).send('Внутренняя ошибка сервера');
@@ -175,7 +183,7 @@ app.get('/tasks/member/:userId', async (req, res) => {
   if (!/^\d+$/.test(userId)) return res.status(400).send('Некорректный ID');
   try {
     const data = await fetchTasksData();
-    res.send(renderMemberDetail(data, userId, req.viewer.token));
+    res.send(renderMemberDetail(data, userId, req.viewer));
   } catch (err) {
     console.error(`[ERR] /tasks/member/${userId}:`, err.message);
     res.status(500).send('Внутренняя ошибка сервера');
@@ -184,7 +192,7 @@ app.get('/tasks/member/:userId', async (req, res) => {
 
 app.post('/tasks/refresh', (req, res) => {
   cacheInvalidateTasks();
-  res.redirect('/tasks');
+  res.redirect(withBxt('/tasks', req));
 });
 
 // ── SMM Dashboard ─────────────────────────────────────────────────────────────
@@ -194,7 +202,7 @@ app.get('/social', async (req, res) => {
   try {
     const days = Math.min(365, Math.max(7, parseInt(req.query.days, 10) || 30));
     const data = await fetchSocialData(days);
-    res.send(renderSocial(data, req.viewer.token));
+    res.send(renderSocial(data, req.viewer));
   } catch (err) {
     console.error('[ERR] /social:', err.message);
     res.status(500).send('Внутренняя ошибка сервера');
@@ -204,7 +212,7 @@ app.get('/social', async (req, res) => {
 app.post('/social/refresh', (req, res) => {
   const days = Math.min(365, Math.max(7, parseInt(req.body.days, 10) || 30));
   socialInvalidate();
-  res.redirect(`/social?days=${days}`);
+  res.redirect(withBxt(`/social?days=${days}`, req));
 });
 
 // ── Healthcheck ───────────────────────────────────────────────────────────────

@@ -2,7 +2,10 @@
 /**
  * bx-auth.js — мост между локальным приложением Б24 и report-app.
  *
- * Б24 при каждом открытии приложения шлёт POST на /bx/entry с AUTH_ID/DOMAIN.
+ * Б24 при каждом открытии приложения шлёт POST на /bx/entry. Важно: поля DOMAIN
+ * там НЕТ (устаревшее предположение) — вместо него member_id (постоянный ID
+ * портала, не меняется в отличие от домена) и SERVER_ENDPOINT (общий OAuth-шлюз
+ * вида https://oauth.bitrix24.tech/rest/, а не домен портала напрямую).
  * AUTH_ID используется один раз — только чтобы через user.current узнать,
  * кто открыл приложение. Дальше личность/права живут в собственном
  * коротком JWT (?bxt=...), который пробрасывается через ссылки (см. bx-embed.js) —
@@ -24,21 +27,42 @@ function directorIds() {
 // ── POST /bx/entry — вход из левого меню Б24 ───────────────────────────────────
 async function bxEntry(req, res) {
   const AUTH_ID = req.body && req.body.AUTH_ID;
-  const DOMAIN = req.body && req.body.DOMAIN;
-  const expectedDomain = process.env.BX_PORTAL_DOMAIN;
+  const memberId = req.body && req.body.member_id;
+  const serverEndpoint = req.body && req.body.SERVER_ENDPOINT;
+  const expectedMemberId = process.env.BX_MEMBER_ID;
 
-  if (!AUTH_ID || !DOMAIN || (expectedDomain && DOMAIN !== expectedDomain)) {
+  if (!AUTH_ID || !memberId || !serverEndpoint || (expectedMemberId && memberId !== expectedMemberId)) {
+    console.warn('[bx-entry] отказ: member_id=%s AUTH_ID=%s ожидали=%s body=%j',
+      memberId, AUTH_ID ? '(есть)' : '(нет)', expectedMemberId, req.body);
     return res.status(403).send('Доступ запрещён: неизвестный портал Битрикс24.');
+  }
+
+  async function callProfile(baseUrl) {
+    const r = await fetch(`${baseUrl}profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ auth: AUTH_ID }),
+    });
+    const json = await r.json();
+    if (!json.result) throw new Error(json.error_description || `profile (${baseUrl}) не вернул результат`);
+    return json.result;
   }
 
   let user;
   try {
-    const r = await fetch(`https://${DOMAIN}/rest/user.current?auth=${encodeURIComponent(AUTH_ID)}`);
-    const json = await r.json();
-    if (!json.result) throw new Error(json.error_description || 'user.current не вернул результат');
-    user = json.result;
+    // Общий OAuth-шлюз oauth.bitrix24.tech (SERVER_ENDPOINT) для этого портала
+    // не отдаёт user.current (ERROR_METHOD_NOT_FOUND) и отвечает ACCESS_DENIED
+    // на profile — стабильно работает только вызов напрямую на домен портала.
+    // SERVER_ENDPOINT оставлен как резервный вариант на случай смены инфраструктуры.
+    const domainBase = `https://${process.env.BX_PORTAL_DOMAIN}/rest/`;
+    try {
+      user = await callProfile(domainBase);
+    } catch (domainErr) {
+      console.warn('[bx-entry] profile через DOMAIN не удался (%s), пробуем SERVER_ENDPOINT: %s', domainBase, domainErr.message);
+      user = await callProfile(serverEndpoint);
+    }
   } catch (err) {
-    console.error('[ERR] /bx/entry user.current:', err.message);
+    console.error('[ERR] /bx/entry profile:', err.message);
     return res.status(401).send('Не удалось подтвердить пользователя Битрикс24.');
   }
 
@@ -73,7 +97,9 @@ if (window.BX24) {
 // ── hybridAuth: bxt (из Б24) ИЛИ Basic Auth (фолбэк для прямого захода) ────────
 function createHybridAuth(authMiddleware) {
   return function hybridAuth(req, res, next) {
-    const bxt = req.query.bxt;
+    // bxt приходит в query (переход по ссылке/select) или в теле POST-формы
+    // (перехватчик сабмита в bx-embed.js добавляет его как hidden input).
+    const bxt = req.query.bxt || (req.body && req.body.bxt);
     if (bxt) {
       try {
         const payload = jwt.verify(bxt, process.env.BX_SESSION_SECRET);

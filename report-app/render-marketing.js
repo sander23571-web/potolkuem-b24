@@ -5,6 +5,7 @@
 
 const { PRESETS, rangeQueryString } = require('./period');
 const { bxBootstrap } = require('./bx-embed');
+const { renderNav } = require('./nav');
 
 const B24_URL = 'https://potolkuem.bitrix24.ru';
 const TYPE_ID  = 28;
@@ -204,7 +205,8 @@ function renderPeriodBar(basePath, range) {
 }
 
 // ── Main renderer ─────────────────────────────────────────────────────────────
-function renderMarketing(data, token) {
+function renderMarketing(data, viewer) {
+  const { token, isDirector } = viewer || {};
   const { platforms, topQueries, snapDate, wordstatHistory, queryDynamics, wordstatCompetitors, fetchedAt, range } = data;
 
   // ── Бренд: Wordstat ──────────────────────────────────────────────────────
@@ -306,12 +308,7 @@ function renderMarketing(data, token) {
   <h1>Маркетинг</h1>
   <div class="hero-sub">Бренд · Сайт · Соцсети · SEO</div>
   <nav class="hero-nav">
-    <a class="nav-btn" href="/report">Выставки</a>
-    <a class="nav-btn" href="/report/compare">Сравнение</a>
-    <a class="nav-btn" href="/social">SMM</a>
-    <a class="nav-btn active" href="/report/marketing">Маркетинг</a>
-    <a class="nav-btn" href="/report/marketing/expenses" style="border-color:var(--orange);color:var(--orange)">Расходы</a>
-    <a class="nav-btn" href="/tasks">Задачи</a>
+    ${renderNav('marketing', isDirector)}
     <form method="POST" action="/report/marketing/refresh?${rangeQueryString(range)}" style="margin-left:auto">
       <button class="refresh-btn" type="submit">Обновить данные</button>
     </form>
@@ -659,7 +656,8 @@ function renderChannelBadge(channelId, label) {
 }
 
 // ── Expenses dashboard (management-only) ──────────────────────────────────────
-function renderMarketingExpenses(data, token) {
+function renderMarketingExpenses(data, viewer) {
+  const { token, isDirector } = viewer || {};
   const { expenses, byChannel, byMonth, total, totalYear, totalMonth, fetchedAt, range } = data;
 
   // Каналы: сортировка по убыванию суммы
@@ -699,7 +697,7 @@ function renderMarketingExpenses(data, token) {
   <h1>Маркетинговые расходы</h1>
   <div class="hero-sub">СП «Расходы» · направление «Маркетинг» · ${expenses.length} записей</div>
   <nav class="hero-nav">
-    <a class="nav-btn" href="/report/marketing">← Маркетинг</a>
+    ${renderNav('expenses', isDirector)}
     <form method="POST" action="/report/marketing/expenses/refresh?${rangeQueryString(range)}" style="margin-left:auto">
       <button class="refresh-btn" type="submit">Обновить данные</button>
     </form>

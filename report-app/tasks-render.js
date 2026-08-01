@@ -1,6 +1,7 @@
 'use strict';
 
 const { bxBootstrap } = require('./bx-embed');
+const { renderNav } = require('./nav');
 
 const PALETTE = ['#1e2eb5','#3d4de6','#4a5df9','#7b8ef9','#9eabfa','#bbc5fc','#dde2fc','#6c3483','#117a65','#b7950b'];
 
@@ -70,6 +71,7 @@ const BASE_CSS = `
   .refresh-btn:hover { background: var(--accent); color: #fff; }
   .nav-btn { color: #9eabfa; border: 1px solid #3a3460; border-radius: 4px; padding: 8px 14px; font-size: 13px; text-decoration: none; letter-spacing: 1px; }
   .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .nav-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   .fetched-at { font-size: 11px; color: #666; margin-left: auto; }
 
   .container { max-width: 1100px; margin: 0 auto; padding: 0 32px 60px; }
@@ -135,7 +137,8 @@ const BASE_CSS = `
 `;
 
 // ── Главный дашборд /tasks ────────────────────────────────────────────────────
-function renderTasksDashboard(data, token) {
+function renderTasksDashboard(data, viewer) {
+  const { token, isDirector } = viewer || {};
   const { stats, byStatus, byUser, activityByDay, overdueList, staleList, fetchedAt, b24Url, activeUserIds } = data;
   const activeSet = new Set(activeUserIds || []);
 
@@ -232,7 +235,7 @@ function renderTasksDashboard(data, token) {
     <form method="post" action="/tasks/refresh" style="display:contents">
       <button type="submit" class="refresh-btn">Обновить данные</button>
     </form>
-    <a href="/report" class="nav-btn">Дашборд выставок</a>
+    ${renderNav('tasks', isDirector)}
     <span class="fetched-at">Данные: ${fetchedAt ? fetchedAt.slice(0, 16).replace('T', ' ') : '—'}</span>
   </div>
 </div>
@@ -404,7 +407,8 @@ ${bxBootstrap(token)}
 }
 
 // ── Детальная страница сотрудника /tasks/member/:userId ───────────────────────
-function renderMemberDetail(data, userId, token) {
+function renderMemberDetail(data, userId, viewer) {
+  const { token, isDirector } = viewer || {};
   const uid  = String(userId);
   const { userMap, b24Url, fetchedAt } = data;
   const name = escHtml(userMap[uid] || `Пользователь #${uid}`);
@@ -414,7 +418,7 @@ function renderMemberDetail(data, userId, token) {
     return `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">
     <style>${BASE_CSS}</style></head>
     <body><div class="hero"><div class="hero-label">Дашборд задач</div><h1>${name}</h1>
-    <div class="hero-nav"><a href="/tasks" class="nav-btn">← К команде</a></div></div>
+    <div class="hero-nav"><a href="/tasks" class="nav-btn">← К команде</a>${renderNav('tasks', isDirector)}</div></div>
     <div class="container"><p style="margin-top:40px;color:var(--muted)">Нет данных по этому сотруднику.</p></div>
     ${bxBootstrap(token)}
     </body></html>`;
@@ -509,6 +513,7 @@ function renderMemberDetail(data, userId, token) {
   </div>
   <div class="hero-nav">
     <a href="/tasks" class="nav-btn">← К команде</a>
+    ${renderNav('tasks', isDirector)}
     <span class="fetched-at">Данные: ${fetchedAt ? fetchedAt.slice(0, 16).replace('T', ' ') : '—'}</span>
   </div>
 </div>

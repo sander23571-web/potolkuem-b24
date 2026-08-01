@@ -1,6 +1,7 @@
 'use strict';
 
 const { bxBootstrap } = require('./bx-embed');
+const { renderNav } = require('./nav');
 
 // ── Shared with render.js ─────────────────────────────────────────────────────
 const BASE_CSS = `
@@ -21,9 +22,10 @@ const BASE_CSS = `
   .hero { background: var(--black); color: #fff; padding: 28px 48px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
   .hero h1 { font-size: 22px; font-weight: normal; letter-spacing: .5px; }
   .hero .meta { font-size: 12px; color: #aaa; }
-  nav { background: var(--dark); padding: 0 48px; display: flex; gap: 4px; }
-  nav a { color: #ccc; text-decoration: none; padding: 10px 16px; font-size: 13px; display: inline-block; border-bottom: 3px solid transparent; }
-  nav a:hover, nav a.active { color: #fff; border-bottom-color: var(--accent); }
+  .hero-nav { background: var(--dark); padding: 10px 48px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .nav-btn { color: #9eabfa; border: 1px solid #3a3460; border-radius: 4px; padding: 8px 14px; font-size: 13px; text-decoration: none; letter-spacing: 1px; }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .nav-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   .wrap { max-width: 1200px; margin: 0 auto; padding: 32px 48px 64px; }
   .section-title { font-size: 17px; font-weight: bold; margin: 36px 0 16px; color: var(--dark); border-bottom: 2px solid var(--border); padding-bottom: 8px; }
   .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
@@ -241,7 +243,8 @@ function renderWatchedTable(watched, days) {
 }
 
 // ── Main render ───────────────────────────────────────────────────────────────
-function renderSocial(data, token) {
+function renderSocial(data, viewer) {
+  const { token, isDirector } = viewer || {};
   const { own, watched, fetchedAt, days, from } = data;
 
   const totalSubs   = own.reduce((s, a) => s + (a.ana30?.followers || 0), 0);
@@ -277,9 +280,8 @@ function renderSocial(data, token) {
   </div>
 </div>
 
-<nav>
-  <a href="/report">Выставки</a>
-  <a href="/social" class="active">SMM</a>
+<nav class="hero-nav">
+  ${renderNav('social', isDirector)}
 </nav>
 
 <div class="period-bar">

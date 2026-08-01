@@ -1,6 +1,7 @@
 'use strict';
 
 const { bxBootstrap } = require('./bx-embed');
+const { renderNav } = require('./nav');
 
 function fmt(n) {
   return Math.round(n || 0).toLocaleString('ru-RU');
@@ -59,6 +60,7 @@ const BASE_CSS = `
   .refresh-btn:hover { background: var(--accent); color: #fff; }
   .nav-btn { color: #9eabfa; border: 1px solid #3a3460; border-radius: 4px; padding: 8px 14px; font-size: 13px; text-decoration: none; letter-spacing: 1px; }
   .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .nav-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   .fetched-at { font-size: 11px; color: #666; margin-left: auto; }
 
   .container { max-width: 1100px; margin: 0 auto; padding: 0 32px 60px; }
@@ -130,7 +132,8 @@ const BASE_CSS = `
 `;
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
-function renderDashboard(data, allExhibitions, currentId, token) {
+function renderDashboard(data, allExhibitions, currentId, viewer) {
+  const { token, isDirector } = viewer || {};
   const { exhibition, expenses, shifts, hostMap, deals, fetchedAt, b24Url } = data;
 
   const exhTitle = escHtml(exhibition.title || `Выставка #${exhibition.id}`);
@@ -325,8 +328,7 @@ function renderDashboard(data, allExhibitions, currentId, token) {
     <form method="post" action="/report/${currentId}/refresh" style="display:contents">
       <button type="submit" class="refresh-btn">Обновить данные</button>
     </form>
-    <a href="/report/compare" class="nav-btn">Все выставки</a>
-    <a href="/report/marketing" class="nav-btn">Маркетинг</a>
+    ${renderNav('report', isDirector)}
     <span class="fetched-at">Данные: ${fetchedAt ? fetchedAt.slice(0, 16).replace('T', ' ') : '—'}</span>
   </div>
 </div>
@@ -581,7 +583,8 @@ ${bxBootstrap(token)}
 }
 
 // ── Comparison page ───────────────────────────────────────────────────────────
-function renderComparison(allExhibitions, summaries, token) {
+function renderComparison(allExhibitions, summaries, viewer) {
+  const { token, isDirector } = viewer || {};
   const sorted = [...allExhibitions]
     .filter(e => summaries[e.id] !== undefined)
     .sort((a, b) => (a.begindate || '').localeCompare(b.begindate || ''));
@@ -633,7 +636,7 @@ function renderComparison(allExhibitions, summaries, token) {
     <div><strong>${sorted.length}</strong> выставок · <strong>${totalDeals}</strong> сделок</div>
   </div>
   <div class="hero-nav">
-    <a href="/report" class="nav-btn">← К дашборду</a>
+    ${renderNav('compare', isDirector)}
   </div>
 </div>
 

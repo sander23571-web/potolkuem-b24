@@ -4,6 +4,7 @@
  */
 
 const { bxBootstrap } = require('./bx-embed');
+const { renderNav } = require('./nav');
 
 const B24_URL = 'https://potolkuem.bitrix24.ru';
 
@@ -95,7 +96,8 @@ function shortName(name) {
   return (name || '').replace(/["""«»]/g, '').replace(/Потолкуем\??\s*/i, '').trim() || name;
 }
 
-function renderWarehouse(data, token) {
+function renderWarehouse(data, viewer) {
+  const { token, isDirector } = viewer || {};
   const { products, stores, documents, totals } = data;
 
   const mainStores   = stores.filter(s => s.isMain);
@@ -151,12 +153,7 @@ function renderWarehouse(data, token) {
   <h1>Склад</h1>
   <div class="hero-sub">Остатки · Заморозка капитала · Маржа</div>
   <nav class="hero-nav">
-    <a class="nav-btn" href="/report">Выставки</a>
-    <a class="nav-btn" href="/report/compare">Сравнение</a>
-    <a class="nav-btn" href="/social">SMM</a>
-    <a class="nav-btn" href="/report/marketing">Маркетинг</a>
-    <a class="nav-btn active" href="/report/warehouse">Склад</a>
-    <a class="nav-btn" href="/tasks">Задачи</a>
+    ${renderNav('warehouse', isDirector)}
     <form method="POST" action="/report/warehouse/refresh" style="margin-left:auto">
       <button class="refresh-btn" type="submit">Обновить данные</button>
     </form>
