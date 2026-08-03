@@ -816,9 +816,14 @@ function renderMarketingExpenses(data, viewer) {
 
   // Строки таблицы (изначально по дате DESC; сортировка по клику на заголовок — на клиенте)
   const escAttr = s => escHtml(s).replace(/"/g, '&quot;');
+  // Название расхода обычно вида "Вендор · Месяц Год" — сортировка по полному title
+  // даёт алфавитный (не хронологический) порядок месяцев внутри одного вендора.
+  // Отделяем "вендор" от даты, чтобы сортировка по названию группировала по вендору,
+  // а внутри вендора шла хронологически (см. JS-сортировку ниже: title → сначала vendor, затем date).
+  const vendorPart = title => (title || '').split('·')[0].trim().toLowerCase();
   const tableRows = expenses.map(e => `<tr
     data-sort-date="${e.date || ''}"
-    data-sort-title="${escAttr((e.title || '').toLowerCase())}"
+    data-sort-title="${escAttr(vendorPart(e.title))}"
     data-sort-channel="${escAttr(e.channelLabel.toLowerCase())}"
     data-sort-amount="${e.amount}"
     style="background:${CHANNEL_BG[e.channel] || 'transparent'}"
@@ -989,7 +994,11 @@ new Chart(document.getElementById('moChart'), {
       rows.sort((a, b) => {
         let av = a.dataset[attr] ?? '', bv = b.dataset[attr] ?? '';
         if (key === 'amount') { av = parseFloat(av) || 0; bv = parseFloat(bv) || 0; return (av - bv) * currentDir; }
-        return String(av).localeCompare(String(bv), 'ru') * currentDir;
+        const primary = String(av).localeCompare(String(bv), 'ru') * currentDir;
+        // При сортировке по названию — внутри одного вендора платежи идут хронологически,
+        // а не по алфавиту месяца (иначе "Апрель" оказывается раньше "Январь").
+        if (primary !== 0 || key !== 'title') return primary;
+        return String(a.dataset.sortDate ?? '').localeCompare(String(b.dataset.sortDate ?? ''), 'ru') * currentDir;
       });
       rows.forEach(r => tbody.appendChild(r));
     });
