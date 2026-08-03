@@ -227,7 +227,7 @@ function renderMarketing(data, viewer) {
   // ── Бренд: конкуренты из последнего снапшота (wordstat.current) ──────────
   const cmpImagin = wordstatCompetitors['имаджинариум'] || null;
   const cmpBunker = wordstatCompetitors['бункер настольная игра'] || null;
-  const cmpElias  = wordstatCompetitors['элиас настольная игра'] || null;
+  const cmpElias  = wordstatCompetitors['элиас игра'] || null;
 
   // ── Сайт: Метрика ─────────────────────────────────────────────────────────
   const metItems = platforms['Метрика_сайт'] || [];

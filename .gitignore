@@ -9,3 +9,4 @@ VK_Potolkuem
 *.docx
 *.png
 backups/
+scripts/__pycache__/

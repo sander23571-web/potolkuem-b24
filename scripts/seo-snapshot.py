@@ -33,12 +33,16 @@ WM_HOST_ID    = 'https:potolkuem.pro:443'    # формат Яндекс host_id
 # Метрика
 MC_COUNTER    = '97696821'
 
+# Метрика — счётчик "на Маркете" (ecommerce-цели Яндекс.Маркета)
+MC_MARKET_COUNTER = '98713606'
+MC_MARKET_GOAL     = '352302510'  # Ecommerce: покупка
+
 # Wordstat — фразы для мониторинга
 WORDSTAT_PHRASES = [
     'потолкуем',
     'имаджинариум',
     'бункер настольная игра',
-    'элиас настольная игра',
+    'элиас игра',
     'настольная игра для взрослых',
 ]
 
@@ -202,6 +206,35 @@ def fetch_metrica():
         'paid_users':     int(paid[1]) if len(paid) > 1 else 0,
     }
 
+# ── 2b. Метрика — Яндекс.Маркет (ecommerce) ─────────────────────────────────────
+
+def fetch_market_ecommerce():
+    """Покупки/выручка на Я.Маркете за ПРЕДЫДУЩИЙ завершённый месяц (счётчик 98713606)."""
+    today        = datetime.date.today()
+    first_this   = today.replace(day=1)
+    last_prev    = first_this - datetime.timedelta(days=1)
+    month_from   = last_prev.replace(day=1).isoformat()
+    date_to      = last_prev.isoformat()
+    period_label = month_from[:7]
+
+    params = (
+        f'?id={MC_MARKET_COUNTER}'
+        f'&metrics=ym:s:goal{MC_MARKET_GOAL}reaches,ym:s:goal{MC_MARKET_GOAL}revenue,ym:s:visits'
+        f'&date1={month_from}&date2={date_to}'
+        f'&accuracy=full'
+    )
+    r = get_json('https://api-metrika.yandex.net/stat/v1/data' + params, token=OAUTH_TOKEN)
+    totals = r.get('totals', [0, 0, 0])
+
+    return {
+        'period':    period_label,
+        'date_from': month_from,
+        'date_to':   date_to,
+        'purchases': int(totals[0]) if totals else 0,
+        'revenue':   round(totals[1], 2) if len(totals) > 1 else 0,
+        'visits':    int(totals[2]) if len(totals) > 2 else 0,
+    }
+
 # ── 3. Wordstat ───────────────────────────────────────────────────────────────
 
 def _ws_request(endpoint, payload):
@@ -288,6 +321,16 @@ def main():
         print(f"  Визиты: {m['total_visits']} всего, {m['organic_visits']} органика, {m['paid_visits']} платный")
     except Exception as e:
         snapshot['metrica'] = {'error': str(e)}
+        print(f'  ОШИБКА: {e}')
+
+    # 2b. Метрика — Я.Маркет
+    print('Метрика (Я.Маркет)...')
+    try:
+        snapshot['market_ecommerce'] = fetch_market_ecommerce()
+        me = snapshot['market_ecommerce']
+        print(f"  Покупок: {me['purchases']}, выручка: {me['revenue']} ₽")
+    except Exception as e:
+        snapshot['market_ecommerce'] = {'error': str(e)}
         print(f'  ОШИБКА: {e}')
 
     # 3. Wordstat
