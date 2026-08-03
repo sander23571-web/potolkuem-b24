@@ -119,6 +119,11 @@ const BASE_CSS = `
   .data-table td { padding: 11px 18px; border-bottom: 1px solid var(--border); font-size: 14px; }
   .data-table tr:last-child td { border-bottom: none; }
   .data-table tr:hover td { background: #f9f7ff; }
+  .data-table th.sortable { cursor: pointer; user-select: none; }
+  .data-table th.sortable:hover { color: #ccc; }
+  .data-table th.sortable::after { content: '↕'; opacity: 0.4; margin-left: 6px; font-size: 10px; }
+  .data-table th.sortable.sort-asc::after { content: '↑'; opacity: 1; }
+  .data-table th.sortable.sort-desc::after { content: '↓'; opacity: 1; }
   .data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
   .exp-bar { display: inline-block; height: 6px; background: var(--accent2); border-radius: 3px; vertical-align: middle; margin-right: 6px; opacity: .5; }
   .b24-link { color: var(--accent); text-decoration: none; font-size: 12px; border: 1px solid var(--border); border-radius: 3px; padding: 2px 8px; white-space: nowrap; }
@@ -809,8 +814,15 @@ function renderMarketingExpenses(data, viewer) {
   }));
   const moStackedJson = JSON.stringify(moChannelDatasets);
 
-  // Строки таблицы (уже отсортированы по дате DESC)
-  const tableRows = expenses.map(e => `<tr>
+  // Строки таблицы (изначально по дате DESC; сортировка по клику на заголовок — на клиенте)
+  const escAttr = s => escHtml(s).replace(/"/g, '&quot;');
+  const tableRows = expenses.map(e => `<tr
+    data-sort-date="${e.date || ''}"
+    data-sort-title="${escAttr((e.title || '').toLowerCase())}"
+    data-sort-channel="${escAttr(e.channelLabel.toLowerCase())}"
+    data-sort-amount="${e.amount}"
+    style="background:${CHANNEL_BG[e.channel] || 'transparent'}"
+  >
     <td style="color:var(--muted);font-size:13px;white-space:nowrap">${e.date || '—'}</td>
     <td>${escHtml(e.title || `#${e.id}`)}</td>
     <td>${renderChannelBadge(e.channel, e.channelLabel)}</td>
@@ -886,14 +898,14 @@ ${(channelEntries.length >= 2 || months.length >= 2) ? `
 
 <!-- TABLE -->
 <div class="section">
-  <div class="section-title">Детализация</div>
-  <table class="data-table">
+  <div class="section-title">Детализация <span style="font-weight:400;color:var(--muted);font-size:12px;text-transform:none;letter-spacing:0">— клик по заголовку сортирует</span></div>
+  <table class="data-table" id="expTable">
     <thead>
       <tr>
-        <th>Дата</th>
-        <th>Название</th>
-        <th>Канал</th>
-        <th>Сумма</th>
+        <th class="sortable" data-sort="date">Дата</th>
+        <th class="sortable" data-sort="title">Название</th>
+        <th class="sortable" data-sort="channel">Канал</th>
+        <th class="sortable num" data-sort="amount">Сумма</th>
         <th></th>
       </tr>
     </thead>
@@ -955,6 +967,34 @@ new Chart(document.getElementById('moChart'), {
     }
   }
 });` : ''}
+
+// ── Сортировка таблицы «Детализация» по клику на заголовок ────────────────────
+(function () {
+  const table = document.getElementById('expTable');
+  if (!table) return;
+  const tbody = table.querySelector('tbody');
+  const ths = table.querySelectorAll('th.sortable');
+  let currentKey = null, currentDir = 1;
+
+  ths.forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.sort;
+      currentDir = (currentKey === key) ? -currentDir : (key === 'date' || key === 'amount' ? -1 : 1);
+      currentKey = key;
+      ths.forEach(t => t.classList.remove('sort-asc', 'sort-desc'));
+      th.classList.add(currentDir === 1 ? 'sort-asc' : 'sort-desc');
+
+      const attr = key === 'date' ? 'sortDate' : key === 'title' ? 'sortTitle' : key === 'channel' ? 'sortChannel' : 'sortAmount';
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => {
+        let av = a.dataset[attr] ?? '', bv = b.dataset[attr] ?? '';
+        if (key === 'amount') { av = parseFloat(av) || 0; bv = parseFloat(bv) || 0; return (av - bv) * currentDir; }
+        return String(av).localeCompare(String(bv), 'ru') * currentDir;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  });
+})();
 <\/script>
 ${bxBootstrap(token)}
 </body>
