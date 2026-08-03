@@ -79,17 +79,15 @@ async function fetchTasksData() {
     'RESPONSIBLE_ID', 'CREATED_BY',
   ];
 
-  // Параллельно: все задачи + пользователи
-  // Не фильтруем STATUS в API — Битрикс24 может молча игнорировать массив статусов.
-  // Фильтруем в JS после получения.
-  const [allFetched, recentClosed, users] = await Promise.all([
-    fetchAllTasks({}, SELECT),
+  // Параллельно: активные задачи (не завершённые) + недавно закрытые + пользователи.
+  // Раньше тянули ВСЕ задачи без фильтра (1377 шт., из них 1064 давно закрытых
+  // сразу выбрасывались) — 12+ секунд на холодный запрос. !STATUS:5 фильтрует
+  // на стороне Б24, оставляя только реально нужные ~300 активных.
+  const [activeTasks, recentClosed, users] = await Promise.all([
+    fetchAllTasks({ '!STATUS': 5 }, SELECT),
     fetchAllTasks({ STATUS: 5, '>=CLOSED_DATE': d30agoStr }, SELECT),
     fetchAllUsers(),
   ]);
-
-  // STATUS '5' = завершена, всё остальное = активная
-  const activeTasks = allFetched.filter(t => String(t.status) !== '5');
 
   // Карта пользователей id → имя (все, включая уволенных — для отображения имён в задачах)
   const userMap = {};
