@@ -249,6 +249,14 @@ function renderMarketing(data, viewer) {
   const metTotals  = JSON.stringify(metItems.map(r => r.visitsTotal || 0));
   const metOrganics = JSON.stringify(metItems.map(r => r.visitsOrganic || 0));
 
+  // ── Я.Маркет: покупки/выручка (счётчик Метрики 98713606) ───────────────────
+  const ymItems = platforms['ЯМаркет_Метрика_potolkuem'] || [];
+  const ymLast  = latestRecord(ymItems);
+  const ymTotalPurchases = ymItems.reduce((s, r) => s + (r.purchases || 0), 0);
+  const ymTotalRevenue   = ymItems.reduce((s, r) => s + (r.revenue || 0), 0);
+  const ymLabels = JSON.stringify(ymItems.map(r => fmtShortDate(r.period)));
+  const ymData   = JSON.stringify(ymItems.map(r => r.purchases || 0));
+
   // ── Реклама: Директ + VK Реклама ──────────────────────────────────────────
   const ydItems = platforms['ЯндексДирект_potolkuem'] || [];
   const vkAdsItems = platforms['VKРеклама_potolkuem'] || [];
@@ -427,6 +435,39 @@ ${renderPeriodBar('/report/marketing', range)}
     </div>
   </div>`
     : '<div class="no-data">Нет данных Метрики — запустите cron-скрипт</div>'
+  }
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- БЛОК 2.3: Я.МАРКЕТ (ecommerce-цели Метрики) -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Продажи на Я.Маркете · Метрика (счётчик «на Маркете») → Б24</div>
+
+  <div class="kpi-grid kpi-grid-3">
+    <div class="kpi-card">
+      <div class="kpi-label">Покупок (посл. мес.)</div>
+      <div class="kpi-value">${ymLast ? fmt(ymLast.purchases) : '—'}</div>
+      <div class="kpi-note">${ymLast ? fmtDate(ymLast.period) : 'нет данных'}${ymLast?.b24Url ? ` · <a href="${ymLast.b24Url}" target="_blank">Б24</a>` : ''}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Выручка (посл. мес.)</div>
+      <div class="kpi-value">${ymLast ? fmt(ymLast.revenue) + ' ₽' : '—'}</div>
+      <div class="kpi-note">${ymLast && ymLast.purchases ? `средний чек ${fmt(Math.round(ymLast.revenue / ymLast.purchases))} ₽` : ''}</div>
+    </div>
+    <div class="kpi-card ${ymTotalPurchases ? 'green' : 'red'}">
+      <div class="kpi-label">Итого за период</div>
+      <div class="kpi-value">${fmt(ymTotalPurchases)} покупок</div>
+      <div class="kpi-note">${fmt(ymTotalRevenue)} ₽ · ${ymItems.length} мес. в выборке</div>
+    </div>
+  </div>
+
+  ${ymItems.length >= 2
+    ? `<div class="chart-card" style="margin-top:20px">
+    <h3>Покупок по месяцам</h3>
+    <canvas id="ymChart" height="90"></canvas>
+  </div>`
+    : ''
   }
 </div>
 
@@ -636,6 +677,24 @@ new Chart(document.getElementById('metChart'), {
     plugins: { legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } } },
     scales: {
       y: { beginAtZero: true, grid: { color: '#e0daf7' } },
+      x: { grid: { display: false } }
+    }
+  }
+});` : ''}
+
+// ── Я.Маркет: покупки по месяцам ─────────────────────────────────────────────────
+${ymItems.length >= 2 ? `
+new Chart(document.getElementById('ymChart'), {
+  type: 'bar',
+  data: {
+    labels: ${ymLabels},
+    datasets: [{ label: 'Покупок', data: ${ymData}, backgroundColor: 'rgba(192,57,43,0.5)', borderColor: '#c0392b', borderWidth: 1, borderRadius: 3 }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: '#e0daf7' }, ticks: { precision: 0 } },
       x: { grid: { display: false } }
     }
   }
