@@ -286,12 +286,13 @@ async function fetchMarketingExpensesData(range = {}) {
     byChannel[e.channel].count++;
   }
 
-  // Агрегация по месяцам
+  // Агрегация по месяцам (+ разбивка по каналам внутри месяца — для стек-графика)
   const byMonth = {};
   for (const e of expenses) {
     if (!e.month) continue;
-    if (!byMonth[e.month]) byMonth[e.month] = { total: 0 };
+    if (!byMonth[e.month]) byMonth[e.month] = { total: 0, byChannel: {} };
     byMonth[e.month].total += e.amount;
+    byMonth[e.month].byChannel[e.channel] = (byMonth[e.month].byChannel[e.channel] || 0) + e.amount;
   }
 
   const total        = expenses.reduce((s, e) => s + e.amount, 0);

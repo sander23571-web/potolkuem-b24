@@ -801,6 +801,14 @@ function renderMarketingExpenses(data, viewer) {
   const moLabels = JSON.stringify(months.map(m => fmtShortDate(m + '-01')));
   const moData   = JSON.stringify(months.map(m => Math.round(byMonth[m].total)));
 
+  // Стек по каналам внутри каждого месяца — один dataset на канал (порядок = channelEntries)
+  const moChannelDatasets = channelEntries.map(([chId, chInfo]) => ({
+    label: chInfo.label,
+    data:  months.map(m => Math.round(byMonth[m].byChannel[chId] || 0)),
+    backgroundColor: CHANNEL_COLORS[chId] || '#7b79a0',
+  }));
+  const moStackedJson = JSON.stringify(moChannelDatasets);
+
   // Строки таблицы (уже отсортированы по дате DESC)
   const tableRows = expenses.map(e => `<tr>
     <td style="color:var(--muted);font-size:13px;white-space:nowrap">${e.date || '—'}</td>
@@ -864,20 +872,16 @@ ${renderPeriodBar('/report/marketing/expenses', range)}
 ${(channelEntries.length >= 2 || months.length >= 2) ? `
 <div class="section">
   <div class="section-title">Аналитика</div>
-  <div class="two-col">
-    <div class="chart-card">
-      <h3>По каналам</h3>
-      ${channelEntries.length >= 2
-        ? '<canvas id="chChart" height="180"></canvas>'
-        : '<div class="no-data">Недостаточно данных</div>'}
-    </div>
-    <div class="chart-card">
-      <h3>По месяцам</h3>
-      ${months.length >= 2
-        ? '<canvas id="moChart" height="180"></canvas>'
-        : '<div class="no-data">Недостаточно данных</div>'}
-    </div>
-  </div>
+  ${months.length >= 2 ? `
+  <div class="chart-card">
+    <h3>Все маркетинговые расходы по месяцам — по направлениям</h3>
+    <canvas id="moChart" height="90"></canvas>
+  </div>` : ''}
+  ${channelEntries.length >= 2 ? `
+  <div class="chart-card" style="margin-top:20px;max-width:420px">
+    <h3>По каналам — итого за период</h3>
+    <canvas id="chChart" height="220"></canvas>
+  </div>` : ''}
 </div>` : ''}
 
 <!-- TABLE -->
@@ -932,17 +936,22 @@ new Chart(document.getElementById('moChart'), {
   type: 'bar',
   data: {
     labels: ${moLabels},
-    datasets: [{ data: ${moData}, backgroundColor: '#c0392b', borderRadius: 2 }]
+    datasets: ${moStackedJson}.map(ds => ({ ...ds, borderRadius: 2 }))
   },
   options: {
     responsive: true,
     plugins: {
-      legend: { display: false },
-      tooltip: { callbacks: { label: ctx => ' ' + ctx.raw.toLocaleString('ru-RU') + ' ₽' } }
+      legend: { position: 'bottom', labels: { font: { size: 12 }, boxWidth: 12, padding: 12 } },
+      tooltip: {
+        callbacks: {
+          label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.raw.toLocaleString('ru-RU') + ' ₽',
+          footer: items => 'Итого: ' + items.reduce((s, i) => s + i.raw, 0).toLocaleString('ru-RU') + ' ₽'
+        }
+      }
     },
     scales: {
-      y: { beginAtZero: true, grid: { color: '#e0daf7' }, ticks: { callback: v => (v/1000).toFixed(0)+'k', font: { size: 11 } } },
-      x: { grid: { display: false }, ticks: { font: { size: 11 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 18 } }
+      y: { stacked: true, beginAtZero: true, grid: { color: '#e0daf7' }, ticks: { callback: v => (v/1000).toFixed(0)+'k', font: { size: 11 } } },
+      x: { stacked: true, grid: { display: false }, ticks: { font: { size: 11 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 18 } }
     }
   }
 });` : ''}
