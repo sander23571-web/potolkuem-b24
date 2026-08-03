@@ -69,6 +69,7 @@ function parseItem(item) {
     clicks:       parseInt(item[pf('Clicks')]) || 0,
     impressions:  parseInt(item[pf('Impressions')]) || 0,
     brandDemand:  parseInt(item[pf('BrandDemand')]) || 0,
+    spend:        parseFloat(item[pf('Spend')]) || 0,
     b24Url:       `${B24_URL}/crm/type/${ENTITY_TYPE_ID}/details/${item.id}/`,
   };
 }
@@ -159,7 +160,7 @@ async function fetchRawMarketing() {
     pf('Platform'), pf('Period'),
     pf('Followers'), pf('FollowersDiff'), pf('Er'), pf('Reach'),
     pf('VisitsTotal'), pf('VisitsOrganic'), pf('VisitsPaid'), pf('BounceRate'),
-    pf('Clicks'), pf('Impressions'), pf('BrandDemand'),
+    pf('Clicks'), pf('Impressions'), pf('BrandDemand'), pf('Spend'),
   ]);
 
   _rawCache   = { items: raw.map(parseItem), snapshots: loadSnapshotHistory() };

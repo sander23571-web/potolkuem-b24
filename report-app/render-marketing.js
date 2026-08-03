@@ -249,6 +249,22 @@ function renderMarketing(data, viewer) {
   const metTotals  = JSON.stringify(metItems.map(r => r.visitsTotal || 0));
   const metOrganics = JSON.stringify(metItems.map(r => r.visitsOrganic || 0));
 
+  // ── Реклама: Директ + VK Реклама ──────────────────────────────────────────
+  const ydItems = platforms['ЯндексДирект_potolkuem'] || [];
+  const vkAdsItems = platforms['VKРеклама_potolkuem'] || [];
+  const ydLast    = latestRecord(ydItems);
+  const vkAdsLast = latestRecord(vkAdsItems);
+
+  const _adsPeriods = [...new Set([...ydItems.map(r => r.period), ...vkAdsItems.map(r => r.period)])].sort();
+  const adsLabels = JSON.stringify(_adsPeriods.map(p => fmtShortDate(p)));
+  const adsYdData = JSON.stringify(_adsPeriods.map(p => {
+    const r = ydItems.find(x => x.period === p); return r ? (r.spend || 0) : null;
+  }));
+  const adsVkData = JSON.stringify(_adsPeriods.map(p => {
+    const r = vkAdsItems.find(x => x.period === p); return r ? (r.spend || 0) : null;
+  }));
+  const adsTotalSpend = [...ydItems, ...vkAdsItems].reduce((s, r) => s + (r.spend || 0), 0);
+
   // ── Соцсети: LiveDune ─────────────────────────────────────────────────────
   const vkItems     = platforms['VK_potolkuem']     || [];
   const tgItems     = platforms['TG_potolkuem']     || [];
@@ -411,6 +427,39 @@ ${renderPeriodBar('/report/marketing', range)}
     </div>
   </div>`
     : '<div class="no-data">Нет данных Метрики — запустите cron-скрипт</div>'
+  }
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- БЛОК 2.5: РЕКЛАМА -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Реклама · Директ + VK Реклама → Б24</div>
+
+  <div class="kpi-grid kpi-grid-3">
+    <div class="kpi-card">
+      <div class="kpi-label">Яндекс.Директ (посл. мес.)</div>
+      <div class="kpi-value">${ydLast ? fmt(ydLast.spend) + ' ₽' : '—'}</div>
+      <div class="kpi-note">${ydLast ? `${fmt(ydLast.clicks)} кликов · ${fmt(ydLast.impressions)} показов · CTR ${ydLast.impressions ? fmtFloat(ydLast.clicks / ydLast.impressions * 100) : 0}%` : 'нет данных'}${ydLast?.b24Url ? ` · <a href="${ydLast.b24Url}" target="_blank">Б24</a>` : ''}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">VK Реклама (посл. мес.)</div>
+      <div class="kpi-value">${vkAdsLast ? fmt(vkAdsLast.spend) + ' ₽' : '—'}</div>
+      <div class="kpi-note">${vkAdsLast ? `${fmt(vkAdsLast.clicks)} кликов · ${fmt(vkAdsLast.impressions)} показов · CTR ${vkAdsLast.impressions ? fmtFloat(vkAdsLast.clicks / vkAdsLast.impressions * 100) : 0}%` : 'нет данных'}${vkAdsLast?.b24Url ? ` · <a href="${vkAdsLast.b24Url}" target="_blank">Б24</a>` : ''}</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Итого расход за период</div>
+      <div class="kpi-value">${fmt(adsTotalSpend)} ₽</div>
+      <div class="kpi-note">Директ + VK Реклама, ${_adsPeriods.length} мес. в выборке</div>
+    </div>
+  </div>
+
+  ${_adsPeriods.length >= 2
+    ? `<div class="chart-card" style="margin-top:20px">
+    <h3>Динамика расхода по месяцам</h3>
+    <canvas id="adsChart" height="90"></canvas>
+  </div>`
+    : ''
   }
 </div>
 
@@ -587,6 +636,27 @@ new Chart(document.getElementById('metChart'), {
     plugins: { legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } } },
     scales: {
       y: { beginAtZero: true, grid: { color: '#e0daf7' } },
+      x: { grid: { display: false } }
+    }
+  }
+});` : ''}
+
+// ── Реклама: расход по месяцам ──────────────────────────────────────────────────
+${_adsPeriods.length >= 2 ? `
+new Chart(document.getElementById('adsChart'), {
+  type: 'bar',
+  data: {
+    labels: ${adsLabels},
+    datasets: [
+      { label: 'Яндекс.Директ', data: ${adsYdData}, backgroundColor: '#c0392b', borderRadius: 3 },
+      { label: 'VK Реклама', data: ${adsVkData}, backgroundColor: '#2787f5', borderRadius: 3 },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: '#e0daf7' }, stacked: false },
       x: { grid: { display: false } }
     }
   }
