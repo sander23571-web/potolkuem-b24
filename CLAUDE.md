@@ -111,12 +111,12 @@
 
 ### UF-поля СП Статистика площадок (CRM_28)
 
-`ufCrm28Platform`, `ufCrm28Period`, `ufCrm28Followers`, `ufCrm28FollowersDiff`, `ufCrm28Er`, `ufCrm28Reach`, `ufCrm28VisitsTotal`, `ufCrm28VisitsOrganic`, `ufCrm28VisitsPaid`, `ufCrm28BounceRate`, `ufCrm28Clicks`, `ufCrm28Impressions`, `ufCrm28BrandDemand`, `ufCrm28Spend` (добавлено 03.08.2026, id=708)
+`ufCrm28Platform`, `ufCrm28Period`, `ufCrm28Followers`, `ufCrm28FollowersDiff`, `ufCrm28Er`, `ufCrm28Reach`, `ufCrm28VisitsTotal`, `ufCrm28VisitsOrganic`, `ufCrm28VisitsPaid`, `ufCrm28BounceRate`, `ufCrm28Clicks`, `ufCrm28Impressions`, `ufCrm28BrandDemand`, `ufCrm28Spend` (добавлено 03.08.2026, id=708), `ufCrm28Purchases`/`ufCrm28Revenue` (id=710/712, Я.Маркет ecommerce), `ufCrm28Posts`/`ufCrm28Gained`/`ufCrm28Lost`/`ufCrm28LinkClicks` (id=714/716/718/720, LiveDune-активность)
 
 > `Clicks`/`Impressions` изначально назывались «(Вебмастер)» — переименованы в общие «Клики»/«Показы»
 > 03.08.2026, т.к. теперь используются и для рекламных площадок (Директ/VK Реклама), не только SEO.
 
-**Платформы (значения `ufCrm28Platform`):** `Wordstat_потолкуем`, `Метрика_сайт`, `VK_potolkuem`, `TG_potolkuem`, `Дзен_potolkuem`, `TikTok_potolkuem`, `MAX_potolkuem`, `Вебмастер_SEO`, `ЯндексДирект_potolkuem`, `VKРеклама_potolkuem` (последние два — добавлены 03.08.2026, Фаза 3 плана)
+**Платформы (значения `ufCrm28Platform`):** `Wordstat_потолкуем`, `Метрика_сайт`, `VK_potolkuem`, `TG_potolkuem`, `Дзен_potolkuem`, `TikTok_potolkuem`, `MAX_potolkuem`, `Вебмастер_SEO`, `ЯндексДирект_potolkuem`, `VKРеклама_potolkuem` (добавлены 03.08.2026, Фаза 3 плана), `ЯМаркет_Метрика_potolkuem` (добавлено 03.08.2026, Фаза 4 плана)
 
 ### Регламент прикрепления файлов
 
