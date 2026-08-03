@@ -111,9 +111,12 @@
 
 ### UF-поля СП Статистика площадок (CRM_28)
 
-`ufCrm28Platform`, `ufCrm28Period`, `ufCrm28Followers`, `ufCrm28FollowersDiff`, `ufCrm28Er`, `ufCrm28Reach`, `ufCrm28VisitsTotal`, `ufCrm28VisitsOrganic`, `ufCrm28VisitsPaid`, `ufCrm28BounceRate`, `ufCrm28Clicks`, `ufCrm28Impressions`, `ufCrm28BrandDemand`
+`ufCrm28Platform`, `ufCrm28Period`, `ufCrm28Followers`, `ufCrm28FollowersDiff`, `ufCrm28Er`, `ufCrm28Reach`, `ufCrm28VisitsTotal`, `ufCrm28VisitsOrganic`, `ufCrm28VisitsPaid`, `ufCrm28BounceRate`, `ufCrm28Clicks`, `ufCrm28Impressions`, `ufCrm28BrandDemand`, `ufCrm28Spend` (добавлено 03.08.2026, id=708)
 
-**Платформы (значения `ufCrm28Platform`):** `Wordstat_потолкуем`, `Метрика_сайт`, `VK_potolkuem`, `TG_potolkuem`, `Дзен_potolkuem`, `Вебмастер_SEO`
+> `Clicks`/`Impressions` изначально назывались «(Вебмастер)» — переименованы в общие «Клики»/«Показы»
+> 03.08.2026, т.к. теперь используются и для рекламных площадок (Директ/VK Реклама), не только SEO.
+
+**Платформы (значения `ufCrm28Platform`):** `Wordstat_потолкуем`, `Метрика_сайт`, `VK_potolkuem`, `TG_potolkuem`, `Дзен_potolkuem`, `TikTok_potolkuem`, `MAX_potolkuem`, `Вебмастер_SEO`, `ЯндексДирект_potolkuem`, `VKРеклама_potolkuem` (последние два — добавлены 03.08.2026, Фаза 3 плана)
 
 ### Регламент прикрепления файлов
 
@@ -238,7 +241,7 @@ API-ключ и конфиг портала: `ssh -p 2222 root@155.212.143.68` �
 | Скрипт | Расписание | Что делает |
 |---|---|---|
 | `scripts/seo-snapshot.py` | Пн 09:00 | Вебмастер + Метрика + Wordstat → `/root/projects/talk-report/data/seo/YYYY-MM-DD.json` |
-| `scripts/platform-stats-cron.py` | 2-е число 10:00 | LiveDune → СП «Статистика площадок» (Б24) |
+| `scripts/platform-stats-cron.py` | Пн 10:00 | LiveDune + Директ + VK Реклама → СП «Статистика площадок» (Б24). ⚠️ LiveDune отдаёт данные только за последние ~30 дней — `--backfill` для него бесполезен; Директ/VK Реклама полной истории не ограничены |
 | `scripts/task_require_result_cron.py` | каждые 2 мин | requireResult=True на новые задачи Алины (id=132) |
 | `../Bitrix24/ENVPro/ЗАДАЧИ_НАБЛЮДАТЕЛЬ` | каждую мин | Агеева-Дзукаева как наблюдатель в задачах |
 
