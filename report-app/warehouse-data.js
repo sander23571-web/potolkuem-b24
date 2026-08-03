@@ -57,7 +57,7 @@ async function fetchWarehouseData() {
   if (_cache && Date.now() - _cacheTs < CACHE_TTL) return _cache;
 
   // Параллельно тянем всё нужное
-  const [catalogProducts, crmProducts, rawStores, rawInventory, rawDocs] = await Promise.all([
+  const [catalogProducts, crmProducts, rawStores, rawInventory, rawDocs, rawShipments] = await Promise.all([
     // purchasingPrice живёт в catalog.product
     // iblockId обязателен и в select, и в filter — иначе Б24 возвращает ошибку
     // "Required filter fields: iblockId", которая тут молча превращается в []
@@ -81,6 +81,14 @@ async function fetchWarehouseData() {
     b24('catalog.document.list', {
       select: ['id', 'docType', 'status', 'title', 'dateCreate', 'dateStatus'],
       order:  { dateCreate: 'DESC' },
+      start:  0,
+    }),
+    // Реализации (отгрузки) — отдельная сущность модуля Продаж, не catalog.document.
+    // Только проведённые (deducted=Y) — они реально списывают товар со склада.
+    b24('sale.shipment.list', {
+      select: ['id', 'accountNumber', 'dateInsert', 'deducted'],
+      filter: { deducted: 'Y' },
+      order:  { dateInsert: 'DESC' },
       start:  0,
     }),
   ]);
@@ -166,14 +174,31 @@ async function fetchWarehouseData() {
   };
 
   const DOC_LABELS = { S: 'Оприходование', A: 'Поступление', M: 'Перемещение', D: 'Списание', R: 'Возврат' };
-  const documents = (rawDocs?.result?.documents || []).slice(0, 20).map(d => ({
+  const catalogDocuments = (rawDocs?.result?.documents || []).map(d => ({
     id:       d.id,
     type:     DOC_LABELS[d.docType] || d.docType,
     docType:  d.docType,
     title:    d.title || `Документ #${d.id}`,
     date:     d.dateCreate ? d.dateCreate.slice(0, 10) : '',
-    url:      `${B24_URL}/shop/document/detail/${d.id}/`,
+    dateSort: d.dateCreate || '',
+    url:      `${B24_URL}/shop/documents/details/${d.id}/?inventoryManagementSource=inventory`,
   }));
+
+  // Реализации — свой URL-паттерн (сегмент sales_order) и своя нумерация (id
+  // из sale.shipment, не пересекается с id из catalog.document).
+  const shipmentDocuments = (rawShipments?.result?.shipments || []).map(s => ({
+    id:       s.id,
+    type:     'Реализация',
+    docType:  'REALIZATION',
+    title:    `Реализация №${s.accountNumber || s.id}`,
+    date:     s.dateInsert ? s.dateInsert.slice(0, 10) : '',
+    dateSort: s.dateInsert || '',
+    url:      `${B24_URL}/shop/documents/details/sales_order/${s.id}/?inventoryManagementSource=inventory`,
+  }));
+
+  const documents = [...catalogDocuments, ...shipmentDocuments]
+    .sort((a, b) => b.dateSort.localeCompare(a.dateSort))
+    .slice(0, 20);
 
   _cache = { products, stores, documents, totals, storeMap };
   _cacheTs = Date.now();

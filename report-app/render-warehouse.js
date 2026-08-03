@@ -12,7 +12,7 @@ const fmt      = n => Math.round(n).toLocaleString('ru-RU');
 const fmtPct   = n => (n >= 0 ? '+' : '') + Math.round(n) + '%';
 const escHtml  = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-const DOC_LABEL_COLOR = { S: 'var(--green)', A: 'var(--accent)', M: 'var(--muted)', D: 'var(--red)', R: 'var(--orange)' };
+const DOC_LABEL_COLOR = { S: 'var(--green)', A: 'var(--accent)', M: 'var(--muted)', D: 'var(--red)', R: 'var(--orange)', REALIZATION: 'var(--accent2)' };
 
 // ── Общий дизайн-язык (тот же BASE_CSS, что в render-marketing.js) ────────────
 const BASE_CSS = `
