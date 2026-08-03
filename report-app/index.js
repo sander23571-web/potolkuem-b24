@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const basicAuth = require('express-basic-auth');
 const { bxEntry, createHybridAuth, requireDirector } = require('./bx-auth');
-const { fetchExhibitionData, fetchExhibitionList, cacheInvalidate, fetchAllSummaries } = require('./b24');
+const { fetchExhibitionData, fetchExhibitionList, cacheInvalidate, fetchAllSummaries, sortExhibitionsRecentFirst } = require('./b24');
 const { renderDashboard, renderComparison } = require('./render');
 const { fetchSocialData, invalidate: socialInvalidate } = require('./livedune');
 const { renderSocial } = require('./render-social');
@@ -64,9 +64,10 @@ app.get('/report', async (req, res) => {
     if (!list.length) {
       return res.status(404).send('Выставки не найдены в Bitrix24');
     }
-    // Sort by begin date desc, redirect to most recent
-    list.sort((a, b) => (b.begindate || '').localeCompare(a.begindate || ''));
-    res.redirect(withBxt(`/report/${list[0].id}`, req));
+    // Уже состоявшиеся выставки — вперёд (самая недавняя первой),
+    // ещё не начавшиеся — в конец (см. b24.js: sortExhibitionsRecentFirst).
+    const sorted = sortExhibitionsRecentFirst(list);
+    res.redirect(withBxt(`/report/${sorted[0].id}`, req));
   } catch (err) {
     console.error('[ERR] /report:', err.message);
     res.status(500).send('Внутренняя ошибка сервера');

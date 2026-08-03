@@ -162,6 +162,18 @@ async function fetchExhibitionList() {
   );
 }
 
+// Уже состоявшиеся (begindate <= сегодня) — сначала, самая недавняя первой.
+// Ещё не начавшиеся — в конце, ближайшая из них первой. Так на странице
+// «Выставки» впереди не оказываются выставки без данных.
+function sortExhibitionsRecentFirst(list) {
+  const today = new Date().toISOString().slice(0, 10);
+  const started  = list.filter(e => (e.begindate || '').slice(0, 10) <= today)
+    .sort((a, b) => (b.begindate || '').localeCompare(a.begindate || ''));
+  const upcoming = list.filter(e => (e.begindate || '').slice(0, 10) > today)
+    .sort((a, b) => (a.begindate || '').localeCompare(b.begindate || ''));
+  return [...started, ...upcoming];
+}
+
 // ── Lightweight summary for comparison page ───────────────────────────────────
 async function fetchExhibitionSummary(id) {
   // Reuse full cache if available
@@ -203,4 +215,4 @@ async function fetchAllSummaries() {
   };
 }
 
-module.exports = { fetchExhibitionData, fetchExhibitionList, cacheInvalidate, fetchAllSummaries };
+module.exports = { fetchExhibitionData, fetchExhibitionList, cacheInvalidate, fetchAllSummaries, sortExhibitionsRecentFirst };

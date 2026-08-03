@@ -2,6 +2,7 @@
 
 const { bxBootstrap } = require('./bx-embed');
 const { renderNav } = require('./nav');
+const { sortExhibitionsRecentFirst } = require('./b24');
 
 function fmt(n) {
   return Math.round(n || 0).toLocaleString('ru-RU');
@@ -192,8 +193,7 @@ function renderDashboard(data, allExhibitions, currentId, viewer) {
   );
 
   // ── Dropdown ─────────────────────────────────────────────────────────────────
-  const dropdownOptions = allExhibitions
-    .sort((a, b) => (b.begindate || '').localeCompare(a.begindate || ''))
+  const dropdownOptions = sortExhibitionsRecentFirst(allExhibitions)
     .map(e => `<option value="${e.id}" ${String(e.id) === String(currentId) ? 'selected' : ''}>${escHtml(e.title || `#${e.id}`)}</option>`)
     .join('\n');
 
