@@ -56,7 +56,31 @@ B24_WEBHOOK   = _env.get('B24_WEBHOOK', os.environ.get('B24_WEBHOOK', ''))
 LD_KEY        = _env.get('LIVEDUNE_API_KEY', os.environ.get('LIVEDUNE_API_KEY', ''))
 YD_TOKEN      = _env.get('YANDEX_DIRECT_OAUTH_TOKEN', os.environ.get('YANDEX_DIRECT_OAUTH_TOKEN', ''))
 VK_ADS_TOKEN  = _env.get('VK_ADS_TOKEN', os.environ.get('VK_ADS_TOKEN', ''))
+MC_TOKEN      = _env.get('YANDEX_OAUTH_TOKEN', os.environ.get('YANDEX_OAUTH_TOKEN', ''))
+MC_COUNTER    = '97696821'  # Метрика: основной сайт potolkuem.pro
 DATA_DIR      = '/root/projects/talk-report/data/seo'
+
+# СП «Кампании Директ — статистика»
+CAMP_ENTITY_TYPE_ID = 1094
+CAMP_TYPE_ID         = 38
+CF = {
+    'campaign':        f'ufCrm{CAMP_TYPE_ID}Campaign',
+    'campaign_id':      f'ufCrm{CAMP_TYPE_ID}CampaignId',
+    'period':           f'ufCrm{CAMP_TYPE_ID}Period',
+    'impressions':      f'ufCrm{CAMP_TYPE_ID}Impressions',
+    'clicks':           f'ufCrm{CAMP_TYPE_ID}Clicks',
+    'cost':             f'ufCrm{CAMP_TYPE_ID}Cost',
+    'visits':           f'ufCrm{CAMP_TYPE_ID}Visits',
+    'bounce_rate':      f'ufCrm{CAMP_TYPE_ID}BounceRate',
+    'cart_adds':        f'ufCrm{CAMP_TYPE_ID}CartAdds',
+    'orders':           f'ufCrm{CAMP_TYPE_ID}Orders',
+    'payment_returns':  f'ufCrm{CAMP_TYPE_ID}PaymentReturns',
+}
+# Цели Метрики (счётчик 97696821): корзина, оформление заказа, возврат из ЮKassa —
+# намеренно НЕ используем 'Ecommerce: покупка' (338243077), она сломана на сайте (см. STATUS.md)
+MC_GOAL_CART    = 477280113
+MC_GOAL_ORDER   = 476452790
+MC_GOAL_PAYMENT = 541186609
 
 # СП «Статистика площадок»
 ENTITY_TYPE_ID = 1074  # entityTypeId
@@ -566,6 +590,219 @@ def process_ads(target_months=None):
             })
             time.sleep(0.5)
 
+# ── Кампании Директ: статистика (СП 1094) ───────────────────────────────────────
+
+def camp_b24_find_record(campaign, period_iso):
+    try:
+        res = b24_post('crm.item.list', {
+            'entityTypeId': CAMP_ENTITY_TYPE_ID,
+            'filter': {CF['campaign']: campaign, CF['period']: period_iso},
+            'select': ['id'],
+        })
+        items = res.get('items', []) if res else []
+        return items[0]['id'] if items else None
+    except Exception as e:
+        print(f'  [warn] camp_find_record({campaign},{period_iso}): {e}')
+        return None
+
+
+def camp_b24_upsert(campaign, campaign_id, period_iso, fields_data):
+    existing_id = camp_b24_find_record(campaign, period_iso)
+    title = f'{campaign} · {period_iso[:7]}'
+    fields = {
+        'title':            title,
+        CF['campaign']:     campaign,
+        CF['campaign_id']:  str(campaign_id),
+        CF['period']:       period_iso,
+    }
+    for k, v in fields_data.items():
+        if v is not None:
+            fields[CF[k]] = v
+
+    if existing_id:
+        b24_post('crm.item.update', {'entityTypeId': CAMP_ENTITY_TYPE_ID, 'id': existing_id, 'fields': fields})
+        print(f'  обновлено id={existing_id}: {title}')
+    else:
+        res = b24_post('crm.item.add', {'entityTypeId': CAMP_ENTITY_TYPE_ID, 'fields': fields})
+        new_id = res.get('item', {}).get('id') if res else None
+        print(f'  создано id={new_id}: {title}')
+
+
+def get_active_campaigns():
+    """Кампании Директа в статусе ON или SUSPENDED — растущий во времени список,
+    не хардкодим ID: при запуске новой кампании она подхватится сама."""
+    body = json.dumps({
+        'method': 'get',
+        'params': {
+            'SelectionCriteria': {'States': ['ON', 'SUSPENDED']},
+            'FieldNames': ['Id', 'Name'],
+        }
+    }).encode('utf-8')
+    req = urllib.request.Request(
+        'https://api.direct.yandex.com/json/v5/campaigns',
+        data=body,
+        headers={'Authorization': f'Bearer {YD_TOKEN}', 'Accept-Language': 'ru', 'Content-Type': 'application/json'},
+    )
+    with urllib.request.urlopen(req, timeout=30) as r:
+        resp = json.loads(r.read())
+    if 'error' in resp:
+        raise RuntimeError(f'campaigns.get: {resp["error"]}')
+    return [(c['Id'], c['Name']) for c in resp.get('result', {}).get('Campaigns', [])]
+
+
+def yd_report_by_campaign(date_from, date_to, campaign_ids):
+    """CAMPAIGN_PERFORMANCE_REPORT за диапазон дат, с разбивкой по кампаниям
+    (в отличие от yd_report(), которая суммирует всё вместе)."""
+    report_name = f'platform-stats-cron-bycamp_{date_from}_{date_to}'
+    body = json.dumps({
+        'params': {
+            'SelectionCriteria': {
+                'DateFrom': date_from, 'DateTo': date_to,
+                'Filter': [{'Field': 'CampaignId', 'Operator': 'IN', 'Values': [str(c) for c in campaign_ids]}],
+            },
+            'FieldNames':    ['CampaignId', 'CampaignName', 'Impressions', 'Clicks', 'Cost'],
+            'ReportName':    report_name,
+            'ReportType':    'CAMPAIGN_PERFORMANCE_REPORT',
+            'DateRangeType': 'CUSTOM_DATE',
+            'Format':        'TSV',
+            'IncludeVAT':    'YES',
+        }
+    }, ensure_ascii=False).encode('utf-8')
+    headers = {
+        'Authorization': f'Bearer {YD_TOKEN}', 'Accept-Language': 'ru', 'processingMode': 'auto',
+        'returnMoneyInMicros': 'false', 'skipReportHeader': 'true', 'skipReportSummary': 'true',
+        'skipColumnHeader': 'true', 'Content-Type': 'application/json; charset=utf-8',
+    }
+    for attempt in range(15):
+        req = urllib.request.Request('https://api.direct.yandex.com/json/v5/reports', data=body, headers=headers)
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                status = r.status
+                text = r.read().decode('utf-8')
+        except urllib.error.HTTPError as e:
+            raise RuntimeError(f'Директ отчёт по кампаниям {date_from}..{date_to}: HTTP {e.code} — '
+                                f'{e.read().decode("utf-8", "ignore")[:300]}')
+        if status in (201, 202):
+            time.sleep(6)
+            continue
+        break
+    else:
+        raise RuntimeError(f'Директ отчёт по кампаниям {date_from}..{date_to}: не готов')
+
+    out = {}
+    for line in text.strip().splitlines():
+        parts = line.split('\t')
+        if len(parts) != 5:
+            continue
+        cid, name, impr, clicks, cost = parts
+        try:
+            out[cid] = {'name': name, 'impressions': int(impr), 'clicks': int(clicks), 'cost': round(float(cost), 2)}
+        except ValueError:
+            continue
+    return out
+
+
+def mc_funnel_by_campaign(date_from, date_to):
+    """Визиты/отказы/цели воронки (корзина, заказ, возврат из ЮKassa) из Метрики,
+    сегментировано по названию рекламной кампании Директа (атрибуция last significant)."""
+    params = (
+        f'?id={MC_COUNTER}'
+        f'&metrics=ym:s:visits,ym:s:bounceRate,'
+        f'ym:s:goal{MC_GOAL_CART}reaches,ym:s:goal{MC_GOAL_ORDER}reaches,ym:s:goal{MC_GOAL_PAYMENT}reaches'
+        f'&dimensions=ym:s:lastsignDirectClickOrderName'
+        f'&date1={date_from}&date2={date_to}'
+        f"&filters=" + urllib.parse.quote("ym:s:lastsignTrafficSource=='ad'") +
+        f'&limit=100&accuracy=full'
+    )
+    req = urllib.request.Request('https://api-metrika.yandex.net/stat/v1/data' + params)
+    req.add_header('Authorization', 'OAuth ' + MC_TOKEN)
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            resp = json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f'Метрика-воронка {date_from}..{date_to}: HTTP {e.code} — {e.read().decode("utf-8","ignore")[:400]}')
+    out = {}
+    for row in resp.get('data', []):
+        name = row['dimensions'][0].get('name')
+        if not name:
+            continue
+        visits, bounce, cart, order, payment = row['metrics']
+        out[name] = {
+            'visits': int(visits), 'bounce_rate': round(bounce, 1) if bounce else None,
+            'cart_adds': int(cart), 'orders': int(order), 'payment_returns': int(payment),
+        }
+    return out
+
+
+def process_direct_campaigns(target_months=None):
+    """
+    Пишет в СП «Кампании Директ — статистика» (1094) месячные показы/клики/расход
+    (где виден — часть кампаний управляется через агентский биллинг, см. заметку
+    в БЗ проекта от 04.08.2026) + визиты/воронку из Метрики, по каждой активной
+    или приостановленной кампании. Список кампаний не хардкодим — берём текущий
+    ON/SUSPENDED список при каждом запуске, чтобы новые кампании подхватывались сами.
+    """
+    if not YD_TOKEN or not MC_TOKEN:
+        print('  [skip] YANDEX_DIRECT_OAUTH_TOKEN или YANDEX_OAUTH_TOKEN не заданы')
+        return
+
+    try:
+        campaigns = get_active_campaigns()
+    except Exception as e:
+        print(f'  [err] get_active_campaigns: {e}')
+        return
+    if not campaigns:
+        print('  [skip] нет активных/приостановленных кампаний')
+        return
+    print(f'  Активных/приостановленных кампаний: {len(campaigns)}')
+    campaign_ids = [c[0] for c in campaigns]
+    id_to_name = dict(campaigns)
+
+    today = datetime.date.today()
+    if BACKFILL:
+        date_from = '2024-06-01'
+    else:
+        first_of_month = today.replace(day=1)
+        prev_month_end = first_of_month - datetime.timedelta(days=1)
+        date_from = prev_month_end.replace(day=1).isoformat()
+    months = _months_between(date_from, today.isoformat())
+
+    for ym in months:
+        if target_months and ym not in target_months:
+            continue
+        last_day = calendar.monthrange(int(ym[:4]), int(ym[5:7]))[1]
+        m_from = f'{ym}-01'
+        m_to   = min(f'{ym}-{last_day:02d}', today.isoformat())
+
+        try:
+            yd_data = yd_report_by_campaign(m_from, m_to, campaign_ids)
+        except Exception as e:
+            print(f'  [err] Директ-отчёт {ym}: {e}')
+            yd_data = {}
+        try:
+            mc_data = mc_funnel_by_campaign(m_from, m_to)
+        except Exception as e:
+            print(f'  [err] Метрика-воронка {ym}: {e}')
+            mc_data = {}
+
+        for cid in campaign_ids:
+            name = id_to_name[cid]
+            yd = yd_data.get(str(cid), {})
+            mc = mc_data.get(name, {})
+            if not yd and not mc:
+                continue
+            camp_b24_upsert(name, cid, f'{ym}-01', {
+                'impressions':      yd.get('impressions'),
+                'clicks':           yd.get('clicks'),
+                'cost':             yd.get('cost'),
+                'visits':           mc.get('visits'),
+                'bounce_rate':      mc.get('bounce_rate'),
+                'cart_adds':        mc.get('cart_adds'),
+                'orders':           mc.get('orders'),
+                'payment_returns':  mc.get('payment_returns'),
+            })
+            time.sleep(0.4)
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
@@ -606,6 +843,10 @@ def main():
     # ── Реклама: Директ + VK Реклама ───────────────────────────────────────────
     print('\n=== Реклама (Директ + VK Реклама) ===')
     process_ads(target_months)
+
+    # ── Кампании Директ: статистика по каждой ───────────────────────────────────
+    print('\n=== Кампании Директ — статистика ===')
+    process_direct_campaigns(target_months)
 
     print('\n✅ Готово')
 
