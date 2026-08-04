@@ -212,7 +212,27 @@ function renderPeriodBar(basePath, range) {
 // ── Main renderer ─────────────────────────────────────────────────────────────
 function renderMarketing(data, viewer) {
   const { token, isDirector } = viewer || {};
-  const { platforms, topQueries, snapDate, wordstatHistory, queryDynamics, wordstatCompetitors, fetchedAt, range } = data;
+  const { platforms, topQueries, snapDate, wordstatHistory, queryDynamics, wordstatCompetitors, fetchedAt, range, campaigns } = data;
+
+  // ── Кампании Директ — статистика (СП 1094) ──────────────────────────────────
+  const campSummary = (campaigns?.summary || []);
+  const campTotalCost   = campSummary.reduce((s, c) => s + c.totalCost, 0);
+  const campTotalVisits = campSummary.reduce((s, c) => s + c.totalVisits, 0);
+  const campTotalOrders = campSummary.reduce((s, c) => s + c.totalOrders, 0);
+  // Динамика расхода по месяцам, по кампании — для стек-графика
+  const campByCampaign = campaigns?.byCampaign || {};
+  const campMonthsSet = new Set();
+  for (const items of Object.values(campByCampaign)) items.forEach(i => campMonthsSet.add(i.period));
+  const campMonths = [...campMonthsSet].sort();
+  const CAMP_COLORS = ['#c0392b', '#2787f5', '#27ae60', '#e67e22', '#7b79a0', '#2aabee', '#8e44ad'];
+  const campDatasets = campSummary.slice(0, 7).map(({ campaign }, i) => ({
+    label: campaign,
+    data: campMonths.map(m => {
+      const rec = (campByCampaign[campaign] || []).find(x => x.period === m);
+      return rec ? rec.cost : null;
+    }),
+    backgroundColor: CAMP_COLORS[i % CAMP_COLORS.length],
+  }));
 
   // ── Бренд: Wordstat ──────────────────────────────────────────────────────
   const wsItems = platforms['Wordstat_потолкуем'] || [];
@@ -510,6 +530,65 @@ ${renderPeriodBar('/report/marketing', range)}
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- БЛОК 2.7: КАМПАНИИ ДИРЕКТ — СТАТИСТИКА -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+${campSummary.length ? `
+<div class="section">
+  <div class="section-title">Кампании Директ — отдача по воронке</div>
+
+  <div class="kpi-grid kpi-grid-3">
+    <div class="kpi-card">
+      <div class="kpi-label">Расход за период (виден нам)</div>
+      <div class="kpi-value">${fmt(campTotalCost)} ₽</div>
+      <div class="kpi-note">${campSummary.length} кампаний · часть расхода не видна — управляется через агентский баланс</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Визитов из рекламы</div>
+      <div class="kpi-value">${fmt(campTotalVisits)}</div>
+      <div class="kpi-note">по атрибуции последнего значимого клика</div>
+    </div>
+    <div class="kpi-card ${campTotalOrders ? 'green' : 'red'}">
+      <div class="kpi-label">Оформлено заказов</div>
+      <div class="kpi-value">${fmt(campTotalOrders)}</div>
+      <div class="kpi-note">по всем кампаниям суммарно</div>
+    </div>
+  </div>
+
+  <table class="data-table" style="margin-top:20px">
+    <thead>
+      <tr>
+        <th>Кампания</th>
+        <th class="num">Расход</th>
+        <th class="num">Визиты</th>
+        <th class="num">Клики</th>
+        <th class="num">В корзину</th>
+        <th class="num">Заказы</th>
+        <th class="num">Конв. в корзину</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${campSummary.map(c => `<tr>
+        <td>${escHtml(c.campaign)}</td>
+        <td class="num">${c.totalCost ? fmt(c.totalCost) + ' ₽' : '<span style="color:var(--muted)">не видно (агентский баланс)</span>'}</td>
+        <td class="num">${fmt(c.totalVisits)}</td>
+        <td class="num">${fmt(c.totalClicks)}</td>
+        <td class="num">${fmt(c.totalCart)}</td>
+        <td class="num" style="${c.totalOrders ? 'color:var(--green);font-weight:600' : ''}">${fmt(c.totalOrders)}</td>
+        <td class="num">${c.cartRate ? fmtFloat(c.cartRate) + '%' : '—'}</td>
+        <td>${c.b24Url ? `<a class="b24-link" href="${c.b24Url}" target="_blank">Б24</a>` : ''}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+
+  ${campMonths.length >= 2 ? `
+  <div class="chart-card" style="margin-top:20px">
+    <h3>Расход по месяцам, по кампании (где виден)</h3>
+    <canvas id="campChart" height="90"></canvas>
+  </div>` : ''}
+</div>` : ''}
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
 <!-- БЛОК 3: СОЦСЕТИ -->
 <!-- ══════════════════════════════════════════════════════════════════════ -->
 <div class="section">
@@ -721,6 +800,24 @@ new Chart(document.getElementById('adsChart'), {
     plugins: { legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } } },
     scales: {
       y: { beginAtZero: true, grid: { color: '#e0daf7' }, stacked: false },
+      x: { grid: { display: false } }
+    }
+  }
+});` : ''}
+
+// ── Кампании Директ: расход по месяцам ───────────────────────────────────────────
+${campMonths.length >= 2 ? `
+new Chart(document.getElementById('campChart'), {
+  type: 'bar',
+  data: {
+    labels: ${JSON.stringify(campMonths.map(m => fmtShortDate(m)))},
+    datasets: ${JSON.stringify(campDatasets)}.map(ds => ({ ...ds, borderRadius: 3 }))
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: '#e0daf7' } },
       x: { grid: { display: false } }
     }
   }

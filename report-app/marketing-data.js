@@ -318,7 +318,96 @@ function cacheInvalidateExpenses() {
   _rawExpCacheTs = 0;
 }
 
+// ── Кампании Директ — статистика (entityTypeId=1094) ───────────────────────────
+
+const CAMPAIGNS_ENTITY_TYPE_ID = 1094;
+const CAMPAIGNS_TYPE_ID        = 38;
+const cf = (suffix) => `ufCrm${CAMPAIGNS_TYPE_ID}${suffix}`;
+
+function parseCampaignItem(item) {
+  return {
+    id:              item.id,
+    campaign:        item[cf('Campaign')] || '',
+    campaignId:      item[cf('CampaignId')] || '',
+    period:          (item[cf('Period')] || '').slice(0, 10),
+    impressions:     parseInt(item[cf('Impressions')]) || 0,
+    clicks:          parseInt(item[cf('Clicks')]) || 0,
+    cost:            parseFloat(item[cf('Cost')]) || 0,
+    visits:          parseInt(item[cf('Visits')]) || 0,
+    bounceRate:      item[cf('BounceRate')] != null ? parseFloat(item[cf('BounceRate')]) : null,
+    cartAdds:        parseInt(item[cf('CartAdds')]) || 0,
+    orders:          parseInt(item[cf('Orders')]) || 0,
+    paymentReturns:  parseInt(item[cf('PaymentReturns')]) || 0,
+    b24Url:          `${B24_URL}/crm/type/${CAMPAIGNS_ENTITY_TYPE_ID}/details/${item.id}/`,
+  };
+}
+
+let _rawCampCache   = null;
+let _rawCampCacheTs = 0;
+
+async function fetchRawCampaigns() {
+  if (_rawCampCache && Date.now() - _rawCampCacheTs < CACHE_TTL) return _rawCampCache;
+
+  const raw = await fetchAllItems(CAMPAIGNS_ENTITY_TYPE_ID, {}, [
+    'id', cf('Campaign'), cf('CampaignId'), cf('Period'),
+    cf('Impressions'), cf('Clicks'), cf('Cost'),
+    cf('Visits'), cf('BounceRate'), cf('CartAdds'), cf('Orders'), cf('PaymentReturns'),
+  ]);
+
+  _rawCampCache   = raw.map(parseCampaignItem);
+  _rawCampCacheTs = Date.now();
+  return _rawCampCache;
+}
+
+// range: { from: 'YYYY-MM-DD'|null, to: 'YYYY-MM-DD'|null }
+async function fetchCampaignsData(range = {}) {
+  const { from = null, to = null } = range;
+  const all = await fetchRawCampaigns();
+  const filtered = filterByRange(all, from, to, 'period');
+
+  // Группировка по кампании, сортировка по периоду
+  const byCampaign = {};
+  for (const item of filtered) {
+    const key = item.campaign || 'unknown';
+    if (!byCampaign[key]) byCampaign[key] = [];
+    byCampaign[key].push(item);
+  }
+  for (const key of Object.keys(byCampaign)) {
+    byCampaign[key].sort((a, b) => a.period.localeCompare(b.period));
+  }
+
+  // Сводка по кампании за весь выбранный период (для таблицы/карточек)
+  const summary = Object.entries(byCampaign).map(([campaign, items]) => {
+    const totalCost   = items.reduce((s, i) => s + i.cost, 0);
+    const totalVisits = items.reduce((s, i) => s + i.visits, 0);
+    const totalCart   = items.reduce((s, i) => s + i.cartAdds, 0);
+    const totalOrders = items.reduce((s, i) => s + i.orders, 0);
+    const totalPay    = items.reduce((s, i) => s + i.paymentReturns, 0);
+    const totalClicks = items.reduce((s, i) => s + i.clicks, 0);
+    const last = items[items.length - 1];
+    return {
+      campaign, months: items.length,
+      totalCost, totalVisits, totalClicks, totalCart, totalOrders, totalPay,
+      cartRate: totalVisits ? totalCart / totalVisits * 100 : 0,
+      lastPeriod: last?.period || null,
+      b24Url: last?.b24Url || null,
+    };
+  }).sort((a, b) => b.totalCost - a.totalCost);
+
+  return {
+    byCampaign, summary,
+    range,
+    fetchedAt: new Date().toISOString(),
+  };
+}
+
+function cacheInvalidateCampaigns() {
+  _rawCampCache   = null;
+  _rawCampCacheTs = 0;
+}
+
 module.exports = {
   fetchMarketingData, cacheInvalidateMarketing,
   fetchMarketingExpensesData, cacheInvalidateExpenses,
+  fetchCampaignsData, cacheInvalidateCampaigns,
 };

@@ -8,7 +8,7 @@ const { fetchSocialData, invalidate: socialInvalidate } = require('./livedune');
 const { renderSocial } = require('./render-social');
 const { fetchTasksData, cacheInvalidateTasks } = require('./tasks-b24');
 const { renderTasksDashboard, renderMemberDetail } = require('./tasks-render');
-const { fetchMarketingData, cacheInvalidateMarketing, fetchMarketingExpensesData, cacheInvalidateExpenses } = require('./marketing-data');
+const { fetchMarketingData, cacheInvalidateMarketing, fetchMarketingExpensesData, cacheInvalidateExpenses, fetchCampaignsData, cacheInvalidateCampaigns } = require('./marketing-data');
 const { renderMarketing, renderMarketingExpenses } = require('./render-marketing');
 const { fetchWarehouseData, cacheInvalidateWarehouse } = require('./warehouse-data');
 const { renderWarehouse } = require('./render-warehouse');
@@ -106,8 +106,11 @@ app.post('/report/warehouse/refresh', (req, res) => {
 app.get('/report/marketing', async (req, res) => {
   try {
     const range = resolveRange(req.query);
-    const data = await fetchMarketingData(range);
-    res.send(renderMarketing(data, req.viewer));
+    const [data, campaigns] = await Promise.all([
+      fetchMarketingData(range),
+      fetchCampaignsData(range),
+    ]);
+    res.send(renderMarketing({ ...data, campaigns }, req.viewer));
   } catch (err) {
     console.error('[ERR] /report/marketing:', err.message);
     res.status(500).send('Внутренняя ошибка сервера');
@@ -116,6 +119,7 @@ app.get('/report/marketing', async (req, res) => {
 
 app.post('/report/marketing/refresh', (req, res) => {
   cacheInvalidateMarketing();
+  cacheInvalidateCampaigns();
   const range = resolveRange(req.query);
   res.redirect(withBxt('/report/marketing?' + rangeQueryString(range), req));
 });
