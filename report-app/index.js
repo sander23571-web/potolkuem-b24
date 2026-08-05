@@ -210,7 +210,18 @@ app.get('/social', async (req, res) => {
     res.send(renderSocial(data, req.viewer));
   } catch (err) {
     console.error('[ERR] /social:', err.message);
-    res.status(500).send('Внутренняя ошибка сервера');
+    const isLiveDune = /LiveDune/i.test(err.message || '');
+    res.status(502).send(`<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8"><title>Соцсети временно недоступны</title>
+<style>body{font-family:Georgia,serif;background:#f5f3ff;color:#1e1a3a;max-width:640px;margin:80px auto;padding:0 24px;line-height:1.6}
+h1{font-size:20px}a{color:#4a5df9}</style></head><body>
+<h1>${isLiveDune ? 'LiveDune временно недоступен' : 'Не удалось загрузить данные соцсетей'}</h1>
+<p>${isLiveDune
+  ? 'Сервис LiveDune сейчас не отвечает на их стороне (не наша проблема — проверено напрямую, у них 502/403 даже с других адресов). Обычно это временно, страница заработает сама, когда LiveDune восстановится.'
+  : 'Техническая ошибка при получении данных.'}</p>
+<p>Пока можно посмотреть последние собранные данные по соцсетям (подписчики, охват) в блоке «Соцсети» на <a href="/report/marketing">дашборде «Маркетинг»</a> — они берутся из Б24, не зависят от LiveDune напрямую.</p>
+<p><a href="/social">Обновить страницу</a></p>
+</body></html>`);
   }
 });
 
