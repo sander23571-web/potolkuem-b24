@@ -13,6 +13,7 @@ const { renderMarketing, renderMarketingExpenses } = require('./render-marketing
 const { fetchWarehouseData, cacheInvalidateWarehouse } = require('./warehouse-data');
 const { renderWarehouse } = require('./render-warehouse');
 const { resolveRange, rangeQueryString } = require('./period');
+const { handleWebhook: maxHandleWebhook, BOTS: MAX_BOTS } = require('./max-bot');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -229,6 +230,33 @@ app.post('/social/refresh', (req, res) => {
   const days = Math.min(365, Math.max(7, parseInt(req.body.days, 10) || 30));
   socialInvalidate();
   res.redirect(withBxt(`/social?days=${days}`, req));
+});
+
+// ── МАКС: приём сообщений от именных ботов сотрудников ─────────────────────────
+// Регистрация подписки на вебхук — см. max-bot.js registerSubscription(), запускать
+// вручную один раз на каждого нового бота (когда владелец их заведёт на стороне МАКС).
+app.post('/max/webhook/:slug', express.json({ limit: '10mb' }), async (req, res) => {
+  const { slug } = req.params;
+  const cfg = MAX_BOTS[slug];
+  if (!cfg) {
+    console.error(`[max] неизвестный slug: ${slug}`);
+    return res.status(404).json({ ok: false });
+  }
+  // Если для бота задан secret — проверяем заголовок X-Max-Bot-Api-Secret
+  const expectedSecret = process.env[`MAX_BOT_SECRET_${cfg.envPrefix}`];
+  if (expectedSecret && req.get('X-Max-Bot-Api-Secret') !== expectedSecret) {
+    console.error(`[max] неверный secret для ${slug}`);
+    return res.status(401).json({ ok: false });
+  }
+  try {
+    await maxHandleWebhook(slug, req.body);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(`[ERR] /max/webhook/${slug}:`, err.message);
+    // МАКС всё равно ждёт 200 на вебхук, иначе будет ретраить — отвечаем ok,
+    // ошибку разбираем по логам
+    res.json({ ok: true });
+  }
 });
 
 // ── Healthcheck ───────────────────────────────────────────────────────────────
