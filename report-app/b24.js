@@ -82,7 +82,7 @@ async function fetchExhibitionData(id) {
   const expenses = await fetchAllItems(
     1070,
     { parentId1048: id },
-    ['id', 'title', 'ufCrm24ExpenseType', 'ufCrm24Amount', 'ufCrm24DocumentDate']
+    ['id', 'title', 'ufCrm24ExpenseType', 'ufCrm24Amount']
   );
 
   // 3. Shifts (entityTypeId 1056, parentId1048 = id)
