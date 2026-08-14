@@ -20,7 +20,18 @@ const PORT = process.env.PORT || 3002;
 
 // ── Basic Auth ────────────────────────────────────────────────────────────────
 // Один realm для всех маршрутов. Оба пользователя (admin + director) принимаются.
-const _authUsers = { [process.env.REPORT_USER || 'admin']: process.env.REPORT_PASSWORD || 'change_me' };
+//
+// REPORT_PASSWORD обязателен — раньше был тихий откат на 'change_me' (пароль
+// открытым текстом в публичном коде), если переменная терялась. Найдено при
+// разборе периметра склада 14.08: не активная утечка (в проде пароль реально
+// задан, снаружи проверено — 401 на дефолтных кредах), но хрупкость: тихий
+// откат на угадываемый пароль вместо явной ошибки. Теперь падаем при старте,
+// если пароль не задан — проблема конфигурации становится видимой ошибкой
+// запуска, а не молчаливой дырой.
+if (!process.env.REPORT_PASSWORD) {
+  throw new Error('REPORT_PASSWORD не задан в окружении — отказ запуска (было тихим fallback на change_me, см. решение 14.08)');
+}
+const _authUsers = { [process.env.REPORT_USER || 'admin']: process.env.REPORT_PASSWORD };
 if (process.env.REPORT_ADMIN_USER && process.env.REPORT_ADMIN_PASSWORD) {
   _authUsers[process.env.REPORT_ADMIN_USER] = process.env.REPORT_ADMIN_PASSWORD;
 }
