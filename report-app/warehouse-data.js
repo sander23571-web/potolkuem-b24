@@ -162,6 +162,21 @@ async function fetchWarehouseData() {
     .filter(p => p.totalQty > 0)
     .sort((a, b) => b.totalValue - a.totalValue);
 
+  // ── Низкий остаток ─────────────────────────────────────────────────────────
+  // Порог — нижний квартиль ТЕКУЩЕГО распределения остатков по товарам, не
+  // зашитое число. Разброс между товарами большой и меняется со временем
+  // (проверено на снимке 14.08: от ~86 до ~1061 шт., медиана ~537) — жёсткий
+  // порог быстро устареет по мере роста/сокращения ассортимента и продаж.
+  // Понятно, что p25 — грубая эвристика (относительный аутсайдер, не
+  // "физически заканчивается"), но она не требует поддержки/пересмотра.
+  const qtySorted = products.map(p => p.totalQty).sort((a, b) => a - b);
+  const lowStockThreshold = qtySorted.length
+    ? qtySorted[Math.floor(qtySorted.length * 0.25)]
+    : 0;
+  for (const p of products) {
+    p.lowStock = p.totalQty <= lowStockThreshold;
+  }
+
   const stores = Object.values(storeMap)
     .filter(s => s.totalQty > 0)
     .sort((a, b) => b.totalQty - a.totalQty);
@@ -171,6 +186,7 @@ async function fetchWarehouseData() {
     qty:     products.reduce((s, p) => s + p.totalQty,   0),
     value:   products.reduce((s, p) => s + p.totalValue, 0),
     stores:  stores.length,
+    lowStockCount: products.filter(p => p.lowStock).length,
   };
 
   const DOC_LABELS = { S: 'Оприходование', A: 'Поступление', M: 'Перемещение', D: 'Списание', R: 'Возврат' };

@@ -111,9 +111,9 @@ function renderWarehouse(data, viewer) {
   const productRows = products.map((p, i) => {
     const mgp = p.cost ? Math.round((p.price - p.cost) / p.cost * 100) : null;
     const badgeClass = mgp === null ? '' : mgp >= 200 ? 'badge-green' : mgp >= 100 ? 'badge-orange' : 'badge-red';
-    return `<tr>
+    return `<tr${p.lowStock ? ' style="background:#fdf3e7"' : ''}>
       <td style="color:var(--muted)">${i + 1}</td>
-      <td><a class="b24-link" href="${escHtml(p.url)}" target="_blank">${escHtml(shortName(p.name))}</a></td>
+      <td><a class="b24-link" href="${escHtml(p.url)}" target="_blank">${escHtml(shortName(p.name))}</a>${p.lowStock ? ' <span class="badge badge-orange" title="нижний квартиль по остаткам">низкий остаток</span>' : ''}</td>
       <td class="num">${p.price ? fmt(p.price) + ' ₽' : '—'}</td>
       <td class="num">${p.cost  ? fmt(p.cost)  + ' ₽' : '—'}</td>
       <td class="num">${mgp !== null ? `<span class="badge ${badgeClass}">${fmtPct(mgp)}</span>` : '—'}</td>
@@ -184,6 +184,11 @@ function renderWarehouse(data, viewer) {
       <div class="kpi-label">Точек / складов</div>
       <div class="kpi-value">${totals.stores}</div>
       <div class="kpi-sub">${mainStores.length} склада + ${retailStores.length} розничных</div>
+    </div>
+    <div class="kpi-card${totals.lowStockCount > 0 ? ' orange' : ''}">
+      <div class="kpi-label">Низкий остаток</div>
+      <div class="kpi-value">${totals.lowStockCount}</div>
+      <div class="kpi-sub">нижний квартиль по текущим остаткам — относительно, не абсолютный порог</div>
     </div>
   </div>
 </div>
