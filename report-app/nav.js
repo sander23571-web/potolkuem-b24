@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { key: 'warehouse', label: 'Склад',     href: '/report/warehouse' },
   { key: 'tasks',     label: 'Задачи',    href: '/tasks' },
   { key: 'social',    label: 'SMM',       href: '/social' },
+  { key: 'nas',       label: 'NAS',       href: '/report/nas' },
 ];
 
 function renderNav(active, isDirector) {

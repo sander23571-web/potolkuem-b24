@@ -12,6 +12,7 @@ const { fetchMarketingData, cacheInvalidateMarketing, fetchMarketingExpensesData
 const { renderMarketing, renderMarketingExpenses } = require('./render-marketing');
 const { fetchWarehouseData, cacheInvalidateWarehouse } = require('./warehouse-data');
 const { renderWarehouse } = require('./render-warehouse');
+const { renderNas } = require('./render-nas');
 const { resolveRange, rangeQueryString } = require('./period');
 const { handleWebhook: maxHandleWebhook, BOTS: MAX_BOTS } = require('./max-bot');
 
@@ -112,6 +113,12 @@ app.get('/report/warehouse', async (req, res) => {
 app.post('/report/warehouse/refresh', (req, res) => {
   cacheInvalidateWarehouse();
   res.redirect(withBxt('/report/warehouse', req));
+});
+
+// NAS (Synology QuickConnect) — статичная страница с iframe, не ходит в Б24 API.
+// Должно быть до /report/:id, иначе 'nas' попытается матчиться как ID выставки.
+app.get('/report/nas', (req, res) => {
+  res.send(renderNas(req.viewer));
 });
 
 // Marketing dashboard — must be before /report/:id
