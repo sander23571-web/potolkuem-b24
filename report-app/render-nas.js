@@ -1,24 +1,31 @@
 'use strict';
 /**
- * render-nas.js — HTML-рендерер страницы /report/nas: Synology QuickConnect
+ * render-nas.js — HTML-рендерер страницы /report/nas: Synology DSM/QuickConnect
  * встроенный в отдельное окно Б24, тем же паттерном, что /report/warehouse
  * (BASE_CSS-хедер + nav + bxBootstrap для auto-height/токена внутри Б24).
  *
- * Это НЕ дашборд с данными — статичная страница с <iframe> на QuickConnect.
+ * Это НЕ дашборд с данными Б24 — статичная страница с <iframe> на NAS.
  * Ничего не ходит в Б24 REST API, поэтому низкий риск (см. задача A в БЗ talk).
  *
- * URL QuickConnect не хардкожен — берётся из NAS_QUICKCONNECT_URL (.env).
- * На момент внедрения (19.08.2026) сам URL/quickconnect ID нигде в БЗ не найден
- * (proj search "QuickConnect"/"Synology" — пусто), это открытый вопрос к
- * владельцу, а не догадка. Пока переменная не задана — страница показывает
- * понятное сообщение вместо битого iframe.
+ * АВТОРИЗАЦИЯ — ПРОЗРАЧНЫЙ SSO, НЕ форма логина DSM внутри окна (уточнение
+ * владельца от 19.08.2026, тот же принцип, что bxBootstrap для Б24: короткий
+ * токен в URL, не пароль, не cookie на чужом домене). Логин на NAS выполняется
+ * НА СЕРВЕРЕ (nas-auth.js, Synology SYNO.API.Auth) — служебный
+ * пользователь/пароль читаются из report-app/.env и никогда не попадают в
+ * клиентский HTML/JS. В браузер уходит только короткоживущий sid, приклеенный
+ * к URL iframe как query-параметр `_sid=`.
+ *
+ * Требует отдельного служебного пользователя DSM (НЕ admin) — заводит
+ * владелец руками в DSM. Если у него включена 2FA — автологин через API не
+ * пройдёт, см. hint от nas-auth.js и предупреждение в итоговой выжимке задачи A.
  *
  * ВАЖНО (потенциальная проблема, см. отчёт задачи A): это iframe-в-iframe —
- * QuickConnect встраивается в окно report-app, которое само уже внутри iframe
- * Б24. Если на стороне DSM/QuickConnect выставлен X-Frame-Options/CSP
+ * NAS встраивается в окно report-app, которое само уже внутри iframe Б24.
+ * Если на стороне DSM/QuickConnect выставлен X-Frame-Options/CSP
  * frame-ancestors, запрещающий встраивание с чужого домена — iframe ниже
  * останется пустым молча (кросс-доменно это не отловить через JS/onerror).
- * Поэтому рядом всегда есть ссылка "Открыть в новой вкладке" как запасной путь.
+ * Поэтому рядом всегда есть ссылка "Открыть в новой вкладке" (с тем же sid)
+ * как запасной путь.
  */
 
 const { bxBootstrap } = require('./bx-embed');
@@ -70,28 +77,56 @@ const BASE_CSS = `
   .footer { text-align: center; font-size: 12px; color: var(--muted); padding: 16px; border-top: 1px solid var(--border); flex: 0 0 auto; letter-spacing: 1px; }
 `;
 
-function renderNas(viewer) {
-  const { token, isDirector } = viewer || {};
-  const qcUrl = process.env.NAS_QUICKCONNECT_URL || '';
+// Приклеить _sid к URL, не затерев уже существующий query-string.
+function withSid(url, sid) {
+  const sep = url.includes('?') ? '&' : '?';
+  return url + sep + '_sid=' + encodeURIComponent(sid);
+}
 
-  const body = qcUrl
-    ? `
-<div class="nas-toolbar">
-  <a class="ext-link" href="${escHtml(qcUrl)}" target="_blank" rel="noopener">Открыть в новой вкладке ↗</a>
-  <span class="hint">Если ниже пусто — Synology блокирует встраивание в iframe чужого домена, используйте ссылку слева.</span>
-</div>
-<div class="nas-frame-wrap">
-  <iframe src="${escHtml(qcUrl)}" title="Synology QuickConnect" loading="lazy" allow="fullscreen"></iframe>
-</div>`
-    : `
+function renderNas(viewer, nasSession) {
+  const { token, isDirector } = viewer || {};
+  const session = nasSession || { configured: false };
+
+  let body;
+  if (!session.configured) {
+    body = `
 <div class="nas-missing">
   <h2>NAS ещё не подключён</h2>
-  <p>Не задан адрес QuickConnect — переменная окружения <code>NAS_QUICKCONNECT_URL</code> в
-  <code>report-app/.env</code> пустая или отсутствует. Открытый вопрос к владельцу: QuickConnect ID
-  (или прямой URL) и логин NAS нигде в базе знаний не найдены (проверено: <code>proj search
-  "QuickConnect"</code>, <code>proj search "Synology"</code>). Как только адрес будет известен —
-  добавить его в .env и перезапустить report-app (pm2 restart report-app), код менять не нужно.</p>
+  <p>Не заданы <code>NAS_BASE_URL</code> / <code>NAS_ACCOUNT</code> / <code>NAS_PASSWORD</code> в
+  <code>report-app/.env</code> на сервере. Открытые вопросы к владельцу:</p>
+  <p style="text-align:left;max-width:480px;margin:16px auto 0">
+    1. Адрес NAS для API (QuickConnect ID или https://ip:5001) — нигде в БЗ не найден
+    (проверено: <code>proj search "QuickConnect"</code>, <code>proj search "Synology"</code>).<br>
+    2. Отдельный служебный пользователь DSM с урезанными правами (НЕ admin) — владелец заводит
+    руками в DSM, логин/пароль потом только в .env на сервере, не в git.<br>
+    3. Если на этом служебном пользователе включена 2FA — прозрачный SSO работать не будет,
+    её придётся отключить именно для него (решение владельца, компромисс безопасности).
+  </p>
+  <p>Как только всё это будет — прописать в .env и pm2 restart report-app, код менять не нужно.</p>
 </div>`;
+  } else if (!session.ok) {
+    const reasonText = session.reason === 'network'
+      ? 'NAS недоступен по сети с сервера report-app (проверьте адрес/порт/файрвол).'
+      : 'DSM отклонил логин служебного пользователя.';
+    body = `
+<div class="nas-missing">
+  <h2>Не удалось войти на NAS</h2>
+  <p>${escHtml(reasonText)}</p>
+  ${session.hint ? `<p style="color:var(--red)">${escHtml(session.hint)}</p>` : ''}
+  <p>Подробности в логах сервера (pm2 logs report-app). Пароль в лог не пишется.</p>
+</div>`;
+  } else {
+    const iframeUrl = withSid(session.targetUrl, session.sid);
+    body = `
+<div class="nas-toolbar">
+  <a class="ext-link" href="${escHtml(iframeUrl)}" target="_blank" rel="noopener">Открыть в новой вкладке ↗</a>
+  <span class="hint">Вход выполнен автоматически служебным пользователем DSM. Если ниже пусто —
+  Synology блокирует встраивание в iframe чужого домена, используйте ссылку слева.</span>
+</div>
+<div class="nas-frame-wrap">
+  <iframe src="${escHtml(iframeUrl)}" title="Synology DSM" loading="lazy" allow="fullscreen"></iframe>
+</div>`;
+  }
 
   return `<!DOCTYPE html>
 <html lang="ru">

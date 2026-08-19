@@ -13,6 +13,7 @@ const { renderMarketing, renderMarketingExpenses } = require('./render-marketing
 const { fetchWarehouseData, cacheInvalidateWarehouse } = require('./warehouse-data');
 const { renderWarehouse } = require('./render-warehouse');
 const { renderNas } = require('./render-nas');
+const { nasLogin } = require('./nas-auth');
 const { resolveRange, rangeQueryString } = require('./period');
 const { handleWebhook: maxHandleWebhook, BOTS: MAX_BOTS } = require('./max-bot');
 
@@ -115,10 +116,18 @@ app.post('/report/warehouse/refresh', (req, res) => {
   res.redirect(withBxt('/report/warehouse', req));
 });
 
-// NAS (Synology QuickConnect) — статичная страница с iframe, не ходит в Б24 API.
+// NAS (Synology DSM) — статичная страница с iframe, не ходит в Б24 API.
+// Логин на NAS выполняется на сервере (nas-auth.js, прозрачный SSO —
+// см. proj log talk 19.08), в iframe уходит только короткоживущий sid.
 // Должно быть до /report/:id, иначе 'nas' попытается матчиться как ID выставки.
-app.get('/report/nas', (req, res) => {
-  res.send(renderNas(req.viewer));
+app.get('/report/nas', async (req, res) => {
+  try {
+    const nasSession = await nasLogin();
+    res.send(renderNas(req.viewer, nasSession));
+  } catch (err) {
+    console.error('[ERR] /report/nas:', err.message);
+    res.status(500).send('Внутренняя ошибка сервера');
+  }
 });
 
 // Marketing dashboard — must be before /report/:id
