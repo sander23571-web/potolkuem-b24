@@ -131,6 +131,20 @@ function renderWarehouse(data, viewer) {
     <td class="num" style="color:var(--orange)">${s.totalValue ? fmtRub(s.totalValue) : '—'}</td>
   </tr>`).join('');
 
+  const storeTotals = (list) => list.reduce((acc, s) => ({
+    qty: acc.qty + (s.totalQty || 0),
+    value: acc.value + (s.totalValue || 0),
+  }), { qty: 0, value: 0 });
+
+  const storeFoot = (list) => {
+    const t = storeTotals(list);
+    return `<tr>
+      <td style="color:var(--muted)">ИТОГО</td>
+      <td class="num">${fmt(t.qty)}</td>
+      <td class="num" style="color:var(--orange)">${fmtRub(t.value)}</td>
+    </tr>`;
+  };
+
   const docRows = documents.map(d => `<tr>
     <td><span class="badge" style="background:${DOC_LABEL_COLOR[d.docType] || 'var(--muted)'}22;color:${DOC_LABEL_COLOR[d.docType] || 'var(--muted)'}">${escHtml(d.type)}</span></td>
     <td>${escHtml(d.title)}</td>
@@ -179,7 +193,7 @@ function renderWarehouse(data, viewer) {
     <div class="kpi-card orange">
       <div class="kpi-label">Заморожено капитала</div>
       <div class="kpi-value">${fmtRub(totals.value)}</div>
-      <div class="kpi-sub">по себестоимости</div>
+      <div class="kpi-sub">${fmt(totals.qty)} шт. · по себестоимости</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Точек / складов</div>
@@ -246,6 +260,7 @@ function renderWarehouse(data, viewer) {
       <table class="data-table">
         <thead><tr><th>Склад</th><th class="num">Единиц</th><th class="num">Заморожено</th></tr></thead>
         <tbody>${storeRows(mainStores)}</tbody>
+        <tfoot>${storeFoot(mainStores)}</tfoot>
       </table>
     </div>
     <div class="card">
@@ -253,6 +268,7 @@ function renderWarehouse(data, viewer) {
       <table class="data-table">
         <thead><tr><th>Точка</th><th class="num">Единиц</th><th class="num">Заморожено</th></tr></thead>
         <tbody>${storeRows(retailStores)}</tbody>
+        <tfoot>${storeFoot(retailStores)}</tfoot>
       </table>
     </div>
   </div>

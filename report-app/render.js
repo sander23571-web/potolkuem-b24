@@ -496,6 +496,7 @@ ${fmtRubClientSrc}
 const hostUrls = ${hostChartUrls};
 new Chart(document.getElementById('hostChart'), {
   type: 'bar',
+  plugins: [ChartDataLabels],
   data: {
     labels: ${hostChartLabels},
     datasets: [{ data: ${hostChartData}, backgroundColor: ${hostChartColors}, borderRadius: 3, borderSkipped: false }]
@@ -503,11 +504,19 @@ new Chart(document.getElementById('hostChart'), {
   options: {
     indexAxis: 'y',
     responsive: true,
+    layout: { padding: { right: 48 } }, // место под подписи сумм справа от столбцов
     onClick: (e, els) => { if (els.length) window.open(hostUrls[els[0].index], '_blank'); },
     onHover:  (e, els) => { e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
     plugins: {
       legend: { display: false },
-      tooltip: { callbacks: { label: ctx => ' ' + fmtRub(ctx.raw) } }
+      tooltip: { callbacks: { label: ctx => ' ' + fmtRub(ctx.raw) } },
+      datalabels: {
+        anchor: 'end',
+        align: 'end',
+        color: '#4a4770',
+        font: { size: 11, weight: '600' },
+        formatter: v => fmtRub(v)
+      }
     },
     scales: {
       x: { grid: { color: '#ece8f8' }, ticks: { callback: v => fmtRub(v), font: { size: 11 } } },
