@@ -14,6 +14,7 @@ const { fetchWarehouseData, cacheInvalidateWarehouse } = require('./warehouse-da
 const { renderWarehouse } = require('./render-warehouse');
 const { renderNas } = require('./render-nas');
 const { nasLogin } = require('./nas-auth');
+const { nasAppEntry } = require('./nas-bx-auth');
 const { resolveRange, rangeQueryString } = require('./period');
 const { handleWebhook: maxHandleWebhook, BOTS: MAX_BOTS } = require('./max-bot');
 
@@ -65,6 +66,12 @@ app.use(express.urlencoded({ extended: false }));
 
 // Вход из левого меню Б24: POST с AUTH_ID/DOMAIN → сессионный ?bxt= и редирект
 app.post('/bx/entry', bxEntry);
+
+// /nas-app/entry — вход из ОТДЕЛЬНОГО локального приложения «NAS» (свой
+// client_id/client_secret, свой пункт меню Б24), не через report-app.
+// И обработчик, и путь первичной установки указывают на один и тот же URL —
+// см. proj log talk 19.08, тот же паттерн что уже работает для /bx/entry.
+app.post('/nas-app/entry', nasAppEntry);
 
 app.use('/report', hybridAuth);
 app.use('/tasks',  hybridAuth);
@@ -122,7 +129,7 @@ app.post('/report/warehouse/refresh', (req, res) => {
 // Должно быть до /report/:id, иначе 'nas' попытается матчиться как ID выставки.
 app.get('/report/nas', async (req, res) => {
   try {
-    const nasSession = await nasLogin();
+    const nasSession = await nasLogin(req.viewer && req.viewer.uid);
     res.send(renderNas(req.viewer, nasSession));
   } catch (err) {
     console.error('[ERR] /report/nas:', err.message);

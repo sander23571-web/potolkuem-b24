@@ -1,6 +1,7 @@
 .env
 .env.local
 .env*.local
+report-app/nas-accounts.json
 node_modules/
 *.~lock.*
 Снимок*

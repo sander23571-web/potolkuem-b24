@@ -83,31 +83,45 @@ function withSid(url, sid) {
   return url + sep + '_sid=' + encodeURIComponent(sid);
 }
 
-function renderNas(viewer, nasSession) {
+function renderNas(viewer, nasSession, opts) {
   const { token, isDirector } = viewer || {};
   const session = nasSession || { configured: false };
+  // standalone: страница вызвана из СВОЕГО отдельного локального приложения
+  // (nas-bx-auth.js), не из report-app — ссылки на /report/*, /tasks и т.д.
+  // будут требовать ЧУЖУЮ сессию (bxt report-app), поэтому в standalone-
+  // режиме навигацию не показываем вообще, только заголовок.
+  const standalone = !!(opts && opts.standalone);
 
   let body;
   if (!session.configured) {
     body = `
 <div class="nas-missing">
   <h2>NAS ещё не подключён</h2>
-  <p>Не заданы <code>NAS_BASE_URL</code> / <code>NAS_ACCOUNT</code> / <code>NAS_PASSWORD</code> в
-  <code>report-app/.env</code> на сервере. Открытые вопросы к владельцу:</p>
+  <p>Не задан <code>NAS_BASE_URL</code> в <code>report-app/.env</code> на сервере, или файл
+  <code>NAS_ACCOUNTS_FILE</code> (карта Б24-пользователь → своя учётка DSM) отсутствует/пуст.
+  Открытые вопросы к владельцу:</p>
   <p style="text-align:left;max-width:480px;margin:16px auto 0">
-    1. Адрес NAS для API (QuickConnect ID или https://ip:5001) — нигде в БЗ не найден
-    (проверено: <code>proj search "QuickConnect"</code>, <code>proj search "Synology"</code>).<br>
-    2. Отдельный служебный пользователь DSM с урезанными правами (НЕ admin) — владелец заводит
-    руками в DSM, логин/пароль потом только в .env на сервере, не в git.<br>
-    3. Если на этом служебном пользователе включена 2FA — прозрачный SSO работать не будет,
-    её придётся отключить именно для него (решение владельца, компромисс безопасности).
+    1. Адрес NAS для API (QuickConnect ID или https://ip:5001).<br>
+    2. Для каждого сотрудника, кому нужен доступ — свой пользователь DSM с урезанными правами
+    (НЕ admin, НЕ общий на всех) — владелец заводит руками в DSM, пары логин/пароль потом
+    только в <code>NAS_ACCOUNTS_FILE</code> на сервере, не в git.<br>
+    3. Если на чьей-то учётке включена 2FA — прозрачный SSO для НЕГО работать не будет,
+    придётся её отключить именно для этой учётки (решение владельца по каждой отдельно).
   </p>
-  <p>Как только всё это будет — прописать в .env и pm2 restart report-app, код менять не нужно.</p>
+  <p>Как только всё это будет — прописать в NAS_ACCOUNTS_FILE и pm2 restart report-app, код менять не нужно.</p>
+</div>`;
+  } else if (session.reason === 'no_account_for_user') {
+    body = `
+<div class="nas-missing">
+  <h2>NAS-доступ не настроен для вас</h2>
+  <p>Для вашего Б24-аккаунта (ID ${escHtml(String(session.bxUserId || ''))}) нет своей учётки DSM
+  в карте <code>NAS_ACCOUNTS_FILE</code>. Это не общая проблема — для других сотрудников NAS
+  может уже работать. Обратитесь к владельцу, чтобы вам завели отдельную учётку.</p>
 </div>`;
   } else if (!session.ok) {
     const reasonText = session.reason === 'network'
       ? 'NAS недоступен по сети с сервера report-app (проверьте адрес/порт/файрвол).'
-      : 'DSM отклонил логин служебного пользователя.';
+      : 'DSM отклонил логин вашей учётки.';
     body = `
 <div class="nas-missing">
   <h2>Не удалось войти на NAS</h2>
@@ -142,13 +156,22 @@ function renderNas(viewer, nasSession) {
   <div class="hero-label">Потолкуем?</div>
   <h1>NAS</h1>
   <div class="hero-sub">Synology QuickConnect</div>
-  <nav class="hero-nav">
+  ${standalone ? '' : `<nav class="hero-nav">
     ${renderNav('nas', isDirector)}
-  </nav>
+  </nav>`}
 </div>
 ${body}
 <div class="footer">Потолкуем? · NAS · БюроОБП</div>
-${bxBootstrap(token)}
+${standalone ? '' : bxBootstrap(token)}
+${standalone ? `<script src="https://api.bitrix24.com/api/v1/"></script>
+<script>
+if (window.BX24) {
+  BX24.init(function () {
+    try { BX24.installFinish(); } catch (e) {}
+    try { BX24.fitWindow(); } catch (e) {}
+  });
+}
+</script>` : ''}
 </body>
 </html>`;
 }
