@@ -29,16 +29,20 @@
 
 **Навигация:** ссылки на дашборды добавлены в левое меню Б24 вручную через Настройки портала (Вариант 2, 15.07.2026).
 
-**Деплой:**
+**Деплой (текущий способ — под `reportapp-deploy`, не root, см. раздел "Инфраструктура report-app" ниже):**
 ```bash
-scp -P 2222 report-app/index.js report-app/livedune.js report-app/render-social.js \
+scp -P 2222 -i ~/.ssh/reportapp_deploy_key \
+  report-app/index.js report-app/livedune.js report-app/render-social.js \
   report-app/tasks-b24.js report-app/tasks-render.js report-app/render.js \
   report-app/marketing-data.js report-app/render-marketing.js report-app/period.js \
-  report-app/warehouse-data.js report-app/render-warehouse.js \
+  report-app/warehouse-data.js report-app/render-warehouse.js report-app/format.js \
   report-app/bx-auth.js report-app/bx-embed.js report-app/nav.js report-app/package.json \
-  root@155.212.143.68:/root/projects/talk-report/ && \
-ssh -p 2222 root@155.212.143.68 'cd /root/projects/talk-report && npm install --omit=dev && pm2 restart report-app'
+  reportapp-deploy@155.212.143.68:/root/projects/talk-report/ && \
+ssh -p 2222 -i ~/.ssh/reportapp_deploy_key reportapp-deploy@155.212.143.68 'sudo /usr/bin/pm2 restart report-app'
 ```
+`format.js` (добавлен 24.08) — общий модуль форматирования сумм (`fmtRub`) для всех дашбордов,
+не забывать при следующем деплое. `npm install` через `reportapp-deploy` штатно не запускался бы
+(нет прав на произвольные команды) — не нужен, пока не добавляются новые npm-зависимости.
 
 ---
 
