@@ -18,7 +18,10 @@ function cSet(k, d) { cache.set(k, { data: d, ts: Date.now() }); }
 // ── Raw API ───────────────────────────────────────────────────────────────────
 async function ld(path, params = {}) {
   const qs  = new URLSearchParams({ access_token: API_KEY, ...params });
-  const res = await fetch(`${BASE}${path}?${qs}`);
+  // timeout обязателен (node-fetch@2, поддерживает нативно) — без него зависший запрос к LiveDune
+  // вешает всю страницу /social навсегда (пойман живьём 24.08: "проверяет подключение" 13+ минут,
+  // хотя прямой curl с того же сервера отвечал за 0.15с — единичный подвисший запрос, не общий сбой).
+  const res = await fetch(`${BASE}${path}?${qs}`, { timeout: 10000 });
   if (!res.ok) throw new Error(`LiveDune ${path} → ${res.status}`);
   return res.json();
 }
