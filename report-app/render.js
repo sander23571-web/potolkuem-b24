@@ -3,10 +3,7 @@
 const { bxBootstrap } = require('./bx-embed');
 const { renderNav } = require('./nav');
 const { sortExhibitionsRecentFirst } = require('./b24');
-
-function fmt(n) {
-  return Math.round(n || 0).toLocaleString('ru-RU');
-}
+const { fmtRub, fmtRubClientSrc } = require('./format');
 
 function fmtDate(iso) {
   if (!iso) return '—';
@@ -259,7 +256,7 @@ function renderDashboard(data, allExhibitions, currentId, viewer) {
     const url  = `${b24Url}/crm/type/1070/details/${e.id}/`;
     return `<tr>
       <td><span class="exp-bar" style="width:${barW}px"></span>${escHtml(e.title || `Расход #${e.id}`)}</td>
-      <td class="num">${fmt(amt)}</td>
+      <td class="num">${fmtRub(amt)}</td>
       <td class="num">${pct}%</td>
       <td><a href="${url}" target="_blank" class="b24-link">Открыть</a></td>
     </tr>`;
@@ -274,7 +271,7 @@ function renderDashboard(data, allExhibitions, currentId, viewer) {
       const dealUrl  = `${b24Url}/crm/deal/details/${d.ID}/`;
       return `<tr>
         <td>${escHtml(d.TITLE || '—')}</td>
-        <td class="num">${fmt(d.OPPORTUNITY)}</td>
+        <td class="num">${fmtRub(d.OPPORTUNITY)}</td>
         <td>${hostName}</td>
         <td><a href="${dealUrl}" target="_blank" class="b24-link">Открыть</a></td>
       </tr>`;
@@ -308,6 +305,7 @@ function renderDashboard(data, allExhibitions, currentId, viewer) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${exhTitle} — Дашборд</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>${BASE_CSS}</style>
 </head>
 <body>
@@ -341,17 +339,17 @@ function renderDashboard(data, allExhibitions, currentId, viewer) {
     <div class="kpi-grid kpi-grid-5">
       <div class="kpi-card green">
         <div class="kpi-label">Выручка</div>
-        <div class="kpi-value green">${fmt(totalRevenue)}</div>
+        <div class="kpi-value green">${fmtRub(totalRevenue)}</div>
         <div class="kpi-note">руб.</div>
       </div>
       <div class="kpi-card red">
         <div class="kpi-label">Расходы</div>
-        <div class="kpi-value red">${fmt(totalExpenses)}</div>
+        <div class="kpi-value red">${fmtRub(totalExpenses)}</div>
         <div class="kpi-note">руб.</div>
       </div>
       <div class="kpi-card ${pnlClass}">
         <div class="kpi-label">P&amp;L</div>
-        <div class="kpi-value ${pnlClass}">${pnl >= 0 ? '' : '−'}${fmt(Math.abs(pnl))}</div>
+        <div class="kpi-value ${pnlClass}">${pnl >= 0 ? '' : '−'}${fmtRub(Math.abs(pnl))}</div>
         <div class="kpi-note">руб. ${pnlLabel.toLowerCase()}</div>
       </div>
       <div class="kpi-card">
@@ -411,7 +409,7 @@ function renderDashboard(data, allExhibitions, currentId, viewer) {
         <tfoot>
           <tr>
             <td><strong>ИТОГО</strong></td>
-            <td class="num"><strong>${fmt(totalExpenses)}</strong></td>
+            <td class="num"><strong>${fmtRub(totalExpenses)}</strong></td>
             <td class="num">100%</td>
             <td></td>
           </tr>
@@ -424,17 +422,17 @@ function renderDashboard(data, allExhibitions, currentId, viewer) {
         <div class="pnl-row">
           <span style="color:var(--green)">Выручка</span>
           <div class="pnl-bar-wrap"><div class="pnl-bar green" style="width:${revBar}%"></div></div>
-          <span class="pnl-amount num" style="color:var(--green)">+ ${fmt(totalRevenue)}</span>
+          <span class="pnl-amount num" style="color:var(--green)">+ ${fmtRub(totalRevenue)}</span>
         </div>
         <div class="pnl-row">
           <span style="color:var(--red)">Расходы</span>
           <div class="pnl-bar-wrap"><div class="pnl-bar red" style="width:${expBar}%"></div></div>
-          <span class="pnl-amount num" style="color:var(--red)">− ${fmt(totalExpenses)}</span>
+          <span class="pnl-amount num" style="color:var(--red)">− ${fmtRub(totalExpenses)}</span>
         </div>
         <div class="pnl-row total">
           <span style="color:var(--${pnlClass})">${pnlLabel}</span>
           <div class="pnl-bar-wrap"></div>
-          <span class="pnl-amount num" style="color:var(--${pnlClass})">${pnlSign} ${fmt(Math.abs(pnl))}</span>
+          <span class="pnl-amount num" style="color:var(--${pnlClass})">${pnlSign} ${fmtRub(Math.abs(pnl))}</span>
         </div>
       </div>
     </div>
@@ -445,7 +443,7 @@ function renderDashboard(data, allExhibitions, currentId, viewer) {
     <div class="section-title">Сделки${deals.length > 100 ? ' (первые 100)' : ''}</div>
     <div style="margin-bottom:14px;font-size:13px;color:var(--muted)">
       Итого выручка по сделкам:
-      <strong style="font-size:17px;color:var(--green);margin-left:6px">+ ${fmt(totalRevenue)} руб.</strong>
+      <strong style="font-size:17px;color:var(--green);margin-left:6px">+ ${fmtRub(totalRevenue)}</strong>
       <span style="margin-left:12px">${deals.length} сделок</span>
     </div>
     <table class="data-table">
@@ -463,7 +461,7 @@ function renderDashboard(data, allExhibitions, currentId, viewer) {
       <tfoot>
         <tr>
           <td><strong>Итого</strong></td>
-          <td class="num" style="color:var(--green)"><strong>+ ${fmt(totalRevenue)}</strong></td>
+          <td class="num" style="color:var(--green)"><strong>+ ${fmtRub(totalRevenue)}</strong></td>
           <td><strong>${deals.length} сделок</strong></td>
           <td></td>
         </tr>
@@ -492,6 +490,7 @@ function renderDashboard(data, allExhibitions, currentId, viewer) {
 
 <script>
 const P = ${JSON.stringify(PALETTE)};
+${fmtRubClientSrc}
 
 // Chart 1 — Выручка по ведущим (горизонтальный бар, клик → карточка ведущего)
 const hostUrls = ${hostChartUrls};
@@ -508,10 +507,10 @@ new Chart(document.getElementById('hostChart'), {
     onHover:  (e, els) => { e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
     plugins: {
       legend: { display: false },
-      tooltip: { callbacks: { label: ctx => ' ' + ctx.raw.toLocaleString('ru-RU') + ' руб.' } }
+      tooltip: { callbacks: { label: ctx => ' ' + fmtRub(ctx.raw) } }
     },
     scales: {
-      x: { grid: { color: '#ece8f8' }, ticks: { callback: v => (v/1000).toFixed(0)+'k', font: { size: 11 } } },
+      x: { grid: { color: '#ece8f8' }, ticks: { callback: v => fmtRub(v), font: { size: 11 } } },
       y: { grid: { display: false }, ticks: { font: { size: 12 } } }
     }
   }
@@ -521,6 +520,7 @@ new Chart(document.getElementById('hostChart'), {
 const expUrls = ${expenseChartIds}.map(id => '${b24Url}/crm/type/1070/details/' + id + '/');
 new Chart(document.getElementById('expenseChart'), {
   type: 'doughnut',
+  plugins: [ChartDataLabels],
   data: {
     labels: ${expenseChartLabels},
     datasets: [{ data: ${expenseChartData}, backgroundColor: ${expenseChartColors}, borderWidth: 2, borderColor: '#fff' }]
@@ -532,7 +532,16 @@ new Chart(document.getElementById('expenseChart'), {
     onHover:  (e, els) => { e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
     plugins: {
       legend: { position: 'right', labels: { font: { size: 11 }, boxWidth: 12, padding: 8 } },
-      tooltip: { callbacks: { label: ctx => ' ' + ctx.raw.toLocaleString('ru-RU') + ' руб.' } }
+      tooltip: { callbacks: { label: ctx => ' ' + fmtRub(ctx.raw) } },
+      datalabels: {
+        color: '#fff',
+        font: { size: 11, weight: '600' },
+        formatter: v => fmtRub(v),
+        display: ctx => {
+          const total = ctx.dataset.data.reduce((s, x) => s + x, 0);
+          return total > 0 && (ctx.dataset.data[ctx.dataIndex] / total) > 0.03; // прячем подписи на совсем узких секторах (<3%), иначе наслаиваются
+        }
+      }
     }
   }
 });
@@ -548,11 +557,11 @@ new Chart(document.getElementById('dayChart'), {
     responsive: true,
     plugins: {
       legend: { display: false },
-      tooltip: { callbacks: { label: ctx => ' ' + ctx.raw.toLocaleString('ru-RU') + ' руб.' } }
+      tooltip: { callbacks: { label: ctx => ' ' + fmtRub(ctx.raw) } }
     },
     scales: {
       x: { grid: { display: false }, ticks: { font: { size: 12 } } },
-      y: { grid: { color: '#ece8f8' }, ticks: { callback: v => (v/1000).toFixed(0)+'k', font: { size: 11 } } }
+      y: { grid: { color: '#ece8f8' }, ticks: { callback: v => fmtRub(v), font: { size: 11 } } }
     }
   }
 });
@@ -611,9 +620,9 @@ function renderComparison(allExhibitions, summaries, viewer) {
     return `<tr>
       <td><a href="/report/${e.id}" class="b24-link-inline">${escHtml(e.title || `#${e.id}`)}</a></td>
       <td style="color:var(--muted);font-size:13px">${dateStr}</td>
-      <td class="num green">+${fmt(s.revenue)}</td>
-      <td class="num red">−${fmt(s.expenses)}</td>
-      <td class="num ${cls}">${sign}${fmt(Math.abs(pnl))}</td>
+      <td class="num green">+${fmtRub(s.revenue)}</td>
+      <td class="num red">−${fmtRub(s.expenses)}</td>
+      <td class="num ${cls}">${sign}${fmtRub(Math.abs(pnl))}</td>
       <td class="num">${s.dealCount}</td>
     </tr>`;
   }).join('\n');
@@ -648,17 +657,17 @@ function renderComparison(allExhibitions, summaries, viewer) {
     <div class="kpi-grid kpi-grid-3">
       <div class="kpi-card green">
         <div class="kpi-label">Выручка</div>
-        <div class="kpi-value green">${fmt(totalRevAll)}</div>
+        <div class="kpi-value green">${fmtRub(totalRevAll)}</div>
         <div class="kpi-note">руб.</div>
       </div>
       <div class="kpi-card red">
         <div class="kpi-label">Расходы</div>
-        <div class="kpi-value red">${fmt(totalExpAll)}</div>
+        <div class="kpi-value red">${fmtRub(totalExpAll)}</div>
         <div class="kpi-note">руб.</div>
       </div>
       <div class="kpi-card ${pnlAllClass}">
         <div class="kpi-label">P&amp;L</div>
-        <div class="kpi-value ${pnlAllClass}">${pnlAllSign}${fmt(Math.abs(totalPnlAll))}</div>
+        <div class="kpi-value ${pnlAllClass}">${pnlAllSign}${fmtRub(Math.abs(totalPnlAll))}</div>
         <div class="kpi-note">руб. ${totalPnlAll >= 0 ? 'прибыль' : 'убыток'}</div>
       </div>
     </div>
@@ -693,9 +702,9 @@ function renderComparison(allExhibitions, summaries, viewer) {
         <tr>
           <td><strong>ИТОГО</strong></td>
           <td></td>
-          <td class="num green"><strong>+${fmt(totalRevAll)}</strong></td>
-          <td class="num red"><strong>−${fmt(totalExpAll)}</strong></td>
-          <td class="num ${pnlAllClass}"><strong>${pnlAllSign}${fmt(Math.abs(totalPnlAll))}</strong></td>
+          <td class="num green"><strong>+${fmtRub(totalRevAll)}</strong></td>
+          <td class="num red"><strong>−${fmtRub(totalExpAll)}</strong></td>
+          <td class="num ${pnlAllClass}"><strong>${pnlAllSign}${fmtRub(Math.abs(totalPnlAll))}</strong></td>
           <td class="num"><strong>${totalDeals}</strong></td>
         </tr>
       </tfoot>
@@ -709,6 +718,7 @@ function renderComparison(allExhibitions, summaries, viewer) {
 </div>
 
 <script>
+${fmtRubClientSrc}
 const cmpUrls = ${cmpUrls};
 new Chart(document.getElementById('cmpChart'), {
   type: 'bar',
@@ -730,11 +740,11 @@ new Chart(document.getElementById('cmpChart'), {
     onHover: (e, els) => { e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
     plugins: {
       legend: { position: 'top', labels: { font: { size: 12 } } },
-      tooltip: { callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.raw.toLocaleString('ru-RU') + ' руб.' } }
+      tooltip: { callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ' + fmtRub(ctx.raw) } }
     },
     scales: {
       x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-      y: { grid: { color: '#ece8f8' }, ticks: { callback: v => (v/1000).toFixed(0)+'k', font: { size: 11 } } }
+      y: { grid: { color: '#ece8f8' }, ticks: { callback: v => fmtRub(v), font: { size: 11 } } }
     }
   }
 });

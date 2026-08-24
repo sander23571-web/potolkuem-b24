@@ -219,14 +219,14 @@ function renderTasksDashboard(data, viewer) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Задачи коллектива — Потолкуем?</title>
+<title>Активность коллектива — Потолкуем?</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>${BASE_CSS}</style>
 </head>
 <body>
 
 <div class="hero">
-  <div class="hero-label">Дашборд задач · Настольные игры «Потолкуем?»</div>
+  <div class="hero-label">Дашборд активности · Настольные игры «Потолкуем?»</div>
   <h1>Активность коллектива</h1>
   <div class="hero-sub">
     <div><strong>${stats.totalActive}</strong> активных задач · <strong>${userCount}</strong> сотрудников</div>
@@ -417,7 +417,7 @@ function renderMemberDetail(data, userId, viewer) {
   if (!u) {
     return `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">
     <style>${BASE_CSS}</style></head>
-    <body><div class="hero"><div class="hero-label">Дашборд задач</div><h1>${name}</h1>
+    <body><div class="hero"><div class="hero-label">Дашборд активности</div><h1>${name}</h1>
     <div class="hero-nav"><a href="/tasks" class="nav-btn">← К команде</a>${renderNav('tasks', isDirector)}</div></div>
     <div class="container"><p style="margin-top:40px;color:var(--muted)">Нет данных по этому сотруднику.</p></div>
     ${bxBootstrap(token)}
@@ -499,13 +499,13 @@ function renderMemberDetail(data, userId, viewer) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${name} — задачи</title>
+<title>${name} — активность</title>
 <style>${BASE_CSS}</style>
 </head>
 <body>
 
 <div class="hero">
-  <div class="hero-label">Дашборд задач · Исполнитель</div>
+  <div class="hero-label">Дашборд активности · Исполнитель</div>
   <h1>${name}</h1>
   <div class="hero-sub">
     <div><strong>${u.active}</strong> активных · <strong>${u.closedLast30d}</strong> закрыто за 30 дней</div>

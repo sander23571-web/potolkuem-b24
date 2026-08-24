@@ -6,6 +6,7 @@
 const { PRESETS, rangeQueryString } = require('./period');
 const { bxBootstrap } = require('./bx-embed');
 const { renderNav } = require('./nav');
+const { fmtRub, fmtRubClientSrc } = require('./format');
 
 const B24_URL = 'https://potolkuem.bitrix24.ru';
 const TYPE_ID  = 28;
@@ -477,13 +478,13 @@ ${renderPeriodBar('/report/marketing', range)}
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Выручка (посл. мес.)</div>
-      <div class="kpi-value">${ymLast ? fmt(ymLast.revenue) + ' ₽' : '—'}</div>
-      <div class="kpi-note">${ymLast && ymLast.purchases ? `средний чек ${fmt(Math.round(ymLast.revenue / ymLast.purchases))} ₽` : ''}</div>
+      <div class="kpi-value">${ymLast ? fmtRub(ymLast.revenue) : '—'}</div>
+      <div class="kpi-note">${ymLast && ymLast.purchases ? `средний чек ${fmtRub(Math.round(ymLast.revenue / ymLast.purchases))}` : ''}</div>
     </div>
     <div class="kpi-card ${ymTotalPurchases ? 'green' : 'red'}">
       <div class="kpi-label">Итого за период</div>
       <div class="kpi-value">${fmt(ymTotalPurchases)} покупок</div>
-      <div class="kpi-note">${fmt(ymTotalRevenue)} ₽ · ${ymItems.length} мес. в выборке</div>
+      <div class="kpi-note">${fmtRub(ymTotalRevenue)} · ${ymItems.length} мес. в выборке</div>
     </div>
   </div>
 
@@ -505,17 +506,17 @@ ${renderPeriodBar('/report/marketing', range)}
   <div class="kpi-grid kpi-grid-3">
     <div class="kpi-card">
       <div class="kpi-label">Яндекс.Директ (посл. мес.)</div>
-      <div class="kpi-value">${ydLast ? fmt(ydLast.spend) + ' ₽' : '—'}</div>
+      <div class="kpi-value">${ydLast ? fmtRub(ydLast.spend) : '—'}</div>
       <div class="kpi-note">${ydLast ? `${fmt(ydLast.clicks)} кликов · ${fmt(ydLast.impressions)} показов · CTR ${ydLast.impressions ? fmtFloat(ydLast.clicks / ydLast.impressions * 100) : 0}%` : 'нет данных'}${ydLast?.b24Url ? ` · <a href="${ydLast.b24Url}" target="_blank">Б24</a>` : ''}</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">VK Реклама (посл. мес.)</div>
-      <div class="kpi-value">${vkAdsLast ? fmt(vkAdsLast.spend) + ' ₽' : '—'}</div>
+      <div class="kpi-value">${vkAdsLast ? fmtRub(vkAdsLast.spend) : '—'}</div>
       <div class="kpi-note">${vkAdsLast ? `${fmt(vkAdsLast.clicks)} кликов · ${fmt(vkAdsLast.impressions)} показов · CTR ${vkAdsLast.impressions ? fmtFloat(vkAdsLast.clicks / vkAdsLast.impressions * 100) : 0}%` : 'нет данных'}${vkAdsLast?.b24Url ? ` · <a href="${vkAdsLast.b24Url}" target="_blank">Б24</a>` : ''}</div>
     </div>
     <div class="kpi-card green">
       <div class="kpi-label">Итого расход за период</div>
-      <div class="kpi-value">${fmt(adsTotalSpend)} ₽</div>
+      <div class="kpi-value">${fmtRub(adsTotalSpend)}</div>
       <div class="kpi-note">Директ + VK Реклама, ${_adsPeriods.length} мес. в выборке</div>
     </div>
   </div>
@@ -539,7 +540,7 @@ ${campSummary.length ? `
   <div class="kpi-grid kpi-grid-3">
     <div class="kpi-card">
       <div class="kpi-label">Расход за период (виден нам)</div>
-      <div class="kpi-value">${fmt(campTotalCost)} ₽</div>
+      <div class="kpi-value">${fmtRub(campTotalCost)}</div>
       <div class="kpi-note">${campSummary.length} кампаний · часть расхода не видна — управляется через агентский баланс</div>
     </div>
     <div class="kpi-card">
@@ -570,7 +571,7 @@ ${campSummary.length ? `
     <tbody>
       ${campSummary.map(c => `<tr>
         <td>${escHtml(c.campaign)}</td>
-        <td class="num">${c.totalCost ? fmt(c.totalCost) + ' ₽' : '<span style="color:var(--muted)">не видно (агентский баланс)</span>'}</td>
+        <td class="num">${c.totalCost ? fmtRub(c.totalCost) : '<span style="color:var(--muted)">не видно (агентский баланс)</span>'}</td>
         <td class="num">${fmt(c.totalVisits)}</td>
         <td class="num">${fmt(c.totalClicks)}</td>
         <td class="num">${fmt(c.totalCart)}</td>
@@ -928,7 +929,7 @@ function renderMarketingExpenses(data, viewer) {
     <td style="color:var(--muted);font-size:13px;white-space:nowrap">${e.date || '—'}</td>
     <td>${escHtml(e.title || `#${e.id}`)}</td>
     <td>${renderChannelBadge(e.channel, e.channelLabel)}</td>
-    <td class="num">${fmt(e.amount)} ₽</td>
+    <td class="num">${fmtRub(e.amount)}</td>
     <td><a class="b24-link" href="${e.b24Url}" target="_blank">Открыть</a></td>
   </tr>`).join('');
 
@@ -966,17 +967,17 @@ ${renderPeriodBar('/report/marketing/expenses', range)}
   <div class="kpi-grid kpi-grid-3">
     <div class="kpi-card red">
       <div class="kpi-label">Всего за период</div>
-      <div class="kpi-value">${fmt(total)} ₽</div>
+      <div class="kpi-value">${fmtRub(total)}</div>
       <div class="kpi-note">${expenses.length} записей</div>
     </div>
     <div class="kpi-card orange">
       <div class="kpi-label">Текущий год (${new Date().getFullYear()})</div>
-      <div class="kpi-value">${fmt(totalYear)} ₽</div>
+      <div class="kpi-value">${fmtRub(totalYear)}</div>
       <div class="kpi-note">маркетинговые расходы</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Текущий месяц</div>
-      <div class="kpi-value">${fmt(totalMonth)} ₽</div>
+      <div class="kpi-value">${fmtRub(totalMonth)}</div>
       <div class="kpi-note">${new Date().toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
     </div>
   </div>
@@ -1017,7 +1018,7 @@ ${(channelEntries.length >= 2 || months.length >= 2) ? `
     <tfoot>
       <tr>
         <td colspan="3"><strong>Итого</strong></td>
-        <td class="num"><strong>${fmt(total)} ₽</strong></td>
+        <td class="num"><strong>${fmtRub(total)}</strong></td>
         <td></td>
       </tr>
     </tfoot>
@@ -1029,6 +1030,7 @@ ${(channelEntries.length >= 2 || months.length >= 2) ? `
 <div class="footer">Потолкуем? · Маркетинговые расходы · только для руководства · БюроОБП</div>
 
 <script>
+${fmtRubClientSrc}
 ${channelEntries.length >= 2 ? `
 new Chart(document.getElementById('chChart'), {
   type: 'doughnut',
@@ -1041,7 +1043,7 @@ new Chart(document.getElementById('chChart'), {
     cutout: '60%',
     plugins: {
       legend: { position: 'right', labels: { font: { size: 12 }, boxWidth: 12, padding: 8 } },
-      tooltip: { callbacks: { label: ctx => ' ' + ctx.raw.toLocaleString('ru-RU') + ' ₽' } }
+      tooltip: { callbacks: { label: ctx => ' ' + fmtRub(ctx.raw) } }
     }
   }
 });` : ''}
@@ -1058,13 +1060,13 @@ new Chart(document.getElementById('moChart'), {
       legend: { position: 'bottom', labels: { font: { size: 12 }, boxWidth: 12, padding: 12 } },
       tooltip: {
         callbacks: {
-          label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.raw.toLocaleString('ru-RU') + ' ₽',
-          footer: items => 'Итого: ' + items.reduce((s, i) => s + i.raw, 0).toLocaleString('ru-RU') + ' ₽'
+          label: ctx => ' ' + ctx.dataset.label + ': ' + fmtRub(ctx.raw),
+          footer: items => 'Итого: ' + fmtRub(items.reduce((s, i) => s + i.raw, 0))
         }
       }
     },
     scales: {
-      y: { stacked: true, beginAtZero: true, grid: { color: '#e0daf7' }, ticks: { callback: v => (v/1000).toFixed(0)+'k', font: { size: 11 } } },
+      y: { stacked: true, beginAtZero: true, grid: { color: '#e0daf7' }, ticks: { callback: v => fmtRub(v), font: { size: 11 } } },
       x: { stacked: true, grid: { display: false }, ticks: { font: { size: 11 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 18 } }
     }
   }

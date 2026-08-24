@@ -5,10 +5,11 @@
 
 const { bxBootstrap } = require('./bx-embed');
 const { renderNav } = require('./nav');
+const { fmtRub, fmtRubClientSrc } = require('./format');
 
 const B24_URL = 'https://potolkuem.bitrix24.ru';
 
-const fmt      = n => Math.round(n).toLocaleString('ru-RU');
+const fmt      = n => Math.round(n).toLocaleString('ru-RU'); // счётчики (штуки) — округление до тысяч сюда не относится
 const fmtPct   = n => (n >= 0 ? '+' : '') + Math.round(n) + '%';
 const escHtml  = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
@@ -114,20 +115,20 @@ function renderWarehouse(data, viewer) {
     return `<tr${p.lowStock ? ' style="background:#fdf3e7"' : ''}>
       <td style="color:var(--muted)">${i + 1}</td>
       <td><a class="b24-link" href="${escHtml(p.url)}" target="_blank">${escHtml(shortName(p.name))}</a>${p.lowStock ? ' <span class="badge badge-orange" title="нижний квартиль по остаткам">низкий остаток</span>' : ''}</td>
-      <td class="num">${p.price ? fmt(p.price) + ' ₽' : '—'}</td>
-      <td class="num">${p.cost  ? fmt(p.cost)  + ' ₽' : '—'}</td>
+      <td class="num">${p.price ? fmtRub(p.price) : '—'}</td>
+      <td class="num">${p.cost  ? fmtRub(p.cost)  : '—'}</td>
       <td class="num">${mgp !== null ? `<span class="badge ${badgeClass}">${fmtPct(mgp)}</span>` : '—'}</td>
       <td class="num">${p.mainQty   ? fmt(p.mainQty)   : '—'}</td>
       <td class="num">${p.retailQty ? fmt(p.retailQty) : '—'}</td>
       <td class="num" style="font-weight:600">${fmt(p.totalQty)}</td>
-      <td class="num" style="color:var(--orange)">${p.totalValue ? fmt(p.totalValue) + ' ₽' : '—'}</td>
+      <td class="num" style="color:var(--orange)">${p.totalValue ? fmtRub(p.totalValue) : '—'}</td>
     </tr>`;
   }).join('');
 
   const storeRows = (list) => list.map(s => `<tr>
     <td>${escHtml(s.title)}</td>
     <td class="num" style="font-weight:600">${fmt(s.totalQty)}</td>
-    <td class="num" style="color:var(--orange)">${s.totalValue ? fmt(s.totalValue) + ' ₽' : '—'}</td>
+    <td class="num" style="color:var(--orange)">${s.totalValue ? fmtRub(s.totalValue) : '—'}</td>
   </tr>`).join('');
 
   const docRows = documents.map(d => `<tr>
@@ -177,7 +178,7 @@ function renderWarehouse(data, viewer) {
     </div>
     <div class="kpi-card orange">
       <div class="kpi-label">Заморожено капитала</div>
-      <div class="kpi-value">${fmt(totals.value)} ₽</div>
+      <div class="kpi-value">${fmtRub(totals.value)}</div>
       <div class="kpi-sub">по себестоимости</div>
     </div>
     <div class="kpi-card">
@@ -230,7 +231,7 @@ function renderWarehouse(data, viewer) {
       <tr>
         <td colspan="7" style="color:var(--muted)">ИТОГО</td>
         <td class="num">${fmt(totals.qty)}</td>
-        <td class="num" style="color:var(--orange)">${fmt(totals.value)} ₽</td>
+        <td class="num" style="color:var(--orange)">${fmtRub(totals.value)}</td>
       </tr>
     </tfoot>
   </table>
@@ -271,6 +272,7 @@ function renderWarehouse(data, viewer) {
 <div class="footer">Потолкуем? · Склад · БюроОБП</div>
 
 <script>
+${fmtRubClientSrc}
 (function() {
   const labels  = ${chartLabels};
   const values  = ${chartValues};
@@ -286,11 +288,11 @@ function renderWarehouse(data, viewer) {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ' ' + ctx.raw.toLocaleString('ru-RU') + ' ₽' } }
+        tooltip: { callbacks: { label: ctx => ' ' + fmtRub(ctx.raw) } }
       },
       scales: {
         x: { ticks: { color: '#7b79a0', font: { size: 11 } }, grid: { display: false } },
-        y: { ticks: { color: '#7b79a0', callback: v => (v/1000).toFixed(0) + 'к' }, grid: { color: '#e0daf7' } }
+        y: { ticks: { color: '#7b79a0', callback: v => fmtRub(v) }, grid: { color: '#e0daf7' } }
       }
     }
   });
