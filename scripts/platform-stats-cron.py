@@ -32,9 +32,15 @@ from collections import defaultdict
 
 # Читаем .env с сервера или из проекта
 def load_env(path):
+    # encoding='utf-8-sig' — некоторые .env на сервере (yandex-direct.env, yandex-oauth.env)
+    # сохранены с BOM в начале файла; без этого BOM прилипает к имени ПЕРВОЙ переменной
+    # (напр. '﻿YANDEX_DIRECT_OAUTH_TOKEN' != 'YANDEX_DIRECT_OAUTH_TOKEN'), токен молча
+    # не находится, и process_direct_campaigns() весь этот месяц не заполняет СП 1094 —
+    # без ошибки, просто тихий '[skip]'. Найдено 25.08.2026, когда за много недель кроном
+    # набралось всего 5 записей на весь СП.
     env = {}
     try:
-        for line in open(path).read().splitlines():
+        for line in open(path, encoding='utf-8-sig').read().splitlines():
             line = line.strip()
             if not line or line.startswith('#') or '=' not in line:
                 continue
@@ -49,6 +55,11 @@ for p in [
     '/root/projects/talk-report/.env',
     '/root/projects/talk/.env',
     os.path.join(os.path.dirname(__file__), '../.env'),
+    # Найдено 25.08.2026: process_direct_campaigns() (СП 1094) не наполнялась много недель —
+    # эти два файла раньше в список не входили вообще, YD_TOKEN/MC_TOKEN не находились ни
+    # через _env, ни через os.environ, скрипт молча писал '[skip]' и выходил. Добавлены явно.
+    '/root/projects/talk-report/yandex-direct.env',
+    '/root/projects/talk-report/yandex-oauth.env',
 ]:
     _env.update(load_env(p))
 
@@ -56,7 +67,10 @@ B24_WEBHOOK   = _env.get('B24_WEBHOOK', os.environ.get('B24_WEBHOOK', ''))
 LD_KEY        = _env.get('LIVEDUNE_API_KEY', os.environ.get('LIVEDUNE_API_KEY', ''))
 YD_TOKEN      = _env.get('YANDEX_DIRECT_OAUTH_TOKEN', os.environ.get('YANDEX_DIRECT_OAUTH_TOKEN', ''))
 VK_ADS_TOKEN  = _env.get('VK_ADS_TOKEN', os.environ.get('VK_ADS_TOKEN', ''))
-MC_TOKEN      = _env.get('YANDEX_OAUTH_TOKEN', os.environ.get('YANDEX_OAUTH_TOKEN', ''))
+# yandex-oauth.env хранит токен под ключом 'Authorization', не 'YANDEX_OAUTH_TOKEN' — второй
+# .get() ниже подхватывает его как есть, без переименования исходного файла.
+MC_TOKEN      = (_env.get('YANDEX_OAUTH_TOKEN') or _env.get('Authorization')
+                 or os.environ.get('YANDEX_OAUTH_TOKEN', ''))
 MC_COUNTER    = '97696821'  # Метрика: основной сайт potolkuem.pro
 DATA_DIR      = '/root/projects/talk-report/data/seo'
 
