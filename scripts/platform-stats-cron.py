@@ -112,6 +112,11 @@ F = {
     'visits_organic': f'ufCrm{TYPE_ID}VisitsOrganic',
     'visits_paid':    f'ufCrm{TYPE_ID}VisitsPaid',
     'bounce_rate':    f'ufCrm{TYPE_ID}BounceRate',
+    # Корзина/заказ по ВСЕМУ трафику сайта (не по кампаниям — см. комментарий в
+    # process_seo_snapshots) — добавлены 25.08.2026 для честной KPI-карточки
+    # на /report/marketing вместо заниженной суммы по СП 1094.
+    'site_cart':      f'ufCrm{TYPE_ID}SiteCart',
+    'site_orders':    f'ufCrm{TYPE_ID}SiteOrders',
     'clicks':         f'ufCrm{TYPE_ID}Clicks',
     'impressions':    f'ufCrm{TYPE_ID}Impressions',
     'brand_demand':   f'ufCrm{TYPE_ID}BrandDemand',
@@ -267,6 +272,8 @@ def process_seo_snapshots(monthly_snaps, target_months=None):
                 'visits_organic': m.get('organic_visits'),
                 'visits_paid':    m.get('paid_visits'),
                 'bounce_rate':    m.get('bounce_rate'),
+                'site_cart':      m.get('site_cart'),
+                'site_orders':    m.get('site_orders'),
             })
             time.sleep(0.4)
 

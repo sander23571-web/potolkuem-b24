@@ -21,7 +21,26 @@ import urllib.parse
 
 # ── Конфигурация ──────────────────────────────────────────────────────────────
 
-OAUTH_TOKEN   = os.environ.get('YANDEX_OAUTH_TOKEN', '')     # Метрика + Вебмастер
+def _load_env_file(path):
+    # encoding='utf-8-sig' — yandex-oauth.env на сервере сохранён с BOM, без этого
+    # BOM прилипает к имени переменной и она не находится (тот же баг нашли и
+    # починили 25.08.2026 в platform-stats-cron.py — здесь для той же надёжности,
+    # чтобы скрипт не зависел от того, экспортирует ли обёртка cron эти переменные
+    # в os.environ сама).
+    env = {}
+    try:
+        for line in open(path, encoding='utf-8-sig').read().splitlines():
+            line = line.strip()
+            if not line or line.startswith('#') or '=' not in line:
+                continue
+            k, v = line.split('=', 1)
+            env[k.strip()] = v.strip()
+    except FileNotFoundError:
+        pass
+    return env
+
+_oauth_env = _load_env_file('/root/projects/talk-report/yandex-oauth.env')
+OAUTH_TOKEN   = os.environ.get('YANDEX_OAUTH_TOKEN') or _oauth_env.get('YANDEX_OAUTH_TOKEN') or _oauth_env.get('Authorization', '')  # Метрика + Вебмастер
 AI_STUDIO_KEY = os.environ.get('YA_AI_STUDIO_API_KEY', '')  # Search API v2 (Wordstat)
 FOLDER_ID     = os.environ.get('YA_FOLDER_ID', '')          # Яндекс Облако folder_id
 DATA_DIR      = '/root/projects/talk-report/data/seo'
@@ -32,6 +51,10 @@ WM_HOST_ID    = 'https:potolkuem.pro:443'    # формат Яндекс host_id
 
 # Метрика
 MC_COUNTER    = '97696821'
+# Цели корзины/заказа — те же, что в platform-stats-cron.py (СП 1094), см. комментарий там:
+# намеренно НЕ используем 'Ecommerce: покупка' (338243077), она сломана на сайте.
+MC_GOAL_CART  = '477280113'
+MC_GOAL_ORDER = '476452790'
 
 # Метрика — счётчик "на Маркете" (ecommerce-цели Яндекс.Маркета)
 MC_MARKET_COUNTER = '98713606'
@@ -175,9 +198,12 @@ def fetch_metrica():
             params += '&filters=' + urllib.parse.quote(filters)
         return get_json('https://api-metrica.yandex.net/stat/v1/data' + params, token=OAUTH_TOKEN)
 
-    # Общий трафик
-    total_r = mc_get('ym:s:visits,ym:s:users,ym:s:bounceRate')
-    total   = total_r.get('totals', [0, 0, 0])
+    # Общий трафик + корзина/заказ ПО ВСЕМУ ТРАФИКУ САЙТА (не только рекламному —
+    # тот же принцип, что дал честную цифру при разборе оплаты за результат 25.08.2026:
+    # сумма по отдельным кампаниям в СП 1094 занижает результат в разы, агрегат — нет)
+    total_r = mc_get(f'ym:s:visits,ym:s:users,ym:s:bounceRate,'
+                      f'ym:s:goal{MC_GOAL_CART}reaches,ym:s:goal{MC_GOAL_ORDER}reaches')
+    total   = total_r.get('totals', [0, 0, 0, 0, 0])
 
     # Органика
     org_r = mc_get(
@@ -204,6 +230,8 @@ def fetch_metrica():
         'organic_users':  int(org[1]) if len(org) > 1 else 0,
         'paid_visits':    int(paid[0]) if paid else 0,
         'paid_users':     int(paid[1]) if len(paid) > 1 else 0,
+        'site_cart':      int(total[3]) if len(total) > 3 else 0,
+        'site_orders':    int(total[4]) if len(total) > 4 else 0,
     }
 
 # ── 2b. Метрика — Яндекс.Маркет (ecommerce) ─────────────────────────────────────
