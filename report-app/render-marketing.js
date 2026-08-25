@@ -424,7 +424,7 @@ ${renderPeriodBar('/report/marketing', range)}
   <div class="section-title">Уровень 2 — Сайт · Яндекс.Метрика</div>
 
   ${metLast
-    ? `<div class="kpi-grid kpi-grid-4">
+    ? `<div class="kpi-grid kpi-grid-6">
     <div class="kpi-card">
       <div class="kpi-label">Визитов всего</div>
       <div class="kpi-value">${fmt(metLast.visitsTotal)}</div>
@@ -444,6 +444,16 @@ ${renderPeriodBar('/report/marketing', range)}
       <div class="kpi-label">Отказы</div>
       <div class="kpi-value">${fmtFloat(metLast.bounceRate)} %</div>
       <div class="kpi-note">меньше = лучше</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Корзина (весь сайт)</div>
+      <div class="kpi-value">${fmt(metLast.siteCart)}</div>
+      <div class="kpi-note">агрегат Метрики, не сумма по кампаниям</div>
+    </div>
+    <div class="kpi-card ${metLast.siteOrders ? 'green' : 'red'}">
+      <div class="kpi-label">Заказы (весь сайт)</div>
+      <div class="kpi-value">${fmt(metLast.siteOrders)}</div>
+      <div class="kpi-note">честный итог, не занижен по кампаниям — см. таблицу ниже</div>
     </div>
   </div>
 
@@ -536,6 +546,11 @@ ${renderPeriodBar('/report/marketing', range)}
 ${campSummary.length ? `
 <div class="section">
   <div class="section-title">Кампании Директ — отдача по воронке</div>
+  <div class="kpi-note" style="margin-bottom:14px">
+    ⚠️ Корзина/заказы здесь — сумма по опознанным кампаниям, она структурно ниже честного
+    итога по всему сайту (см. карточки «Корзина/Заказы (весь сайт)» в блоке выше) — не все
+    визиты привязываются к конкретному имени кампании.
+  </div>
 
   <div class="kpi-grid kpi-grid-3">
     <div class="kpi-card">

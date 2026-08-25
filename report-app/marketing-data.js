@@ -72,6 +72,11 @@ function parseItem(item) {
     spend:        parseFloat(item[pf('Spend')]) || 0,
     purchases:    parseInt(item[pf('Purchases')]) || 0,
     revenue:      parseFloat(item[pf('Revenue')]) || 0,
+    // Корзина/заказ по ВСЕМУ трафику сайта (агрегат Метрики, не сумма по кампаниям
+    // СП 1094 — та сумма занижает в разы, см. proj log talk 25.08.2026). Заполнено
+    // только у платформы "Метрика_сайт".
+    siteCart:     parseInt(item[pf('SiteCart')]) || 0,
+    siteOrders:   parseInt(item[pf('SiteOrders')]) || 0,
     b24Url:       `${B24_URL}/crm/type/${ENTITY_TYPE_ID}/details/${item.id}/`,
   };
 }
@@ -163,7 +168,7 @@ async function fetchRawMarketing() {
     pf('Followers'), pf('FollowersDiff'), pf('Er'), pf('Reach'),
     pf('VisitsTotal'), pf('VisitsOrganic'), pf('VisitsPaid'), pf('BounceRate'),
     pf('Clicks'), pf('Impressions'), pf('BrandDemand'), pf('Spend'),
-    pf('Purchases'), pf('Revenue'),
+    pf('Purchases'), pf('Revenue'), pf('SiteCart'), pf('SiteOrders'),
   ]);
 
   _rawCache   = { items: raw.map(parseItem), snapshots: loadSnapshotHistory() };
