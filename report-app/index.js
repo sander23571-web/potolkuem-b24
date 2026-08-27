@@ -12,6 +12,8 @@ const { fetchMarketingData, cacheInvalidateMarketing, fetchMarketingExpensesData
 const { renderMarketing, renderMarketingExpenses } = require('./render-marketing');
 const { fetchWarehouseData, cacheInvalidateWarehouse } = require('./warehouse-data');
 const { renderWarehouse } = require('./render-warehouse');
+const { fetchRealizationData } = require('./realization-data');
+const { renderRealization } = require('./render-realization');
 const { renderNas } = require('./render-nas');
 const { nasLogin } = require('./nas-auth');
 const { nasAppEntry } = require('./nas-bx-auth');
@@ -121,6 +123,18 @@ app.get('/report/warehouse', async (req, res) => {
 app.post('/report/warehouse/refresh', (req, res) => {
   cacheInvalidateWarehouse();
   res.redirect(withBxt('/report/warehouse', req));
+});
+
+// Realization dashboard — статический файл (не Б24 API), см. realization-data.js.
+// Должно быть до /report/:id.
+app.get('/report/realization', (req, res) => {
+  try {
+    const data = fetchRealizationData();
+    res.send(renderRealization(data, req.viewer));
+  } catch (err) {
+    console.error('[ERR] /report/realization:', err.message);
+    res.status(500).send('Внутренняя ошибка сервера');
+  }
 });
 
 // NAS (Synology DSM) — статичная страница с iframe, не ходит в Б24 API.
