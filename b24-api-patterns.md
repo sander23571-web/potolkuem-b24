@@ -472,6 +472,7 @@ POST /crm.contact.userfield.add
 | Игровая сессия | 18 | 1060 | 26 | CRM_18 |
 | Логистика | 20 | 1064 | 28 | CRM_20 |
 | Согласия | 22 | 1068 | 30 | CRM_22 |
+| Расходы | 24 | 1070 | 32 | CRM_24 |
 
 > ⚠️ **entityTypeId=1048 в строке «Амбассадоры» выше — ошибка/устаревшие данные**,
 > обнаружено 26.08 при расширении зеркала gigaclaude на СП Выставки: в
@@ -509,7 +510,6 @@ typeId=12, в отличие от остальных СП портала.
 Связи (`parentId{entityTypeId}`): Ведущие (1052), Выход ведущего (1056),
 Игровая сессия (1060), Логистика (1064) — child-сущности, пока не
 заведены в зеркале (вне скоупа расширения 24.08).
-| **Расходы** | **24** | **1070** | **32** | **CRM_24** |
 
 ### Связи между сущностями
 
@@ -975,6 +975,18 @@ POST /crm.product.add
 > ⚠️ Поле 608 (UF_CRM_24_1782188083520, single-file) удалено — заменено полем 610 (multiple).
 > Создать через API не получалось пока не добавили полный префикс в fieldName (см. п.11 «Важных находок»).
 
+> ⚠️ **НАХОДКА 26.08** (при расширении зеркала gigaclaude на СП Расходы):
+> имена `UF_CRM_24_*` выше — это имя поля для `userfieldconfig.add`/классических
+> методов. `crm.item.list` (динамические СП, dynamic items API) отдаёт эти
+> же физические поля под ДРУГИМ, camelCase-псевдонимом: `ufCrm24ExpenseType`,
+> `ufCrm24Description`, `ufCrm24Qty`, `ufCrm24PriceUnit`, `ufCrm24Amount`,
+> `ufCrm24Docs`, плюс `ufCrm24Direction`/`ufCrm24Channel` (Направление/Канал,
+> см. `talk/CLAUDE.md`, id 642/644 — их нет в таблице выше, но они есть в
+> живом `crm.item.fields`). Не опечатка и не расхождение версий БЗ — два
+> легитимных имени одного поля, зависит от того, каким методом обращаться.
+> См. `gigaclaude/mirror/sync_mirror.py::sync_raskhody` — код использует
+> именно camelCase-имена, не `UF_CRM_24_*`.
+
 **Значения EXPENSE_TYPE:**
 - Аренда стенда
 - Оклейка / оформление стенда
@@ -987,6 +999,44 @@ POST /crm.product.add
 ### Связи
 
 - **Parent:** Выставки (entityTypeId=1048) — `relations.parent[{ entityTypeId: 1048 }]`
+- **Parent:** Сделка (entityTypeId=2, поле `parentId2`) — найдено 26.08 живьём через
+  `crm.item.fields(entityTypeId=1070)`, не было в этом разделе раньше. Также есть
+  `parentId1060` (Игровая сессия), пока не используется ни в одном коде.
+
+---
+
+### СП Статистика площадок (typeId=28, entityTypeId=1074, CRM_28)
+
+Типы полей сверены вживую через `crm.item.fields(entityTypeId=1074)` 26.08,
+при расширении зеркала gigaclaude (см. `sync_statistika`). Раньше в БЗ были
+только имена полей (см. таблицу выше, "UF-поля СП Статистика площадок"),
+без типов — здесь впервые. Без `stageId`/`parentId` вообще — не воронка,
+периодические строки метрик (площадка × месяц).
+
+| Поле | Тип | Название |
+|---|---|---|
+| ufCrm28Platform | string | Площадка (закрытый список по конвенции, см. выше) |
+| ufCrm28Period | date | Период (1-е число месяца) |
+| ufCrm28Followers | integer | Подписчиков |
+| ufCrm28FollowersDiff | integer | Прирост подписчиков |
+| ufCrm28Er | double | ER % |
+| ufCrm28Reach | integer | Охват |
+| ufCrm28VisitsTotal | integer | Визитов всего |
+| ufCrm28VisitsOrganic | integer | Визитов органика |
+| ufCrm28VisitsPaid | integer | Визитов платный |
+| ufCrm28BounceRate | double | Отказы % |
+| ufCrm28Clicks | integer | Клики |
+| ufCrm28Impressions | integer | Показы |
+| ufCrm28BrandDemand | integer | Брендовый спрос (Wordstat) |
+| ufCrm28Spend | double | Расход, руб. |
+| ufCrm28Purchases | integer | Покупок (Я.Маркет) |
+| ufCrm28Revenue | double | Выручка (Я.Маркет), руб. |
+| ufCrm28Posts | integer | Постов |
+| ufCrm28Gained | integer | Новых подписчиков (брутто) |
+| ufCrm28Lost | integer | Отписок |
+| ufCrm28LinkClicks | integer | Переходов по ссылкам |
+| ufCrm28SiteCart | integer | Корзина (весь сайт) |
+| ufCrm28SiteOrders | integer | Заказы (весь сайт) |
 
 ---
 

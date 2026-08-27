@@ -113,7 +113,7 @@
 
 ### UF-поля СП Статистика площадок (CRM_28)
 
-`ufCrm28Platform`, `ufCrm28Period`, `ufCrm28Followers`, `ufCrm28FollowersDiff`, `ufCrm28Er`, `ufCrm28Reach`, `ufCrm28VisitsTotal`, `ufCrm28VisitsOrganic`, `ufCrm28VisitsPaid`, `ufCrm28BounceRate`, `ufCrm28Clicks`, `ufCrm28Impressions`, `ufCrm28BrandDemand`, `ufCrm28Spend` (добавлено 03.08.2026, id=708), `ufCrm28Purchases`/`ufCrm28Revenue` (id=710/712, Я.Маркет ecommerce), `ufCrm28Posts`/`ufCrm28Gained`/`ufCrm28Lost`/`ufCrm28LinkClicks` (id=714/716/718/720, LiveDune-активность)
+`ufCrm28Platform`, `ufCrm28Period`, `ufCrm28Followers`, `ufCrm28FollowersDiff`, `ufCrm28Er`, `ufCrm28Reach`, `ufCrm28VisitsTotal`, `ufCrm28VisitsOrganic`, `ufCrm28VisitsPaid`, `ufCrm28BounceRate`, `ufCrm28Clicks`, `ufCrm28Impressions`, `ufCrm28BrandDemand`, `ufCrm28Spend` (добавлено 03.08.2026, id=708), `ufCrm28Purchases`/`ufCrm28Revenue` (id=710/712, Я.Маркет ecommerce), `ufCrm28Posts`/`ufCrm28Gained`/`ufCrm28Lost`/`ufCrm28LinkClicks` (id=714/716/718/720, LiveDune-активность), `ufCrm28SiteCart`/`ufCrm28SiteOrders` (Корзина/Заказы по всему сайту — найдены 26.08 живьём через `crm.item.fields`, раньше в этом списке не были задокументированы вообще)
 
 > `Clicks`/`Impressions` изначально назывались «(Вебмастер)» — переименованы в общие «Клики»/«Показы»
 > 03.08.2026, т.к. теперь используются и для рекламных площадок (Директ/VK Реклама), не только SEO.
