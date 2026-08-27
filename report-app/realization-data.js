@@ -16,18 +16,32 @@
  *
  * Ожидаемый SQL (BI Constructor → SQL Lab), экспорт CSV:
  *
+ * ИСПРАВЛЕНО 27.08 (найдено при разборе дашборда с владельцем — "незамыленный
+ * взгляд"): старый JOIN catalog_store был INNER — строки БЕЗ store_id (услуги,
+ * не физический товар — напр. "Проведение игры-корпоратива", у которой в БД
+ * пусты сразу store_id/amount/cost_price одновременно, не только склад)
+ * молча выпадали из выгрузки целиком. Это выглядело как "не можем определить
+ * склад для реализации", хотя на деле для услуги склада и не может быть в
+ * принципе — не пропуск данных, а смешение двух разных категорий (товар со
+ * складом vs услуга без склада) в одном отчёте. LEFT JOIN + COALESCE ниже
+ * не теряет эту выручку, а показывает её отдельной, явно подписанной
+ * категорией — рендерер (render-realization.js) уже полностью generic по
+ * значению "Склад", доработки там не нужны. COALESCE(i.amount, 1) — для
+ * услуги amount пуст в БД, но выручка (price) реальна; трактуем как 1 unit,
+ * иначе SUM(price*NULL) молча даёт NULL и те же деньги теряются повторно.
+ *
  *   SELECT
  *       date_trunc('month', i.document_date_create) AS "Месяц",
- *       cs.title                                    AS "Склад",
- *       SUM(i.price * i.amount)                     AS "Сумма реализации",
- *       SUM(i.amount)                                AS "Штук"
+ *       COALESCE(cs.title, 'Услуги (без склада)')   AS "Склад",
+ *       SUM(i.price * COALESCE(i.amount, 1))        AS "Сумма реализации",
+ *       SUM(COALESCE(i.amount, 1))                  AS "Штук"
  *   FROM sale_document_saleorder_item i
  *   JOIN sale_document_saleorder d ON d.id = i.document_id
- *   JOIN catalog_store cs          ON cs.id = i.store_id
+ *   LEFT JOIN catalog_store cs     ON cs.id = i.store_id
  *   WHERE d.was_cancelled != 'Y'
  *     AND d.deducted = 'Y'
- *   GROUP BY date_trunc('month', i.document_date_create), cs.title
- *   ORDER BY "Месяц", cs.title
+ *   GROUP BY date_trunc('month', i.document_date_create), COALESCE(cs.title, 'Услуги (без склада)')
+ *   ORDER BY "Месяц", "Склад"
  */
 
 const fs = require('fs');
@@ -103,7 +117,10 @@ function fetchRealizationData() {
     .filter(r => r[idx.month])
     .map(r => ({
       month: String(r[idx.month]).slice(0, 7), // YYYY-MM-DD... -> YYYY-MM
-      store: r[idx.store] || '—',
+      // Fallback на случай, если SQL выполнили без правки 27.08 (COALESCE
+      // в самом запросе) и ячейка всё же пришла пустой — не молчаливый
+      // прочерк, а то же понятное название категории.
+      store: r[idx.store] || 'Услуги (без склада)',
       sum:   parseRubles(r[idx.sum]),
       qty:   parseRubles(r[idx.qty]),
     }));
