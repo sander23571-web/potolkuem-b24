@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { key: 'expenses',  label: 'Расходы',   href: '/report/marketing/expenses', directorOnly: true, orange: true },
   { key: 'warehouse', label: 'Склад',     href: '/report/warehouse' },
   { key: 'realization', label: 'Реализация', href: '/report/realization' },
+  { key: 'creative',  label: 'Креатив',    href: '/report/creative' },
   { key: 'tasks',     label: 'Активность', href: '/tasks' },
   { key: 'social',    label: 'SMM',       href: '/social' },
   { key: 'nas',       label: 'NAS',       href: '/report/nas' },

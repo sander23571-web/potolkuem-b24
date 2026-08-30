@@ -12,7 +12,6 @@
 const { bxBootstrap } = require('./bx-embed');
 const { renderNav } = require('./nav');
 const { fmtRub, fmtRubClientSrc } = require('./format');
-const { REALIZATION_DIR } = require('./realization-data');
 
 const fmt = n => Math.round(n || 0).toLocaleString('ru-RU');
 const escHtml = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -84,7 +83,7 @@ const BASE_CSS = `
 
 function renderRealization(data, viewer) {
   const { token, isDirector } = viewer || {};
-  const { available, rows, months, stores, totals, updatedAt, sourceFile } = data;
+  const { available, rows, months, stores, totals, updatedAt, sourceFile, error } = data;
 
   const updatedStr = updatedAt
     ? new Date(updatedAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -108,9 +107,11 @@ function renderRealization(data, viewer) {
 </div>
 <div class="container">
   <div class="empty">
-    <h2>Файл с данными не найден</h2>
-    <p>Данные заполняются вручную: SQL выполняется в Битрикс24 → BI Constructor → SQL Lab,
-    результат экспортируется в CSV и кладётся в<br><code>${escHtml(REALIZATION_DIR)}</code></p>
+    <h2>Не удалось получить данные</h2>
+    <p>Источник — канал BI-аналитики (<code>pbi.php</code>), напрямую с портала.
+    ${error ? `Ошибка: <code>${escHtml(error)}</code>` : ''}<br>
+    Если ошибка про токен — проверить <code>BI_ANALYTICS_TOKEN</code> в <code>report-app/.env</code>
+    на сервере (см. <code>talk/b24-api-patterns.md</code>, «BI-аналитика (pbi.php)»).</p>
   </div>
 </div>
 ${bxBootstrap(token)}
@@ -197,10 +198,10 @@ ${bxBootstrap(token)}
     <tbody>${tableRows}</tbody>
   </table>
   <div class="note">
-    Данные обновляются вручную: SQL выполняется в BI Constructor → SQL Lab портала, CSV
-    кладётся в <code>${escHtml(REALIZATION_DIR)}</code> (сейчас — файл <code>${escHtml(sourceFile)}</code>).
-    Автоматической синхронизации пока нет — временное решение до расширения зеркала gigaclaude
-    на документы реализации (задача в очереди).
+    Источник данных: ${escHtml(sourceFile)} — канал BI-аналитики портала, кэш обновляется каждые
+    15 минут. Учитываются только реально реализованные документы (без отменённых), суммы и склад —
+    как в самом Б24. Склад «Услуги (без склада)» — позиции без физического товара (например,
+    проведение игровой сессии).
   </div>
 </div>
 

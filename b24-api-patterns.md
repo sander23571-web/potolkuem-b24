@@ -1122,9 +1122,9 @@ POST /crm.product.add
 
    **НЕ существуют** (дают `{"error":"NO_TABLE"}`): `sale_order`, `sale_order_shipment`.
 
-   **Практическое следствие:** дашборд `/report/realization` (report-app) можно автоматизировать прямым pull
-   через этот канал вместо ручного CSV-экспорта из SQL Lab — задача ещё не сделана, следующий шаг для
-   `realization-data.js`.
+   **Сделано 30.08.2026:** `report-app/realization-data.js` переписан на прямой pull через `pbi.php`
+   (таблицы `sale_document_saleorder_item` + `sale_document_saleorder` + `catalog_store`), кэш 15 мин.
+   Ручной CSV-экспорт из SQL Lab больше не нужен. `BI_ANALYTICS_TOKEN` — в `report-app/.env` на проде.
 
 ---
 

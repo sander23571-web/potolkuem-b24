@@ -12,8 +12,10 @@ const { fetchMarketingData, cacheInvalidateMarketing, fetchMarketingExpensesData
 const { renderMarketing, renderMarketingExpenses } = require('./render-marketing');
 const { fetchWarehouseData, cacheInvalidateWarehouse } = require('./warehouse-data');
 const { renderWarehouse } = require('./render-warehouse');
-const { fetchRealizationData } = require('./realization-data');
+const { fetchRealizationData, invalidateRealizationCache } = require('./realization-data');
 const { renderRealization } = require('./render-realization');
+const { fetchActivityData, cacheInvalidateActivity } = require('./activity-data');
+const { renderActivity } = require('./render-activity');
 const { renderNas } = require('./render-nas');
 const { nasLogin } = require('./nas-auth');
 const { nasAppEntry } = require('./nas-bx-auth');
@@ -125,16 +127,37 @@ app.post('/report/warehouse/refresh', (req, res) => {
   res.redirect(withBxt('/report/warehouse', req));
 });
 
-// Realization dashboard — статический файл (не Б24 API), см. realization-data.js.
+// Realization dashboard — BI-аналитика (pbi.php), см. realization-data.js.
 // Должно быть до /report/:id.
-app.get('/report/realization', (req, res) => {
+app.get('/report/realization', async (req, res) => {
   try {
-    const data = fetchRealizationData();
+    const data = await fetchRealizationData();
     res.send(renderRealization(data, req.viewer));
   } catch (err) {
     console.error('[ERR] /report/realization:', err.message);
     res.status(500).send('Внутренняя ошибка сервера');
   }
+});
+
+app.post('/report/realization/refresh', (req, res) => {
+  invalidateRealizationCache();
+  res.redirect(withBxt('/report/realization', req));
+});
+
+// Активность Креативного директора (СП 1100). Должно быть до /report/:id.
+app.get('/report/creative', async (req, res) => {
+  try {
+    const data = await fetchActivityData();
+    res.send(renderActivity(data, req.viewer));
+  } catch (err) {
+    console.error('[ERR] /report/creative:', err.message);
+    res.status(500).send('Внутренняя ошибка сервера');
+  }
+});
+
+app.post('/report/creative/refresh', (req, res) => {
+  cacheInvalidateActivity();
+  res.redirect(withBxt('/report/creative', req));
 });
 
 // NAS (Synology DSM) — статичная страница с iframe, не ходит в Б24 API.

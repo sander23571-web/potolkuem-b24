@@ -24,6 +24,8 @@
 | `/report/marketing` | ✅ | Маркетинговый дашборд (Wordstat, SEO, Соцсети) |
 | `/report/marketing/expenses` | ✅ | Расходы руководству (admin-auth поверх обычного) |
 | `/report/warehouse` | ✅ | Склад: остатки, заморозка, маржа по товарам |
+| `/report/realization` | ✅ | Реализация по складам, помесячно — live-данные через pbi.php (30.08, раньше ручной CSV) |
+| `/report/creative` | ✅ | Активность Креативного директора — СП 1100, 4 блока (30.08) |
 | `/tasks` | ✅ | Задачи команды: просроченные, зависшие, без дедлайна |
 | `/social` | ✅ | SMM: подписчики VK/TG/Дзен (LiveDune) |
 
@@ -36,6 +38,8 @@ scp -P 2222 -i ~/.ssh/reportapp_deploy_key \
   report-app/tasks-b24.js report-app/tasks-render.js report-app/render.js \
   report-app/marketing-data.js report-app/render-marketing.js report-app/period.js \
   report-app/warehouse-data.js report-app/render-warehouse.js report-app/format.js \
+  report-app/realization-data.js report-app/render-realization.js \
+  report-app/activity-data.js report-app/render-activity.js \
   report-app/bx-auth.js report-app/bx-embed.js report-app/nav.js report-app/package.json \
   reportapp-deploy@155.212.143.68:/root/projects/talk-report/ && \
 ssh -p 2222 -i ~/.ssh/reportapp_deploy_key reportapp-deploy@155.212.143.68 'sudo /usr/bin/pm2 restart report-app'
