@@ -300,9 +300,9 @@ ${fmtRubClientSrc}
   const monthTotals = ${JSON.stringify(monthTotals.map(v => Math.round(v)))};
   const datasets = ${chartDatasetsJson};
   // Длинные названия складов ("Фабрика мороженого Сделано в Москве" и т.п.) не влезают в
-  // ширину сегмента одной строкой — переносим по словам, плагин datalabels понимает \n.
+  // ширину сегмента одной строкой — переносим по словам, плагин datalabels понимает перенос строки.
   function wrapLabel(text, maxLen) {
-    const words = text.trim().split(/\s+/);
+    const words = text.trim().split(/\\s+/);
     const lines = [];
     let cur = '';
     for (const w of words) {
