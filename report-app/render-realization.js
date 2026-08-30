@@ -104,7 +104,7 @@ const BASE_CSS = `
 
   .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 28px 24px; }
   .chart-card h3 { font-size: 13px; font-weight: 400; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin-bottom: 24px; }
-  .chart-wrap { height: 420px; position: relative; }
+  .chart-wrap { height: 640px; position: relative; }
 
   .data-table { background: var(--card); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; width: 100%; border-collapse: collapse; }
   .data-table th { background: var(--dark); color: #ccc; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 14px; text-align: left; font-weight: 400; white-space: nowrap; }
@@ -189,12 +189,12 @@ ${bxBootstrap(token)}
       // "store" по центру сегмента (что за склад) и "total" у самого верха (сумма месяца).
       ds.datalabels = {
         labels: {
-          store: { anchor: 'center', align: 'center', color: '#fff', font: { size: 10, weight: '600' } },
+          store: { anchor: 'center', align: 'center', color: '#fff', font: { size: 10, weight: '600' }, textAlign: 'center' },
           total: { anchor: 'end', align: 'end', offset: 6, color: '#1e1a3a', font: { size: 12, weight: '700' } },
         },
       };
     } else {
-      ds.datalabels = { anchor: 'center', align: 'center', color: '#fff', font: { size: 10, weight: '600' } };
+      ds.datalabels = { anchor: 'center', align: 'center', color: '#fff', font: { size: 10, weight: '600' }, textAlign: 'center' };
     }
     return ds;
   });
@@ -299,10 +299,24 @@ ${fmtRubClientSrc}
   const stores = ${JSON.stringify(stores)};
   const monthTotals = ${JSON.stringify(monthTotals.map(v => Math.round(v)))};
   const datasets = ${chartDatasetsJson};
+  // Длинные названия складов ("Фабрика мороженого Сделано в Москве" и т.п.) не влезают в
+  // ширину сегмента одной строкой — переносим по словам, плагин datalabels понимает \n.
+  function wrapLabel(text, maxLen) {
+    const words = text.trim().split(/\s+/);
+    const lines = [];
+    let cur = '';
+    for (const w of words) {
+      const candidate = cur ? cur + ' ' + w : w;
+      if (candidate.length > maxLen && cur) { lines.push(cur); cur = w; }
+      else { cur = candidate; }
+    }
+    if (cur) lines.push(cur);
+    return lines.join('\\n');
+  }
   // Подставляем реальные formatter-функции — JSON не умеет хранить функции, собрали их здесь.
   datasets.forEach((ds, dsIdx) => {
     const isLast = dsIdx === datasets.length - 1;
-    const storeFormatter = (v, ctx) => (v / (monthTotals[ctx.dataIndex] || 1) > 0.06 ? stores[ctx.datasetIndex] : '');
+    const storeFormatter = (v, ctx) => (v / (monthTotals[ctx.dataIndex] || 1) > 0.06 ? wrapLabel(stores[ctx.datasetIndex], 14) : '');
     if (isLast) {
       ds.datalabels.labels.store.formatter = storeFormatter;
       ds.datalabels.labels.total.formatter = (v, ctx) => fmtRub(monthTotals[ctx.dataIndex]);
