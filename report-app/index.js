@@ -131,8 +131,9 @@ app.post('/report/warehouse/refresh', (req, res) => {
 // Должно быть до /report/:id.
 app.get('/report/realization', async (req, res) => {
   try {
-    const data = await fetchRealizationData();
-    res.send(renderRealization(data, req.viewer));
+    const range = resolveRange(req.query);
+    const data = await fetchRealizationData(range);
+    res.send(renderRealization(data, req.viewer, range));
   } catch (err) {
     console.error('[ERR] /report/realization:', err.message);
     res.status(500).send('Внутренняя ошибка сервера');

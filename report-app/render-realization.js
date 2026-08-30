@@ -2,16 +2,17 @@
 /**
  * render-realization.js — HTML-рендерер дашборда /report/realization ("Реализация по складам").
  *
- * Столбчатая диаграмма по месяцам, реализация разбита по складам (сгруппированные
- * столбцы — один месяц = группа столбцов, один столбец = один склад).
+ * Единый столбец на месяц, разбитый на цветные сегменты по складу (stacked bar),
+ * с подписью склада на сегменте (если сегмент не совсем узкий) и общей суммой месяца
+ * над столбцом. Плюс выбор диапазона дат (period.js, тот же паттерн, что в /report/marketing).
  *
- * Источник данных — статический CSV-файл, обновляемый вручную (см. realization-data.js
- * про причину: временная схема "по-старинке" до расширения зеркала gigaclaude).
+ * Источник данных — BI-аналитика (pbi.php), напрямую с портала, см. realization-data.js.
  */
 
 const { bxBootstrap } = require('./bx-embed');
 const { renderNav } = require('./nav');
 const { fmtRub, fmtRubClientSrc } = require('./format');
+const { PRESETS, rangeQueryString } = require('./period');
 
 const fmt = n => Math.round(n || 0).toLocaleString('ru-RU');
 const escHtml = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -22,7 +23,37 @@ function monthLabel(ym) {
   return `${MONTH_NAMES[parseInt(m, 10) - 1]} ${y}`;
 }
 
-const PALETTE = ['#4a5df9', '#e67e22', '#27ae60', '#c0392b', '#8e44ad', '#16a085', '#7b79a0'];
+function fmtRuDateFull(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+function periodLabel(range) {
+  const from = fmtRuDateFull(range.from);
+  const to   = fmtRuDateFull(range.to);
+  if (!from && !to) return 'за всё время';
+  if (from && to)   return `${from} — ${to}`;
+  if (from)         return `с ${from}`;
+  return `по ${to}`;
+}
+function renderPeriodBar(basePath, range) {
+  const buttons = PRESETS.map(p => {
+    const active = range.preset === p.key;
+    return `<a class="period-btn${active ? ' active' : ''}" href="${basePath}?range=${p.key}">${p.label}</a>`;
+  }).join('');
+  return `<div class="period-bar">
+    <div class="period-presets">${buttons}</div>
+    <form class="period-custom" method="GET" action="${basePath}">
+      <input type="date" name="from" value="${range.from || ''}">
+      <span>—</span>
+      <input type="date" name="to" value="${range.to || ''}">
+      <button type="submit">Применить</button>
+    </form>
+    <div class="period-label">Период: ${periodLabel(range)}</div>
+  </div>`;
+}
+
+const PALETTE = ['#4a5df9', '#e67e22', '#27ae60', '#c0392b', '#8e44ad', '#16a085', '#7b79a0', '#2aabee', '#c2185b', '#8d6e63', '#607d8b', '#f39c12'];
 
 const BASE_CSS = `
   :root {
@@ -47,6 +78,22 @@ const BASE_CSS = `
   .section { margin-top: 48px; }
   .section-title { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent2); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
 
+  .period-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 14px 18px; margin-top: 24px; }
+  .period-presets { display: flex; gap: 6px; flex-wrap: wrap; }
+  .period-btn { font-family: inherit; font-size: 12px; letter-spacing: .5px; color: var(--muted); text-decoration: none; border: 1px solid var(--border); border-radius: 3px; padding: 6px 12px; }
+  .period-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .period-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .period-custom { display: flex; align-items: center; gap: 6px; }
+  .period-custom input[type=date] { font-family: inherit; font-size: 12px; color: var(--text); border: 1px solid var(--border); border-radius: 3px; padding: 5px 8px; background: #fff; }
+  .period-custom span { color: var(--muted); font-size: 12px; }
+  .period-custom button { font-family: inherit; font-size: 12px; color: var(--accent); background: transparent; border: 1px solid var(--accent); border-radius: 3px; padding: 6px 12px; cursor: pointer; }
+  .period-custom button:hover { background: var(--accent); color: #fff; }
+  .period-label { margin-left: auto; font-size: 12px; color: var(--muted); white-space: nowrap; }
+  @media (max-width: 700px) {
+    .period-bar { flex-direction: column; align-items: stretch; }
+    .period-label { margin-left: 0; }
+  }
+
   .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 16px; margin-top: 24px; }
   .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 24px 20px; position: relative; }
   .kpi-card::after { content:''; position: absolute; top:0; left:0; right:0; height:3px; background: var(--accent); border-radius: 4px 4px 0 0; }
@@ -57,7 +104,7 @@ const BASE_CSS = `
 
   .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 28px 24px; }
   .chart-card h3 { font-size: 13px; font-weight: 400; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin-bottom: 24px; }
-  .chart-wrap { height: 380px; position: relative; }
+  .chart-wrap { height: 420px; position: relative; }
 
   .data-table { background: var(--card); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; width: 100%; border-collapse: collapse; }
   .data-table th { background: var(--dark); color: #ccc; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 14px; text-align: left; font-weight: 400; white-space: nowrap; }
@@ -65,7 +112,7 @@ const BASE_CSS = `
   .data-table tr:last-child td { border-bottom: none; }
   .data-table tr:hover td { background: #f9f7ff; }
   .data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
-  .data-table tfoot td { border-top: 2px solid var(--border); border-bottom: none; font-weight: 600; }
+  .data-table tfoot td { border-top: 2px solid var(--border); border-bottom: none; font-weight: 700; background: #f9f7ff; }
 
   .note { background: #fdf3e7; border: 1px solid #f3ddb8; border-radius: 4px; padding: 16px 20px; font-size: 13px; color: #7a5a1e; margin-top: 24px; }
   .note code { background: #fff; padding: 1px 5px; border-radius: 3px; }
@@ -81,9 +128,10 @@ const BASE_CSS = `
   }
 `;
 
-function renderRealization(data, viewer) {
+function renderRealization(data, viewer, range) {
   const { token, isDirector } = viewer || {};
   const { available, rows, months, stores, totals, updatedAt, sourceFile, error } = data;
+  range = range || { preset: 'ytd', from: null, to: null };
 
   const updatedStr = updatedAt
     ? new Date(updatedAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -119,26 +167,52 @@ ${bxBootstrap(token)}
 </html>`;
   }
 
-  // Данные для сгруппированной столбчатой диаграммы: labels = месяцы, один dataset на склад.
+  // ── Данные для составного (stacked) столбца: labels = месяцы, один dataset на склад ──
+  const storeColor = Object.fromEntries(stores.map((s, i) => [s, PALETTE[i % PALETTE.length]]));
+  const monthTotals = months.map(m => rows.filter(r => r.month === m).reduce((s, r) => s + r.sum, 0));
+
   const chartLabels = JSON.stringify(months.map(monthLabel));
   const chartDatasets = stores.map((store, i) => {
     const byMonth = new Map(rows.filter(r => r.store === store).map(r => [r.month, r.sum]));
-    const data = months.map(m => Math.round(byMonth.get(m) || 0));
-    const color = PALETTE[i % PALETTE.length];
-    return { label: store, data, backgroundColor: color + '8c', borderColor: color, borderWidth: 1, borderRadius: 3 };
+    const values = months.map(m => Math.round(byMonth.get(m) || 0));
+    const color = storeColor[store];
+    const isLast = i === stores.length - 1;
+    const ds = {
+      label: store, data: values, backgroundColor: color, borderColor: '#fff', borderWidth: 2,
+      stack: 'realization',
+    };
+    // formatter — функция, JSON.stringify её всё равно роняет молча; реальные formatter'ы
+    // навешиваются на клиенте в <script> ниже (там уже есть fmtRub и доступ к массивам).
+    // Здесь только статическое оформление подписей.
+    if (isLast) {
+      // Верхний сегмент стека — вешаем ДВЕ подписи через именованные labels плагина:
+      // "store" по центру сегмента (что за склад) и "total" у самого верха (сумма месяца).
+      ds.datalabels = {
+        labels: {
+          store: { anchor: 'center', align: 'center', color: '#fff', font: { size: 10, weight: '600' } },
+          total: { anchor: 'end', align: 'end', offset: 6, color: '#1e1a3a', font: { size: 12, weight: '700' } },
+        },
+      };
+    } else {
+      ds.datalabels = { anchor: 'center', align: 'center', color: '#fff', font: { size: 10, weight: '600' } };
+    }
+    return ds;
   });
+  const chartDatasetsJson = JSON.stringify(chartDatasets);
 
   const tableRows = [...months].reverse().map(m => {
     const monthRows = rows.filter(r => r.month === m).sort((a, b) => b.sum - a.sum);
     const monthTotal = monthRows.reduce((acc, r) => acc + r.sum, 0);
     return monthRows.map((r, i) => `<tr>
       ${i === 0 ? `<td rowspan="${monthRows.length}" style="vertical-align:top;font-weight:600">${escHtml(monthLabel(m))}</td>` : ''}
-      <td>${escHtml(r.store)}</td>
+      <td><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${storeColor[r.store]};margin-right:8px"></span>${escHtml(r.store)}</td>
       <td class="num">${fmt(r.qty)}</td>
       <td class="num" style="color:var(--orange)">${fmtRub(r.sum)}</td>
       ${i === 0 ? `<td rowspan="${monthRows.length}" class="num" style="vertical-align:top;color:var(--muted)">${fmtRub(monthTotal)}</td>` : ''}
     </tr>`).join('');
   }).join('');
+
+  const basePath = '/report/realization';
 
   return `<!DOCTYPE html>
 <html lang="ru">
@@ -147,6 +221,7 @@ ${bxBootstrap(token)}
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Реализация · Потолкуем?</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>${BASE_CSS}</style>
 </head>
 <body>
@@ -162,6 +237,8 @@ ${bxBootstrap(token)}
 </div>
 
 <div class="container">
+
+${renderPeriodBar(basePath, range)}
 
 <div class="section" style="margin-top:32px">
   <div class="kpi-grid">
@@ -186,7 +263,7 @@ ${bxBootstrap(token)}
 <div class="section">
   <div class="section-title">Реализация по месяцам и складам</div>
   <div class="chart-card">
-    <h3>Сумма реализации, ₽</h3>
+    <h3>Сумма реализации, ₽ — по складам, с итогом месяца</h3>
     <div class="chart-wrap"><canvas id="chartRealization"></canvas></div>
   </div>
 </div>
@@ -196,6 +273,13 @@ ${bxBootstrap(token)}
   <table class="data-table">
     <thead><tr><th>Месяц</th><th>Склад</th><th class="num">Штук</th><th class="num">Сумма</th><th class="num">Итого за месяц</th></tr></thead>
     <tbody>${tableRows}</tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2">Итого за период</td>
+        <td class="num">${fmt(totals.qty)}</td>
+        <td class="num" colspan="2">${fmtRub(totals.sum)}</td>
+      </tr>
+    </tfoot>
   </table>
   <div class="note">
     Источник данных: ${escHtml(sourceFile)} — канал BI-аналитики портала, кэш обновляется каждые
@@ -212,18 +296,35 @@ ${bxBootstrap(token)}
 <script>
 ${fmtRubClientSrc}
 (function() {
+  const stores = ${JSON.stringify(stores)};
+  const monthTotals = ${JSON.stringify(monthTotals.map(v => Math.round(v)))};
+  const datasets = ${chartDatasetsJson};
+  // Подставляем реальные formatter-функции — JSON не умеет хранить функции, собрали их здесь.
+  datasets.forEach((ds, dsIdx) => {
+    const isLast = dsIdx === datasets.length - 1;
+    const storeFormatter = (v, ctx) => (v / (monthTotals[ctx.dataIndex] || 1) > 0.06 ? stores[ctx.datasetIndex] : '');
+    if (isLast) {
+      ds.datalabels.labels.store.formatter = storeFormatter;
+      ds.datalabels.labels.total.formatter = (v, ctx) => fmtRub(monthTotals[ctx.dataIndex]);
+    } else {
+      ds.datalabels.formatter = storeFormatter;
+    }
+  });
+
   new Chart(document.getElementById('chartRealization'), {
     type: 'bar',
-    data: { labels: ${chartLabels}, datasets: ${JSON.stringify(chartDatasets)} },
+    plugins: [ChartDataLabels],
+    data: { labels: ${chartLabels}, datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 24 } },
       plugins: {
         legend: { position: 'bottom', labels: { color: '#7b79a0', font: { size: 12 } } },
         tooltip: { callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ' + fmtRub(ctx.raw) } }
       },
       scales: {
-        x: { ticks: { color: '#7b79a0', font: { size: 11 } }, grid: { display: false } },
-        y: { ticks: { color: '#7b79a0', callback: v => fmtRub(v) }, grid: { color: '#e0daf7' } }
+        x: { stacked: true, ticks: { color: '#7b79a0', font: { size: 11 } }, grid: { display: false } },
+        y: { stacked: true, ticks: { color: '#7b79a0', callback: v => fmtRub(v) }, grid: { color: '#e0daf7' } }
       }
     }
   });

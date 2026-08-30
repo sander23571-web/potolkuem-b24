@@ -10,6 +10,10 @@
  * пользователю с ограниченными правами — не архитектурный тупик и не нехватка тарифа).
  * Теперь тянем те же таблицы Trino напрямую HTTP-запросом, без Trino/SQL Lab/ручного экспорта.
  *
+ * Кэшируется НЕАГРЕГИРОВАННЫЙ список строк (по документу-товару) — агрегация по месяцу/складу
+ * и фильтр по диапазону дат применяются на каждый запрос отдельно, без повторного похода в BI,
+ * чтобы выбор периода на дашборде (period.js) не требовал нового HTTP-запроса каждый раз.
+ *
  * SQL-эквивалент того, что делает этот модуль (для справки, раньше выполнялся вручную):
  *
  *   SELECT
@@ -33,11 +37,11 @@ const B24_URL = 'https://potolkuem.bitrix24.ru';
 const TOKEN = process.env.BI_ANALYTICS_TOKEN;
 const PBI_URL = `${B24_URL}/bitrix/tools/biconnector/pbi.php`;
 
-// ── Cache (TTL 15 мин) ───────────────────────────────────────────────────────
-let cache = null;
-let cacheTs = 0;
+// ── Cache неагрегированных строк (TTL 15 мин) ───────────────────────────────
+let rowsCache = null;
+let rowsCacheTs = 0;
 const CACHE_TTL = 15 * 60 * 1000;
-function invalidateRealizationCache() { cache = null; }
+function invalidateRealizationCache() { rowsCache = null; }
 
 async function pbiTable(table) {
   const res = await fetch(`${PBI_URL}?token=${TOKEN}&table=${table}`);
@@ -53,62 +57,79 @@ function parseRubles(v) {
   return parseFloat(v) || 0;
 }
 
-async function fetchRealizationData() {
-  if (cache && Date.now() - cacheTs < CACHE_TTL) return cache;
+// Тянет и кэширует «плоские» строки реализации — без агрегации, без фильтра по датам.
+async function fetchRealizationRows() {
+  if (rowsCache && Date.now() - rowsCacheTs < CACHE_TTL) return rowsCache;
 
   if (!TOKEN) {
-    return { available: false, error: 'no_token', rows: [], months: [], stores: [], totals: { sum: 0, qty: 0 }, updatedAt: null };
+    const err = new Error('no_token');
+    err.code = 'no_token';
+    throw err;
   }
 
-  let items, documents, storesRaw;
-  try {
-    [items, documents, storesRaw] = await Promise.all([
-      pbiTable('sale_document_saleorder_item'),
-      pbiTable('sale_document_saleorder'),
-      pbiTable('catalog_store'),
-    ]);
-  } catch (err) {
-    console.error('[ERR] realization-data pbi.php:', err.message);
-    return { available: false, error: err.message, rows: [], months: [], stores: [], totals: { sum: 0, qty: 0 }, updatedAt: null };
-  }
+  const [items, documents, storesRaw] = await Promise.all([
+    pbiTable('sale_document_saleorder_item'),
+    pbiTable('sale_document_saleorder'),
+    pbiTable('catalog_store'),
+  ]);
 
-  // Документы: только реально реализованные (deducted=Y) и не отменённые.
   const validDocIds = new Set(
     documents.filter(d => d.DEDUCTED === 'Y' && d.WAS_CANCELLED !== 'Y').map(d => d.ID)
   );
   const storeNames = Object.fromEntries(storesRaw.map(s => [s.ID, s.TITLE.trim()]));
 
-  const agg = new Map(); // key: `${month}|${store}` -> { sum, qty }
+  const rows = [];
   for (const i of items) {
     if (!validDocIds.has(i.DOCUMENT_ID)) continue;
-    const month = String(i.DOCUMENT_DATE_CREATE).slice(0, 7); // YYYY-MM
+    const date = String(i.DOCUMENT_DATE_CREATE).slice(0, 10); // YYYY-MM-DD
     const store = i.STORE_ID != null ? (storeNames[i.STORE_ID] || `Склад #${i.STORE_ID}`) : 'Услуги (без склада)';
     // Услуги (amount пуст в БД) считаем как 1 единицу — та же логика, что была в ручном SQL
     // (COALESCE(amount,1)), иначе SUM(price*NULL) молча теряет выручку услуг.
     const qty = i.AMOUNT != null ? parseRubles(i.AMOUNT) : 1;
     const sum = parseRubles(i.PRICE) * qty;
-    const key = `${month}|${store}`;
-    if (!agg.has(key)) agg.set(key, { month, store, sum: 0, qty: 0 });
-    const a = agg.get(key);
-    a.sum += sum;
-    a.qty += qty;
+    rows.push({ date, store, sum, qty });
   }
 
-  const rows = [...agg.values()];
-  const months = [...new Set(rows.map(r => r.month))].sort();
-  const stores = [...new Set(rows.map(r => r.store))].sort();
-  const totals = rows.reduce((acc, r) => ({ sum: acc.sum + r.sum, qty: acc.qty + r.qty }), { sum: 0, qty: 0 });
+  rowsCache = rows;
+  rowsCacheTs = Date.now();
+  return rows;
+}
 
-  const data = {
+// range: { from: 'YYYY-MM-DD'|null, to: 'YYYY-MM-DD'|null }
+async function fetchRealizationData(range = {}) {
+  let rows;
+  try {
+    rows = await fetchRealizationRows();
+  } catch (err) {
+    console.error('[ERR] realization-data pbi.php:', err.message);
+    return { available: false, error: err.message, rows: [], months: [], stores: [], totals: { sum: 0, qty: 0 }, updatedAt: null };
+  }
+
+  const filtered = rows.filter(r =>
+    (!range.from || r.date >= range.from) && (!range.to || r.date <= range.to)
+  );
+
+  const agg = new Map(); // key: `${month}|${store}` -> { month, store, sum, qty }
+  for (const r of filtered) {
+    const month = r.date.slice(0, 7);
+    const key = `${month}|${r.store}`;
+    if (!agg.has(key)) agg.set(key, { month, store: r.store, sum: 0, qty: 0 });
+    const a = agg.get(key);
+    a.sum += r.sum;
+    a.qty += r.qty;
+  }
+
+  const aggRows = [...agg.values()];
+  const months = [...new Set(aggRows.map(r => r.month))].sort();
+  const stores = [...new Set(aggRows.map(r => r.store))].sort();
+  const totals = aggRows.reduce((acc, r) => ({ sum: acc.sum + r.sum, qty: acc.qty + r.qty }), { sum: 0, qty: 0 });
+
+  return {
     available: true,
-    rows, months, stores, totals,
-    updatedAt: new Date(),
+    rows: aggRows, months, stores, totals,
+    updatedAt: new Date(rowsCacheTs || Date.now()),
     sourceFile: 'BI-аналитика (pbi.php), напрямую',
   };
-
-  cache = data;
-  cacheTs = Date.now();
-  return data;
 }
 
 module.exports = { fetchRealizationData, invalidateRealizationCache };
