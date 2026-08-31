@@ -265,6 +265,23 @@ function renderActivity(data, viewer) {
     </tr>`).join('');
   }
 
+  // График публикаций — простой список ближайших незавершённых статей по плановой дате
+  // (begindate), отдельно от истории journalTable() выше (та отсортирована по убыванию
+  // и мешает и опубликованное, и запланированное вместе).
+  const journalUpcoming = journal
+    .filter(it => !it.terminal)
+    .sort((a, b) => (a.begindate || '9999').localeCompare(b.begindate || '9999'));
+
+  function journalUpcomingRows() {
+    if (!journalUpcoming.length) return `<tr class="empty-row"><td colspan="4">Незавершённых статей в плане нет</td></tr>`;
+    return journalUpcoming.map(it => `<tr>
+      <td>${escHtml(fmtDate(it.begindate))}</td>
+      <td><a class="b24-link" href="${b24Link(b24Url, it.id)}" target="_blank">${escHtml(it.ufCrm42JTopic || it.title || '—')}</a></td>
+      <td>${escHtml(it.ufCrm42JRubric || '—')}</td>
+      <td>${escHtml(it.copywriterName || '—')} · <span class="badge stage">${escHtml(it.stageLabel)}</span></td>
+    </tr>`).join('');
+  }
+
   function designTable() {
     if (!design.length) return `<tr class="empty-row"><td colspan="6">Записей пока нет</td></tr>`;
     return [...design].sort((a, b) => (b.begindate || '').localeCompare(a.begindate || '')).map(it => `<tr>
@@ -358,7 +375,14 @@ ${overdue.length ? `
 <!-- ═══ Журнал ═══ -->
 <div class="section">
   <div class="section-title"><span class="dot" style="background:${CAT_COLOR[CATEGORY.JOURNAL]}"></span>Журнал «Потолкуем?»</div>
-  <div class="two-col" style="margin-top:0">
+
+  <h3 style="margin:4px 0 8px">График публикаций — в работе</h3>
+  <div class="table-wrap"><table class="data-table">
+    <thead><tr><th>Плановая дата</th><th>Статья</th><th>Рубрика</th><th>Копирайтер / стадия</th></tr></thead>
+    <tbody>${journalUpcomingRows()}</tbody>
+  </table></div>
+
+  <div class="two-col" style="margin-top:20px">
     <div class="table-wrap"><table class="data-table">
       <thead><tr><th>Статья</th><th>Рубрика</th><th>Копирайтер</th><th>Дата</th><th class="num">Просмотры</th><th>Версии</th><th>Стадия</th></tr></thead>
       <tbody>${journalTable()}</tbody>
