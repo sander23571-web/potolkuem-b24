@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const basicAuth = require('express-basic-auth');
-const { bxEntry, createHybridAuth, requireDirector } = require('./bx-auth');
+const { bxEntry, createHybridAuth, requireDirector, requireFinanceViewer } = require('./bx-auth');
 const { fetchExhibitionData, fetchExhibitionList, cacheInvalidate, fetchAllSummaries, sortExhibitionsRecentFirst } = require('./b24');
 const { renderDashboard, renderComparison } = require('./render');
 const { fetchSocialData, invalidate: socialInvalidate } = require('./livedune');
@@ -10,6 +10,8 @@ const { fetchTasksData, cacheInvalidateTasks } = require('./tasks-b24');
 const { renderTasksDashboard, renderMemberDetail } = require('./tasks-render');
 const { fetchMarketingData, cacheInvalidateMarketing, fetchMarketingExpensesData, cacheInvalidateExpenses, fetchCampaignsData, cacheInvalidateCampaigns } = require('./marketing-data');
 const { renderMarketing, renderMarketingExpenses } = require('./render-marketing');
+const { fetchExpensesData, cacheInvalidateExpensesAll } = require('./expenses-data');
+const { renderExpenses } = require('./render-expenses');
 const { fetchWarehouseData, cacheInvalidateWarehouse } = require('./warehouse-data');
 const { renderWarehouse } = require('./render-warehouse');
 const { fetchRealizationData, invalidateRealizationCache } = require('./realization-data');
@@ -216,6 +218,32 @@ app.post('/report/marketing/expenses/refresh', (req, res) => {
   cacheInvalidateExpenses();
   const range = resolveRange(req.query);
   res.redirect(withBxt('/report/marketing/expenses?' + rangeQueryString(range), req));
+});
+
+// ── Все расходы компании (СП «Реестр платежей», по коду расхода) ──────────────
+// requireFinanceViewer — уже, чем requireDirector: только Анна Тимуровна + admin-логин
+// (см. bx-auth.js). Независимый от /report/marketing/expenses отчёт (другое СП, другой доступ).
+app.use('/report/expenses', requireFinanceViewer);
+
+app.get('/report/expenses', async (req, res) => {
+  try {
+    const range = resolveRange(req.query);
+    const category = req.query.category || null;
+    const data = await fetchExpensesData(range, category);
+    res.send(renderExpenses(data, req.viewer, range));
+  } catch (err) {
+    console.error('[ERR] /report/expenses:', err.message);
+    res.status(500).send('Внутренняя ошибка сервера');
+  }
+});
+
+app.post('/report/expenses/refresh', (req, res) => {
+  cacheInvalidateExpensesAll();
+  const range = resolveRange(req.query);
+  const category = req.query.category || null;
+  const qp = new URLSearchParams(rangeQueryString(range));
+  if (category) qp.set('category', category);
+  res.redirect(withBxt('/report/expenses?' + qp.toString(), req));
 });
 
 // Dashboard for specific exhibition

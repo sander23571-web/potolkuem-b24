@@ -1,7 +1,7 @@
 'use strict';
 
 const { bxBootstrap } = require('./bx-embed');
-const { renderNav } = require('./nav');
+const { renderNav, isFinanceViewer } = require('./nav');
 
 const PALETTE = ['#1e2eb5','#3d4de6','#4a5df9','#7b8ef9','#9eabfa','#bbc5fc','#dde2fc','#6c3483','#117a65','#b7950b'];
 
@@ -235,7 +235,7 @@ function renderTasksDashboard(data, viewer) {
     <form method="post" action="/tasks/refresh" style="display:contents">
       <button type="submit" class="refresh-btn">Обновить данные</button>
     </form>
-    ${renderNav('tasks', isDirector)}
+    ${renderNav('tasks', isDirector, isFinanceViewer(viewer))}
     <span class="fetched-at">Данные: ${fetchedAt ? fetchedAt.slice(0, 16).replace('T', ' ') : '—'}</span>
   </div>
 </div>
@@ -418,7 +418,7 @@ function renderMemberDetail(data, userId, viewer) {
     return `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">
     <style>${BASE_CSS}</style></head>
     <body><div class="hero"><div class="hero-label">Дашборд активности</div><h1>${name}</h1>
-    <div class="hero-nav"><a href="/tasks" class="nav-btn">← К команде</a>${renderNav('tasks', isDirector)}</div></div>
+    <div class="hero-nav"><a href="/tasks" class="nav-btn">← К команде</a>${renderNav('tasks', isDirector, isFinanceViewer(viewer))}</div></div>
     <div class="container"><p style="margin-top:40px;color:var(--muted)">Нет данных по этому сотруднику.</p></div>
     ${bxBootstrap(token)}
     </body></html>`;
@@ -513,7 +513,7 @@ function renderMemberDetail(data, userId, viewer) {
   </div>
   <div class="hero-nav">
     <a href="/tasks" class="nav-btn">← К команде</a>
-    ${renderNav('tasks', isDirector)}
+    ${renderNav('tasks', isDirector, isFinanceViewer(viewer))}
     <span class="fetched-at">Данные: ${fetchedAt ? fetchedAt.slice(0, 16).replace('T', ' ') : '—'}</span>
   </div>
 </div>

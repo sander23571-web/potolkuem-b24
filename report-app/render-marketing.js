@@ -5,7 +5,7 @@
 
 const { PRESETS, rangeQueryString } = require('./period');
 const { bxBootstrap } = require('./bx-embed');
-const { renderNav } = require('./nav');
+const { renderNav, isFinanceViewer } = require('./nav');
 const { fmtRub, fmtRubClientSrc } = require('./format');
 
 const B24_URL = 'https://potolkuem.bitrix24.ru';
@@ -358,7 +358,7 @@ function renderMarketing(data, viewer) {
   <h1>Маркетинг</h1>
   <div class="hero-sub">Бренд · Сайт · Соцсети · SEO</div>
   <nav class="hero-nav">
-    ${renderNav('marketing', isDirector)}
+    ${renderNav('marketing', isDirector, isFinanceViewer(viewer))}
     <form method="POST" action="/report/marketing/refresh?${rangeQueryString(range)}" style="margin-left:auto">
       <button class="refresh-btn" type="submit">Обновить данные</button>
     </form>
@@ -953,7 +953,7 @@ function renderMarketingExpenses(data, viewer) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Расходы · Маркетинг · Потолкуем?</title>
+  <title>Расходы на маркетинг · Потолкуем?</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>
   <style>${BASE_CSS}</style>
 </head>
@@ -961,10 +961,10 @@ function renderMarketingExpenses(data, viewer) {
 
 <div class="hero">
   <div class="hero-label">Потолкуем? · Только для руководства</div>
-  <h1>Маркетинговые расходы</h1>
+  <h1>Расходы на маркетинг</h1>
   <div class="hero-sub">СП «Расходы» · направление «Маркетинг» · ${expenses.length} записей</div>
   <nav class="hero-nav">
-    ${renderNav('expenses', isDirector)}
+    ${renderNav('expenses', isDirector, isFinanceViewer(viewer))}
     <form method="POST" action="/report/marketing/expenses/refresh?${rangeQueryString(range)}" style="margin-left:auto">
       <button class="refresh-btn" type="submit">Обновить данные</button>
     </form>
@@ -1042,7 +1042,7 @@ ${(channelEntries.length >= 2 || months.length >= 2) ? `
 
 </div>
 
-<div class="footer">Потолкуем? · Маркетинговые расходы · только для руководства · БюроОБП</div>
+<div class="footer">Потолкуем? · Расходы на маркетинг · только для руководства · БюроОБП</div>
 
 <script>
 ${fmtRubClientSrc}

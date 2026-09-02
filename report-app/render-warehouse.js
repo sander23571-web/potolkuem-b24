@@ -4,7 +4,7 @@
  */
 
 const { bxBootstrap } = require('./bx-embed');
-const { renderNav } = require('./nav');
+const { renderNav, isFinanceViewer } = require('./nav');
 const { fmtRub, fmtRubClientSrc } = require('./format');
 
 const B24_URL = 'https://potolkuem.bitrix24.ru';
@@ -168,7 +168,7 @@ function renderWarehouse(data, viewer) {
   <h1>Склад</h1>
   <div class="hero-sub">Остатки · Заморозка капитала · Маржа</div>
   <nav class="hero-nav">
-    ${renderNav('warehouse', isDirector)}
+    ${renderNav('warehouse', isDirector, isFinanceViewer(viewer))}
     <form method="POST" action="/report/warehouse/refresh" style="margin-left:auto">
       <button class="refresh-btn" type="submit">Обновить данные</button>
     </form>

@@ -5,7 +5,7 @@
  */
 
 const { bxBootstrap } = require('./bx-embed');
-const { renderNav } = require('./nav');
+const { renderNav, isFinanceViewer } = require('./nav');
 const { fmtRub, fmtRubClientSrc } = require('./format');
 const { CATEGORY, STAGES } = require('./activity-data');
 
@@ -329,7 +329,7 @@ function renderActivity(data, viewer) {
   <h1>Активность Креативного директора</h1>
   <div class="hero-sub">Соцсети · Журнал «Потолкуем?» · Дизайн · Съёмки</div>
   <nav class="hero-nav">
-    ${renderNav('creative', isDirector)}
+    ${renderNav('creative', isDirector, isFinanceViewer(viewer))}
     <span class="fetched-at">обновлено ${fetchedStr}</span>
   </nav>
 </div>

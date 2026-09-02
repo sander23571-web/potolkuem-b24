@@ -1,12 +1,13 @@
 'use strict';
 /**
- * render-realization.js — HTML-рендерер дашборда /report/realization ("Реализация по складам").
+ * render-expenses.js — HTML-рендерер дашборда /report/expenses ("Все расходы компании").
  *
- * Единый столбец на месяц, разбитый на цветные сегменты по складу (stacked bar),
- * с подписью склада на сегменте (если сегмент не совсем узкий) и общей суммой месяца
- * над столбцом. Плюс выбор диапазона дат (period.js, тот же паттерн, что в /report/marketing).
+ * Тот же визуальный паттерн, что и /report/realization (единый столбец на месяц, разбитый на
+ * цветные сегменты — там склад, здесь категория/подкод кода расхода), плюс переключатель
+ * "по направлению": без выбора категории график группирует по 13 укрупнённым категориям
+ * справочника кодов расходов, при выборе одной категории — по её подкодам (drill-down).
  *
- * Источник данных — BI-аналитика (pbi.php), напрямую с портала, см. realization-data.js.
+ * Источник данных и правила отбора — см. expenses-data.js.
  */
 
 const { bxBootstrap } = require('./bx-embed');
@@ -22,7 +23,6 @@ function monthLabel(ym) {
   const [y, m] = ym.split('-');
   return `${MONTH_NAMES[parseInt(m, 10) - 1]} ${y}`;
 }
-
 function fmtRuDateFull(iso) {
   if (!iso) return null;
   const d = new Date(iso);
@@ -36,14 +36,25 @@ function periodLabel(range) {
   if (from)         return `с ${from}`;
   return `по ${to}`;
 }
-function renderPeriodBar(basePath, range) {
+
+// basePath + category — чтобы переключение периода не сбрасывало выбранную категорию, и наоборот
+function qs(range, category) {
+  const p = new URLSearchParams(rangeQueryString(range));
+  if (category) p.set('category', category);
+  return p.toString();
+}
+
+function renderPeriodBar(basePath, range, category) {
   const buttons = PRESETS.map(p => {
     const active = range.preset === p.key;
-    return `<a class="period-btn${active ? ' active' : ''}" href="${basePath}?range=${p.key}">${p.label}</a>`;
+    const params = new URLSearchParams({ range: p.key });
+    if (category) params.set('category', category);
+    return `<a class="period-btn${active ? ' active' : ''}" href="${basePath}?${params}">${p.label}</a>`;
   }).join('');
   return `<div class="period-bar">
     <div class="period-presets">${buttons}</div>
     <form class="period-custom" method="GET" action="${basePath}">
+      ${category ? `<input type="hidden" name="category" value="${escHtml(category)}">` : ''}
       <input type="date" name="from" value="${range.from || ''}">
       <span>—</span>
       <input type="date" name="to" value="${range.to || ''}">
@@ -53,7 +64,23 @@ function renderPeriodBar(basePath, range) {
   </div>`;
 }
 
-const PALETTE = ['#4a5df9', '#e67e22', '#27ae60', '#c0392b', '#8e44ad', '#16a085', '#7b79a0', '#2aabee', '#c2185b', '#8d6e63', '#607d8b', '#f39c12'];
+function renderCategoryBar(basePath, range, categoryList, selectedKey) {
+  const allActive = !selectedKey;
+  const allHref = `${basePath}?${qs(range, null)}`;
+  const chips = categoryList.map(c => {
+    const active = c.key === selectedKey;
+    const href = `${basePath}?${qs(range, c.key)}`;
+    return `<a class="period-btn${active ? ' active' : ''}" href="${href}">${escHtml(c.label)}</a>`;
+  }).join('');
+  return `<div class="period-bar" style="margin-top:12px">
+    <div class="period-presets" style="flex-wrap:wrap">
+      <a class="period-btn${allActive ? ' active' : ''}" href="${allHref}">Все категории</a>
+      ${chips}
+    </div>
+  </div>`;
+}
+
+const PALETTE = ['#4a5df9', '#e67e22', '#27ae60', '#c0392b', '#8e44ad', '#16a085', '#7b79a0', '#2aabee', '#c2185b', '#8d6e63', '#607d8b', '#f39c12', '#5d4037', '#546e7a'];
 
 const BASE_CSS = `
   :root {
@@ -73,6 +100,8 @@ const BASE_CSS = `
   .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
   .nav-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   .fetched-at { font-size: 11px; color: #666; margin-left: auto; }
+  .refresh-btn { font-family: inherit; font-size: 12px; color: #9eabfa; background: transparent; border: 1px solid #3a3460; border-radius: 4px; padding: 8px 14px; cursor: pointer; }
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
 
   .container { max-width: 1200px; margin: 0 auto; padding: 0 32px 60px; }
   .section { margin-top: 48px; }
@@ -128,10 +157,13 @@ const BASE_CSS = `
   }
 `;
 
-function renderRealization(data, viewer, range) {
+function renderExpenses(data, viewer, range) {
   const { token, isDirector } = viewer || {};
-  const { available, rows, months, stores, totals, updatedAt, sourceFile, error } = data;
+  const isFinance = isFinanceViewer(viewer);
+  const { available, rows, months, segments, categoryList, selectedCategory, totals, updatedAt, error } = data;
   range = range || { preset: 'ytd', from: null, to: null };
+  const basePath = '/report/expenses';
+  const categoryKey = selectedCategory ? selectedCategory.key : null;
 
   const updatedStr = updatedAt
     ? new Date(updatedAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -143,23 +175,21 @@ function renderRealization(data, viewer, range) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Реализация · Потолкуем?</title>
+<title>Все расходы · Потолкуем?</title>
 <style>${BASE_CSS}</style>
 </head>
 <body>
 <div class="hero">
-  <div class="hero-label">Потолкуем?</div>
-  <h1>Реализация по складам</h1>
+  <div class="hero-label">Потолкуем? · Только для ограниченного круга лиц</div>
+  <h1>Все расходы компании</h1>
   <div class="hero-sub">Данных пока нет</div>
-  <nav class="hero-nav">${renderNav('realization', isDirector, isFinanceViewer(viewer))}</nav>
+  <nav class="hero-nav">${renderNav('expensesAll', isDirector, isFinance)}</nav>
 </div>
 <div class="container">
   <div class="empty">
     <h2>Не удалось получить данные</h2>
-    <p>Источник — канал BI-аналитики (<code>pbi.php</code>), напрямую с портала.
-    ${error ? `Ошибка: <code>${escHtml(error)}</code>` : ''}<br>
-    Если ошибка про токен — проверить <code>BI_ANALYTICS_TOKEN</code> в <code>report-app/.env</code>
-    на сервере (см. <code>talk/b24-api-patterns.md</code>, «BI-аналитика (pbi.php)»).</p>
+    <p>Источник — СП «Реестр платежей» (entityTypeId=1080).
+    ${error ? `Ошибка: <code>${escHtml(error)}</code>` : ''}</p>
   </div>
 </div>
 ${bxBootstrap(token)}
@@ -167,29 +197,23 @@ ${bxBootstrap(token)}
 </html>`;
   }
 
-  // ── Данные для составного (stacked) столбца: labels = месяцы, один dataset на склад ──
-  const storeColor = Object.fromEntries(stores.map((s, i) => [s, PALETTE[i % PALETTE.length]]));
+  const segColor = Object.fromEntries(segments.map((s, i) => [s.key, PALETTE[i % PALETTE.length]]));
   const monthTotals = months.map(m => rows.filter(r => r.month === m).reduce((s, r) => s + r.sum, 0));
 
   const chartLabels = JSON.stringify(months.map(monthLabel));
-  const chartDatasets = stores.map((store, i) => {
-    const byMonth = new Map(rows.filter(r => r.store === store).map(r => [r.month, r.sum]));
+  const chartDatasets = segments.map((seg, i) => {
+    const byMonth = new Map(rows.filter(r => r.key === seg.key).map(r => [r.month, r.sum]));
     const values = months.map(m => Math.round(byMonth.get(m) || 0));
-    const color = storeColor[store];
-    const isLast = i === stores.length - 1;
+    const color = segColor[seg.key];
+    const isLast = i === segments.length - 1;
     const ds = {
-      label: store, data: values, backgroundColor: color, borderColor: '#fff', borderWidth: 2,
-      stack: 'realization',
+      label: seg.label, data: values, backgroundColor: color, borderColor: '#fff', borderWidth: 2,
+      stack: 'expenses',
     };
-    // formatter — функция, JSON.stringify её всё равно роняет молча; реальные formatter'ы
-    // навешиваются на клиенте в <script> ниже (там уже есть fmtRub и доступ к массивам).
-    // Здесь только статическое оформление подписей.
     if (isLast) {
-      // Верхний сегмент стека — вешаем ДВЕ подписи через именованные labels плагина:
-      // "store" по центру сегмента (что за склад) и "total" у самого верха (сумма месяца).
       ds.datalabels = {
         labels: {
-          store: { anchor: 'center', align: 'center', color: '#fff', font: { size: 10, weight: '600' }, textAlign: 'center' },
+          seg: { anchor: 'center', align: 'center', color: '#fff', font: { size: 10, weight: '600' }, textAlign: 'center' },
           total: { anchor: 'end', align: 'end', offset: 6, color: '#1e1a3a', font: { size: 12, weight: '700' } },
         },
       };
@@ -199,27 +223,33 @@ ${bxBootstrap(token)}
     return ds;
   });
   const chartDatasetsJson = JSON.stringify(chartDatasets);
+  const segLabelsJson = JSON.stringify(segments.map(s => s.label));
 
   const tableRows = [...months].reverse().map(m => {
     const monthRows = rows.filter(r => r.month === m).sort((a, b) => b.sum - a.sum);
     const monthTotal = monthRows.reduce((acc, r) => acc + r.sum, 0);
     return monthRows.map((r, i) => `<tr>
       ${i === 0 ? `<td rowspan="${monthRows.length}" style="vertical-align:top;font-weight:600">${escHtml(monthLabel(m))}</td>` : ''}
-      <td><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${storeColor[r.store]};margin-right:8px"></span>${escHtml(r.store)}</td>
-      <td class="num">${fmt(r.qty)}</td>
+      <td><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${segColor[r.key]};margin-right:8px"></span>${escHtml(r.label)}</td>
+      <td class="num">${fmt(r.count)}</td>
       <td class="num" style="color:var(--orange)">${fmtRub(r.sum)}</td>
       ${i === 0 ? `<td rowspan="${monthRows.length}" class="num" style="vertical-align:top;color:var(--muted)">${fmtRub(monthTotal)}</td>` : ''}
     </tr>`).join('');
   }).join('');
 
-  const basePath = '/report/realization';
+  const drillTitle = selectedCategory
+    ? `${escHtml(selectedCategory.label)} — по подкодам`
+    : 'по укрупнённым категориям кода расхода';
+  const backLink = selectedCategory
+    ? `<a class="period-btn" href="${basePath}?${qs(range, null)}" style="margin-bottom:16px;display:inline-block">← Ко всем категориям</a>`
+    : '';
 
   return `<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Реализация · Потолкуем?</title>
+<title>Все расходы · Потолкуем?</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>${BASE_CSS}</style>
@@ -227,80 +257,83 @@ ${bxBootstrap(token)}
 <body>
 
 <div class="hero">
-  <div class="hero-label">Потолкуем?</div>
-  <h1>Реализация по складам</h1>
-  <div class="hero-sub">Помесячно, разбивка по складам</div>
+  <div class="hero-label">Потолкуем? · Только для ограниченного круга лиц</div>
+  <h1>Все расходы компании</h1>
+  <div class="hero-sub">СП «Реестр платежей» · по коду расхода · ${totals.count} записей</div>
   <nav class="hero-nav">
-    ${renderNav('realization', isDirector, isFinanceViewer(viewer))}
+    ${renderNav('expensesAll', isDirector, isFinance)}
+    <form method="POST" action="/report/expenses/refresh?${qs(range, categoryKey)}" style="margin-left:0">
+      <button class="refresh-btn" type="submit">Обновить данные</button>
+    </form>
     <span class="fetched-at">обновлено ${updatedStr}</span>
   </nav>
 </div>
 
 <div class="container">
 
-${renderPeriodBar(basePath, range)}
+${renderPeriodBar(basePath, range, categoryKey)}
+${renderCategoryBar(basePath, range, categoryList, categoryKey)}
 
 <div class="section" style="margin-top:32px">
   <div class="kpi-grid">
     <div class="kpi-card orange">
-      <div class="kpi-label">Реализовано всего</div>
+      <div class="kpi-label">Расходы за период</div>
       <div class="kpi-value">${fmtRub(totals.sum)}</div>
-      <div class="kpi-sub">за ${months.length} мес.</div>
+      <div class="kpi-sub">${months.length} мес. в разбивке</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">Единиц реализовано</div>
-      <div class="kpi-value">${fmt(totals.qty)}</div>
-      <div class="kpi-sub">по всем складам</div>
+      <div class="kpi-label">Платежей</div>
+      <div class="kpi-value">${fmt(totals.count)}</div>
+      <div class="kpi-sub">${selectedCategory ? escHtml(selectedCategory.label) : 'по всем категориям'}</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">Складов в разбивке</div>
-      <div class="kpi-value">${stores.length}</div>
-      <div class="kpi-sub">${escHtml(stores.join(', '))}</div>
+      <div class="kpi-label">${selectedCategory ? 'Подкодов в разбивке' : 'Категорий в разбивке'}</div>
+      <div class="kpi-value">${segments.length}</div>
     </div>
   </div>
 </div>
 
 <div class="section">
-  <div class="section-title">Реализация по месяцам и складам</div>
+  <div class="section-title">Расходы по месяцам — ${drillTitle}</div>
+  ${backLink}
   <div class="chart-card">
-    <h3>Сумма реализации, ₽ — по складам, с итогом месяца</h3>
-    <div class="chart-wrap"><canvas id="chartRealization"></canvas></div>
+    <h3>Сумма расходов, ₽ — с итогом месяца</h3>
+    <div class="chart-wrap"><canvas id="chartExpenses"></canvas></div>
   </div>
 </div>
 
 <div class="section">
   <div class="section-title">Таблица по месяцам</div>
   <table class="data-table">
-    <thead><tr><th>Месяц</th><th>Склад</th><th class="num">Штук</th><th class="num">Сумма</th><th class="num">Итого за месяц</th></tr></thead>
+    <thead><tr><th>Месяц</th><th>${selectedCategory ? 'Подкод' : 'Категория'}</th><th class="num">Платежей</th><th class="num">Сумма</th><th class="num">Итого за месяц</th></tr></thead>
     <tbody>${tableRows}</tbody>
     <tfoot>
       <tr>
         <td colspan="2">Итого за период</td>
-        <td class="num">${fmt(totals.qty)}</td>
+        <td class="num">${fmt(totals.count)}</td>
         <td class="num" colspan="2">${fmtRub(totals.sum)}</td>
       </tr>
     </tfoot>
   </table>
   <div class="note">
-    Источник данных: ${escHtml(sourceFile)} — канал BI-аналитики портала, кэш обновляется каждые
-    15 минут. Учитываются только реально реализованные документы (без отменённых), суммы и склад —
-    как в самом Б24. Склад «Услуги (без склада)» — позиции без физического товара (например,
-    проведение игровой сессии).
+    Источник — СП «Реестр платежей» (entityTypeId=1080), поле «Код» → справочник кодов расходов.
+    Учитываются только стадии «Последние проведенные платежи» и «Архив проведенных платежей» —
+    черновики, согласование и отменённые платежи в отчёт не входят. Дата платежа — поле
+    <code>begindate</code> (не <code>closedate</code>, которое перезаписывается автоматически).
+    Клик по категории выше — переход к разбивке по её подкодам.
   </div>
 </div>
 
 </div><!-- /container -->
 
-<div class="footer">Потолкуем? · Реализация · БюроОБП</div>
+<div class="footer">Потолкуем? · Все расходы · БюроОБП</div>
 
 <script>
 ${fmtRubClientSrc}
 (function() {
-  const stores = ${JSON.stringify(stores)};
+  const segLabels = ${segLabelsJson};
   const monthTotals = ${JSON.stringify(monthTotals.map(v => Math.round(v)))};
   const datasets = ${chartDatasetsJson};
-  // Длинные названия складов ("Фабрика мороженого Сделано в Москве" и т.п.) не влезают в
-  // ширину сегмента одной строкой — переносим по словам, плагин datalabels понимает перенос строки.
   function wrapLabel(text, maxLen) {
     const words = text.trim().split(/\\s+/);
     const lines = [];
@@ -313,19 +346,18 @@ ${fmtRubClientSrc}
     if (cur) lines.push(cur);
     return lines.join('\\n');
   }
-  // Подставляем реальные formatter-функции — JSON не умеет хранить функции, собрали их здесь.
   datasets.forEach((ds, dsIdx) => {
     const isLast = dsIdx === datasets.length - 1;
-    const storeFormatter = (v, ctx) => (v / (monthTotals[ctx.dataIndex] || 1) > 0.06 ? wrapLabel(stores[ctx.datasetIndex], 14) : '');
+    const segFormatter = (v, ctx) => (v / (monthTotals[ctx.dataIndex] || 1) > 0.06 ? wrapLabel(segLabels[ctx.datasetIndex], 16) : '');
     if (isLast) {
-      ds.datalabels.labels.store.formatter = storeFormatter;
+      ds.datalabels.labels.seg.formatter = segFormatter;
       ds.datalabels.labels.total.formatter = (v, ctx) => fmtRub(monthTotals[ctx.dataIndex]);
     } else {
-      ds.datalabels.formatter = storeFormatter;
+      ds.datalabels.formatter = segFormatter;
     }
   });
 
-  new Chart(document.getElementById('chartRealization'), {
+  new Chart(document.getElementById('chartExpenses'), {
     type: 'bar',
     plugins: [ChartDataLabels],
     data: { labels: ${chartLabels}, datasets },
@@ -349,4 +381,4 @@ ${bxBootstrap(token)}
 </html>`;
 }
 
-module.exports = { renderRealization };
+module.exports = { renderExpenses };

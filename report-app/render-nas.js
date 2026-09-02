@@ -29,7 +29,7 @@
  */
 
 const { bxBootstrap } = require('./bx-embed');
-const { renderNav } = require('./nav');
+const { renderNav, isFinanceViewer } = require('./nav');
 
 const escHtml = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -157,7 +157,7 @@ function renderNas(viewer, nasSession, opts) {
   <h1>NAS</h1>
   <div class="hero-sub">Synology QuickConnect</div>
   ${standalone ? '' : `<nav class="hero-nav">
-    ${renderNav('nas', isDirector)}
+    ${renderNav('nas', isDirector, isFinanceViewer(viewer))}
   </nav>`}
 </div>
 ${body}

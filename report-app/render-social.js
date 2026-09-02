@@ -1,7 +1,7 @@
 'use strict';
 
 const { bxBootstrap } = require('./bx-embed');
-const { renderNav } = require('./nav');
+const { renderNav, isFinanceViewer } = require('./nav');
 
 // ── Shared with render.js ─────────────────────────────────────────────────────
 const BASE_CSS = `
@@ -281,7 +281,7 @@ function renderSocial(data, viewer) {
 </div>
 
 <nav class="hero-nav">
-  ${renderNav('social', isDirector)}
+  ${renderNav('social', isDirector, isFinanceViewer(viewer))}
 </nav>
 
 <div class="period-bar">

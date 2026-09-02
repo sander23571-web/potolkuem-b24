@@ -1,7 +1,7 @@
 'use strict';
 
 const { bxBootstrap } = require('./bx-embed');
-const { renderNav } = require('./nav');
+const { renderNav, isFinanceViewer } = require('./nav');
 const { sortExhibitionsRecentFirst } = require('./b24');
 const { fmtRub, fmtRubClientSrc } = require('./format');
 
@@ -326,7 +326,7 @@ function renderDashboard(data, allExhibitions, currentId, viewer) {
     <form method="post" action="/report/${currentId}/refresh" style="display:contents">
       <button type="submit" class="refresh-btn">Обновить данные</button>
     </form>
-    ${renderNav('report', isDirector)}
+    ${renderNav('report', isDirector, isFinanceViewer(viewer))}
     <span class="fetched-at">Данные: ${fetchedAt ? fetchedAt.slice(0, 16).replace('T', ' ') : '—'}</span>
   </div>
 </div>
@@ -654,7 +654,7 @@ function renderComparison(allExhibitions, summaries, viewer) {
     <div><strong>${sorted.length}</strong> выставок · <strong>${totalDeals}</strong> сделок</div>
   </div>
   <div class="hero-nav">
-    ${renderNav('compare', isDirector)}
+    ${renderNav('compare', isDirector, isFinanceViewer(viewer))}
   </div>
 </div>
 
