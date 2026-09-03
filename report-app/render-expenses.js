@@ -37,24 +37,30 @@ function periodLabel(range) {
   return `по ${to}`;
 }
 
-// basePath + category — чтобы переключение периода не сбрасывало выбранную категорию, и наоборот
-function qs(range, category) {
+// basePath + category (+ опционально subcodes) — чтобы переключение периода не сбрасывало
+// выбранную категорию/подкоды, и наоборот. subcodes — массив; смена категории их сбрасывает
+// (подкоды другой категории теряют смысл), поэтому вызовы без 3-го аргумента их не пишут.
+function qs(range, category, subcodes) {
   const p = new URLSearchParams(rangeQueryString(range));
   if (category) p.set('category', category);
+  if (subcodes && subcodes.length) subcodes.forEach(s => p.append('subcodes', s));
   return p.toString();
 }
 
-function renderPeriodBar(basePath, range, category) {
+function renderPeriodBar(basePath, range, category, subcodes) {
   const buttons = PRESETS.map(p => {
     const active = range.preset === p.key;
     const params = new URLSearchParams({ range: p.key });
     if (category) params.set('category', category);
+    if (subcodes && subcodes.length) subcodes.forEach(s => params.append('subcodes', s));
     return `<a class="period-btn${active ? ' active' : ''}" href="${basePath}?${params}">${p.label}</a>`;
   }).join('');
+  const subcodeHidden = (subcodes || []).map(s => `<input type="hidden" name="subcodes" value="${escHtml(s)}">`).join('');
   return `<div class="period-bar">
     <div class="period-presets">${buttons}</div>
     <form class="period-custom" method="GET" action="${basePath}">
       ${category ? `<input type="hidden" name="category" value="${escHtml(category)}">` : ''}
+      ${subcodeHidden}
       <input type="date" name="from" value="${range.from || ''}">
       <span>—</span>
       <input type="date" name="to" value="${range.to || ''}">
@@ -77,6 +83,59 @@ function renderCategoryBar(basePath, range, categoryList, selectedKey) {
       <a class="period-btn${allActive ? ' active' : ''}" href="${allHref}">Все категории</a>
       ${chips}
     </div>
+  </div>`;
+}
+
+// Мультивыбор подкодов внутри выбранной категории — чекбоксы, GET-форма. Ничего не отмечено =
+// «все подкоды» (эквивалент отсутствия фильтра). basePath+category+range пробрасываются
+// скрытыми полями, чтобы форма не теряла остальной контекст при отправке.
+function renderSubcodeFilter(basePath, range, category, subcodeOptions, selectedSubcodes) {
+  if (!category || subcodeOptions.length < 2) return '';
+  const rangeHidden = new URLSearchParams(rangeQueryString(range));
+  const rangeHiddenHtml = [...rangeHidden.entries()]
+    .map(([k, v]) => `<input type="hidden" name="${k}" value="${escHtml(v)}">`).join('');
+  const checkboxes = subcodeOptions.map(s => {
+    const checked = selectedSubcodes.includes(s.key);
+    const id = `sub_${escHtml(s.key).replace(/\W/g, '_')}`;
+    return `<label for="${id}" class="subcode-check${checked ? ' checked' : ''}">
+      <input type="checkbox" id="${id}" name="subcodes" value="${escHtml(s.key)}"${checked ? ' checked' : ''}>
+      ${escHtml(s.label)} <span class="subcode-sum">${fmtRub(s.sum)}</span>
+    </label>`;
+  }).join('');
+  const resetHref = `${basePath}?${qs(range, category)}`;
+  return `<div class="chart-card" style="margin-top:16px;padding:18px 20px">
+    <h3 style="margin-bottom:14px">Выбрать несколько поднаправлений (подкодов) для сравнения</h3>
+    <form method="GET" action="${basePath}">
+      <input type="hidden" name="category" value="${escHtml(category)}">
+      ${rangeHiddenHtml}
+      <div class="subcode-grid">${checkboxes}</div>
+      <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
+        <button type="submit" class="period-custom-btn">Показать выбранные</button>
+        ${selectedSubcodes.length ? `<a class="period-btn" href="${resetHref}">Сбросить (показать все)</a>` : ''}
+      </div>
+    </form>
+  </div>`;
+}
+
+function renderPaymentsTable(payments, paymentsTotal, paymentsLimit) {
+  if (!payments.length) return '';
+  const rows = payments.map(p => `<tr>
+    <td>${escHtml(fmtRuDateFull(p.date) || '—')}</td>
+    <td>${escHtml(p.subLabel)}</td>
+    <td>${escHtml(p.title)}</td>
+    <td class="num">${fmtRub(p.amount)}</td>
+    <td><a href="${p.b24Url}" target="_blank" rel="noopener">Открыть в Б24 →</a></td>
+  </tr>`).join('');
+  const note = paymentsTotal > paymentsLimit
+    ? `<div class="note">Показаны последние ${paymentsLimit} из ${fmt(paymentsTotal)} платежей — сузьте период или подкоды, чтобы увидеть остальные.</div>`
+    : '';
+  return `<div class="section">
+    <div class="section-title">Отдельные платежи (${fmt(payments.length)}) — переход в карточку</div>
+    <table class="data-table">
+      <thead><tr><th>Дата</th><th>Подкод</th><th>Платёж</th><th class="num">Сумма</th><th>Карточка</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${note}
   </div>`;
 }
 
@@ -123,6 +182,15 @@ const BASE_CSS = `
     .period-label { margin-left: 0; }
   }
 
+  .subcode-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 4px 16px; }
+  .subcode-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); padding: 6px 4px; border-radius: 3px; cursor: pointer; }
+  .subcode-check:hover { background: #f9f7ff; }
+  .subcode-check.checked { color: var(--accent2); font-weight: 600; }
+  .subcode-check input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; flex-shrink: 0; }
+  .subcode-sum { margin-left: auto; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .period-custom-btn { font-family: inherit; font-size: 12px; color: #fff; background: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: 8px 16px; cursor: pointer; }
+  .period-custom-btn:hover { background: var(--accent2); border-color: var(--accent2); }
+
   .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 16px; margin-top: 24px; }
   .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 24px 20px; position: relative; }
   .kpi-card::after { content:''; position: absolute; top:0; left:0; right:0; height:3px; background: var(--accent); border-radius: 4px 4px 0 0; }
@@ -160,7 +228,7 @@ const BASE_CSS = `
 function renderExpenses(data, viewer, range) {
   const { token, isDirector } = viewer || {};
   const isFinance = isFinanceViewer(viewer);
-  const { available, rows, months, segments, categoryList, selectedCategory, totals, updatedAt, error } = data;
+  const { available, rows, months, segments, categoryList, selectedCategory, subcodeOptions, selectedSubcodes, payments, paymentsTotal, paymentsLimit, totals, updatedAt, error } = data;
   range = range || { preset: 'ytd', from: null, to: null };
   const basePath = '/report/expenses';
   const categoryKey = selectedCategory ? selectedCategory.key : null;
@@ -271,8 +339,9 @@ ${bxBootstrap(token)}
 
 <div class="container">
 
-${renderPeriodBar(basePath, range, categoryKey)}
+${renderPeriodBar(basePath, range, categoryKey, selectedSubcodes)}
 ${renderCategoryBar(basePath, range, categoryList, categoryKey)}
+${renderSubcodeFilter(basePath, range, categoryKey, subcodeOptions, selectedSubcodes)}
 
 <div class="section" style="margin-top:32px">
   <div class="kpi-grid">
@@ -323,6 +392,8 @@ ${renderCategoryBar(basePath, range, categoryList, categoryKey)}
     Клик по категории выше — переход к разбивке по её подкодам.
   </div>
 </div>
+
+${renderPaymentsTable(payments, paymentsTotal, paymentsLimit)}
 
 </div><!-- /container -->
 

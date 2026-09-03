@@ -225,11 +225,19 @@ app.post('/report/marketing/expenses/refresh', (req, res) => {
 // (см. bx-auth.js). Независимый от /report/marketing/expenses отчёт (другое СП, другой доступ).
 app.use('/report/expenses', requireFinanceViewer);
 
+// name="subcodes" может прийти строкой (один чекбокс) или массивом (несколько) — express/qs
+// парсит повторяющиеся ключи в массив сам, но с одним значением отдаёт строку — нормализуем.
+function parseSubcodes(q) {
+  if (!q.subcodes) return null;
+  return Array.isArray(q.subcodes) ? q.subcodes : [q.subcodes];
+}
+
 app.get('/report/expenses', async (req, res) => {
   try {
     const range = resolveRange(req.query);
     const category = req.query.category || null;
-    const data = await fetchExpensesData(range, category);
+    const subcodes = parseSubcodes(req.query);
+    const data = await fetchExpensesData(range, category, subcodes);
     res.send(renderExpenses(data, req.viewer, range));
   } catch (err) {
     console.error('[ERR] /report/expenses:', err.message);
@@ -241,8 +249,10 @@ app.post('/report/expenses/refresh', (req, res) => {
   cacheInvalidateExpensesAll();
   const range = resolveRange(req.query);
   const category = req.query.category || null;
+  const subcodes = parseSubcodes(req.query);
   const qp = new URLSearchParams(rangeQueryString(range));
   if (category) qp.set('category', category);
+  if (subcodes) subcodes.forEach(s => qp.append('subcodes', s));
   res.redirect(withBxt('/report/expenses?' + qp.toString(), req));
 });
 

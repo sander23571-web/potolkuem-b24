@@ -143,20 +143,40 @@ function filterByRange(list, from, to) {
   });
 }
 
-// range: { from, to }; category: ключ верхнеуровневой категории ('11', '_none') или null (все категории)
-async function fetchExpensesData(range = {}, category = null) {
+// range: { from, to }; category: ключ верхнеуровневой категории ('11', '_none') или null (все категории);
+// subcodes: массив подкодов ('4.1','4.2',...) для доп. фильтра ВНУТРИ категории (пусто/null = все подкоды)
+async function fetchExpensesData(range = {}, category = null, subcodes = null) {
   const { from = null, to = null } = range;
   let raw;
   try {
     raw = await fetchRawPayments();
   } catch (err) {
     console.error('[ERR] expenses-data:', err.message);
-    return { available: false, error: err.message, rows: [], months: [], segments: [], categoryList: [], totals: { sum: 0, count: 0 }, updatedAt: null };
+    return { available: false, error: err.message, rows: [], months: [], segments: [], categoryList: [], subcodeOptions: [], selectedSubcodes: [], payments: [], totals: { sum: 0, count: 0 }, updatedAt: null };
   }
 
   const { rows: allRows, categoryList } = raw;
   const filtered = filterByRange(allRows, from, to);
-  const scoped = category ? filtered.filter(r => r.categoryKey === category) : filtered;
+  const catScoped = category ? filtered.filter(r => r.categoryKey === category) : filtered;
+
+  // Список подкодов, доступных для отметки — считается ДО применения фильтра по подкодам
+  // (иначе снятые чекбоксы пропадали бы из списка вместе со своей отметкой).
+  let subcodeOptions = [];
+  if (category) {
+    const subTotals = new Map();
+    for (const r of catScoped) {
+      const key = r.subcode || NO_CODE_LABEL;
+      if (!subTotals.has(key)) subTotals.set(key, { key, label: r.subLabel, sum: 0, count: 0 });
+      const t = subTotals.get(key);
+      t.sum += r.amount;
+      t.count++;
+    }
+    subcodeOptions = [...subTotals.values()].sort((a, b) => b.sum - a.sum);
+  }
+
+  const activeSubcodes = category && subcodes && subcodes.length ? new Set(subcodes) : null;
+  const selectedSubcodes = activeSubcodes ? subcodeOptions.filter(s => activeSubcodes.has(s.key)).map(s => s.key) : [];
+  const scoped = activeSubcodes ? catScoped.filter(r => activeSubcodes.has(r.subcode || NO_CODE_LABEL)) : catScoped;
 
   // segmentKey/segmentLabel — либо категория (обзорный вид), либо подкод (drill-down внутри категории)
   const segKeyOf   = r => category ? (r.subcode || NO_CODE_LABEL) : r.categoryKey;
@@ -186,10 +206,24 @@ async function fetchExpensesData(range = {}, category = null) {
   const totals = scoped.reduce((acc, r) => ({ sum: acc.sum + r.amount, count: acc.count + 1 }), { sum: 0, count: 0 });
   const selectedCategory = categoryList.find(c => c.key === category) || null;
 
+  // Список отдельных платежей со ссылкой на карточку в Б24 — только внутри выбранной категории
+  // (на верхнем уровне, по всем категориям сразу, список был бы на тысячи строк и бесполезен).
+  const PAYMENTS_LIMIT = 500;
+  const payments = category
+    ? scoped
+        .slice()
+        .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+        .slice(0, PAYMENTS_LIMIT)
+        .map(r => ({ id: r.id, date: r.date, title: r.title, amount: r.amount, subLabel: r.subLabel, b24Url: r.b24Url }))
+    : [];
+  const paymentsTotal = scoped.length;
+
   return {
     available: true,
     rows: aggRows, months, segments,
     categoryList, selectedCategory,
+    subcodeOptions, selectedSubcodes,
+    payments, paymentsTotal, paymentsLimit: PAYMENTS_LIMIT,
     totals,
     updatedAt: new Date(_rawCacheTs),
   };

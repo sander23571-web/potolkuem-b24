@@ -14,3 +14,9 @@ scripts/__pycache__/
 
 # Sensitive (добавлено 03.09 после утечки в WIP-коммит)
 Локальное_Приложение_NAS_BitrixGPT/users.json
+
+# Реальные финансовые данные — снапшоты/выгрузки скриптов импорта (репо публичный на GitHub)
+scripts/.existing-1080-*.json
+scripts/.excluded-income-*.json
+scripts/.excluded-dividends-*.json
+scripts/.review-near-duplicates-*.md
