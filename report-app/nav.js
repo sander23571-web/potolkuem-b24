@@ -6,6 +6,8 @@
  * набор расходился (где-то не было ссылки на Склад, где-то — на SMM/Задачи).
  * Теперь список ссылок один, meняется в одном месте.
  */
+const { FINANCE_VIEWER_UIDS } = require('./bx-auth');
+
 const NAV_ITEMS = [
   { key: 'report',    label: 'Выставки',  href: '/report' },
   { key: 'compare',   label: 'Сравнение', href: '/report/compare' },
@@ -35,12 +37,14 @@ function renderNav(active, isDirector, isFinance) {
     .join('\n    ');
 }
 
-// Доступ к «Все расходы»: только Анна Тимуровна (Bitrix ID=18, через встроенное приложение)
-// или технический admin-логин report-app (Basic Auth, isDirector=true без uid). Специально
-// НЕ то же самое, что isDirector сам по себе — у него шире список (BX_DIRECTOR_IDS).
+// Доступ к «Все расходы»: Анна Тимуровна (Bitrix ID=18) + владелец (ID=134), через встроенное
+// приложение, или технический admin-логин report-app (Basic Auth, isDirector=true без uid).
+// Список uid — из bx-auth.js (FINANCE_VIEWER_UIDS), единственный источник правды: раньше здесь
+// была своя копия списка, разошедшаяся с requireFinanceViewer — владелец видел бы страницу по
+// прямой ссылке, но не пункт меню (найдено 03.09.2026).
 function isFinanceViewer(viewer) {
   if (!viewer) return false;
-  if (viewer.uid) return viewer.uid === '18';
+  if (viewer.uid) return FINANCE_VIEWER_UIDS.includes(viewer.uid);
   return !!viewer.isDirector;
 }
 

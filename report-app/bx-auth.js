@@ -141,4 +141,4 @@ function requireFinanceViewer(req, res, next) {
   return res.status(403).send('Доступ запрещён. Раздел доступен только ограниченному кругу лиц.');
 }
 
-module.exports = { bxEntry, createHybridAuth, requireDirector, requireFinanceViewer };
+module.exports = { bxEntry, createHybridAuth, requireDirector, requireFinanceViewer, FINANCE_VIEWER_UIDS };
