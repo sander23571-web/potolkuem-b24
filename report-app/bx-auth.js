@@ -128,13 +128,15 @@ function requireDirector(req, res, next) {
 }
 
 // ── Доступ к «Все расходы» (СП «Реестр платежей») — уже, чем requireDirector ───
-// Решение владельца 02.09.2026: только Анна Тимуровна лично (Bitrix ID=18) + технический
-// admin-логин report-app (Basic Auth REPORT_ADMIN_USER, тот же что уже даёт isDirector=true
-// без uid — см. hybridAuth ниже). Специально НЕ переиспользует BX_DIRECTOR_IDS целиком —
-// там ещё 116/12/134 (PR/бухгалтер/...), которым «Все расходы» видеть не должны.
+// Решение владельца 02.09.2026 (уточнено 03.09.2026): Анна Тимуровна лично (Bitrix ID=18) +
+// сам владелец Александр Жуков (Bitrix ID=134) + технический admin-логин report-app
+// (Basic Auth REPORT_ADMIN_USER, тот же что уже даёт isDirector=true без uid — см. hybridAuth
+// ниже). Специально НЕ переиспользует BX_DIRECTOR_IDS целиком — там ещё 116/12
+// (PR/бухгалтер), которым «Все расходы» видеть не должны.
+const FINANCE_VIEWER_UIDS = ['18', '134'];
 function requireFinanceViewer(req, res, next) {
   const v = req.viewer;
-  const ok = v && (v.uid ? v.uid === '18' : !!v.isDirector);
+  const ok = v && (v.uid ? FINANCE_VIEWER_UIDS.includes(v.uid) : !!v.isDirector);
   if (ok) return next();
   return res.status(403).send('Доступ запрещён. Раздел доступен только ограниченному кругу лиц.');
 }
