@@ -1,0 +1,17 @@
+{
+  "PORTAL": "https://potolkuem.bitrix24.ru",
+  "APP_CLIENT_ID": "local.xxxxxxxxxxxxxxxx",
+  "APP_CLIENT_SECRET": "yyyyyyyyyyyyyyyy",
+  "APP_REDIRECT_URI": "https://proxy.example.com:8443/b24/callback",
+
+  "SYNO_HOST": "192.168.1.10",
+  "SYNO_PORT": "5001",
+  "SYNO_HTTPS": true,
+  "SYNO_DISABLE_VERIFY": false,
+
+  "AUTH_MODE": "service",
+  "SYNO_SERVICE_ACCOUNT": "admin",
+  "SYNO_SERVICE_PASSWORD": "changeme",
+
+  "FLASK_SECRET": "please-change-this-to-a-long-random-string"
+}
