@@ -128,12 +128,12 @@ function requireDirector(req, res, next) {
 }
 
 // ── Доступ к «Все расходы» (СП «Реестр платежей») — уже, чем requireDirector ───
-// Решение владельца 02.09.2026 (уточнено 03.09.2026): Анна Тимуровна лично (Bitrix ID=18) +
-// сам владелец Александр Жуков (Bitrix ID=134) + технический admin-логин report-app
-// (Basic Auth REPORT_ADMIN_USER, тот же что уже даёт isDirector=true без uid — см. hybridAuth
-// ниже). Специально НЕ переиспользует BX_DIRECTOR_IDS целиком — там ещё 116/12
-// (PR/бухгалтер), которым «Все расходы» видеть не должны.
-const FINANCE_VIEWER_UIDS = ['18', '134'];
+// Решение владельца 02.09.2026 (уточнено 03.09.2026): Анна Агеева-Дзукаева (Bitrix ID=18) +
+// владелец Александр Жуков (Bitrix ID=134) + Александр Дзукаев (Bitrix ID=116, добавлен
+// 03.09.2026) + технический admin-логин report-app (Basic Auth REPORT_ADMIN_USER, тот же
+// что уже даёт isDirector=true без uid — см. hybridAuth ниже). Специально НЕ переиспользует
+// BX_DIRECTOR_IDS целиком — там ещё 12 (бухгалтер), которому «Все расходы» видеть не должен.
+const FINANCE_VIEWER_UIDS = ['18', '134', '116'];
 function requireFinanceViewer(req, res, next) {
   const v = req.viewer;
   const ok = v && (v.uid ? FINANCE_VIEWER_UIDS.includes(v.uid) : !!v.isDirector);
