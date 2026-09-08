@@ -86,16 +86,24 @@ async function fetchExhibitionData(id) {
   );
 
   // 3. Shifts (entityTypeId 1056, parentId1048 = id)
-  const shifts = await fetchAllItems(
-    1056,
-    { parentId1048: id },
-    ['id', 'title', 'parentId1052', 'begindate']
-  );
+  const dealSelect = ['ID', 'TITLE', 'OPPORTUNITY', 'CONTACT_ID', 'PARENT_ID_1052', 'CLOSEDATE'];
 
-  // 4. Host ids from shifts
-  const hostIds = [...new Set(
-    shifts.map(s => s.parentId1052).filter(Boolean)
-  )];
+  const [shifts, dealsExh] = await Promise.all([
+    fetchAllItems(1056, { parentId1048: id }, ['id', 'title', 'parentId1052', 'begindate']),
+    // Сделки, привязанные к выставке напрямую (PARENT_ID_1048) — часть из них
+    // сразу несёт PARENT_ID_1052 (продажа привязана к ведущему), даже если для
+    // этой выставки не заведено ни одной записи «Выход ведущего» (1056).
+    fetchAllDeals({ PARENT_ID_1048: id, CATEGORY_ID: 18 }, dealSelect),
+  ]);
+
+  // 4. Host ids — объединяем оба источника: Выходы ведущего (1056) И
+  //    PARENT_ID_1052 у сделок выставки. Раньше брали только из shifts, из-за
+  //    чего для выставок без записей 1056 (но с проданными сделками через
+  //    ведущего) имена ведущих не резолвились — оставался «Ведущий #ID».
+  const hostIds = [...new Set([
+    ...shifts.map(s => s.parentId1052),
+    ...dealsExh.map(d => d.PARENT_ID_1052),
+  ].filter(Boolean).map(String))];
 
   // 5. Hosts (entityTypeId 1052)
   let hosts = [];
@@ -108,14 +116,10 @@ async function fetchExhibitionData(id) {
   }
   const hostMap = Object.fromEntries(hosts.map(h => [String(h.id), h.title]));
 
-  // 6. Deals — two queries in parallel
-  // a) deals linked to exhibition via PARENT_ID_1048
-  //    (работает если при создании сделки был вызван crm.deal.update с uppercase-ключом)
-  // b) deals linked to external hosts via PARENT_ID_1052
-  //    фильтруем по датам выставки чтобы не тащить сделки других выставок
-  const dealSelect = ['ID', 'TITLE', 'OPPORTUNITY', 'CONTACT_ID', 'PARENT_ID_1052', 'CLOSEDATE'];
-
-  // Даты выставки для фильтра сделок ведущих
+  // 6. Дополнительно — сделки, привязанные к ведущим напрямую (PARENT_ID_1052),
+  //    но НЕ привязанные к выставке через PARENT_ID_1048 (например, если это
+  //    забыли проставить). Фильтруем по датам выставки, чтобы не утащить
+  //    сделки ведущего с других мероприятий.
   const exhBegin = exhibition.begindate ? exhibition.begindate.slice(0, 10) : null;
   const exhEnd   = (exhibition.closedate || exhibition.begindate)
     ? (exhibition.closedate || exhibition.begindate).slice(0, 10)
@@ -125,12 +129,9 @@ async function fetchExhibitionData(id) {
   if (exhBegin) hostDealFilter['>=CLOSEDATE'] = exhBegin;
   if (exhEnd)   hostDealFilter['<=CLOSEDATE'] = exhEnd;
 
-  const [dealsExh, dealsHosts] = await Promise.all([
-    fetchAllDeals({ PARENT_ID_1048: id, CATEGORY_ID: 18 }, dealSelect),
-    hostIds.length > 0
-      ? fetchAllDeals(hostDealFilter, dealSelect)
-      : Promise.resolve([]),
-  ]);
+  const dealsHosts = hostIds.length > 0
+    ? await fetchAllDeals(hostDealFilter, dealSelect)
+    : [];
 
   // Merge and deduplicate by ID
   const dealMap = new Map();
@@ -165,12 +166,16 @@ async function fetchExhibitionList() {
 // Уже состоявшиеся (begindate <= сегодня) — сначала, самая недавняя первой.
 // Ещё не начавшиеся — в конце, ближайшая из них первой. Так на странице
 // «Выставки» впереди не оказываются выставки без данных.
+// Тай-брейк по id (desc/asc) — если у двух выставок совпадает begindate
+// (бывает, см. ММКВЯ/«Красная площадь 2026» 02-06.09.2026), выигрывает
+// запись с большим id, т.к. в этой CRM id растёт по мере создания записи —
+// это ближе к «последняя» по смыслу, чем произвольный порядок из API.
 function sortExhibitionsRecentFirst(list) {
   const today = new Date().toISOString().slice(0, 10);
   const started  = list.filter(e => (e.begindate || '').slice(0, 10) <= today)
-    .sort((a, b) => (b.begindate || '').localeCompare(a.begindate || ''));
+    .sort((a, b) => (b.begindate || '').localeCompare(a.begindate || '') || (b.id - a.id));
   const upcoming = list.filter(e => (e.begindate || '').slice(0, 10) > today)
-    .sort((a, b) => (a.begindate || '').localeCompare(b.begindate || ''));
+    .sort((a, b) => (a.begindate || '').localeCompare(b.begindate || '') || (a.id - b.id));
   return [...started, ...upcoming];
 }
 
