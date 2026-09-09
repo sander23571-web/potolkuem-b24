@@ -18,10 +18,44 @@ const ENTITY_TYPE_ID = 1074;  // СП «Статистика площадок»
 const TYPE_ID        = 28;
 const SEO_DIR        = '/root/projects/talk-report/data/seo';
 
-// СП «Расходы» (entityTypeId=1070)
-// UF_CRM_24_DIRECTION enum ID: 224=Выставки, 226=Маркетинг, 228=Операционные
-const EXPENSE_ENTITY_TYPE_ID = 1070;
-const DIRECTION_MARKETING_ID = '226';
+// СП «Реестр платежей» (entityTypeId=1080) — с 09.09.2026 основной источник расходов дашборда.
+// Раньше брали СП «Расходы» (1070, direction=Маркетинг) — узкий ручной срез (176 записей,
+// только рекламные каналы). 1080 — полная банковская выписка + ручной ввод, классифицирована по
+// «Справочнику кодов расходов» (IBLOCK_ID=32). Граница «что считать маркетингом» и правки кодов —
+// см. analytics/marketing-dashboard-svjazka-reestr-2026-09.md. Код 13.8 «Прочее» (мусорная
+// корзина, преимущественно стройка/благоустройство) и коды 13.3/13.4/13.7 (COGS игр — иллюстраторы/
+// тираж/сигнальные образцы) сознательно НЕ входят в маркетинг. Коды 12.1/12.6 (Выставки/Ведущие) —
+// отдельное направление, тоже не входят.
+const REGISTRY_ENTITY_TYPE_ID = 1080;
+const CODE_FIELD = 'ufCrm32Code';
+
+// iblock element id (Справочник кодов расходов) → { group, label }
+const MARKETING_CODES = {
+  216: { group: '11.1', label: 'Кабинеты СМБ' },
+  218: { group: '11.2', label: 'Кабинеты ВК' },
+  220: { group: '11.3', label: 'Кабинеты Телекот' },
+  222: { group: '11.4', label: 'Агентство' },
+  224: { group: '11.5', label: 'Разработка сайта' },
+  226: { group: '11.6', label: 'Прочая реклама' },
+  254: { group: '11.7', label: 'Журнал (контент)' },
+  230: { group: '12.2', label: 'Блогеры' },
+  232: { group: '12.3', label: 'Журналы' },
+  234: { group: '12.4', label: 'Фото/Видео' },
+  236: { group: '12.5', label: 'PR/Радио' },
+  238: { group: '13.1', label: 'Ролики (PreRoll)' },
+  240: { group: '13.2', label: 'Копирайтер' },
+  246: { group: '13.5', label: 'Мерч' },
+  248: { group: '13.6', label: 'Типографии (лифлеты)' },
+};
+const MARKETING_CODE_IDS = Object.keys(MARKETING_CODES).map(Number);
+
+// Отдельная палитра под коды (переиспользует конвенцию из render-expenses.js)
+const MARKETING_PALETTE = ['#4a5df9', '#e67e22', '#27ae60', '#c0392b', '#8e44ad', '#16a085',
+  '#7b79a0', '#2aabee', '#c2185b', '#8d6e63', '#607d8b', '#f39c12', '#5d4037', '#546e7a', '#00838f'];
+const MARKETING_COLORS = {};
+Object.keys(MARKETING_CODES).forEach((id, i) => {
+  MARKETING_COLORS[id] = MARKETING_PALETTE[i % MARKETING_PALETTE.length];
+});
 
 const CACHE_TTL = 10 * 60 * 1000; // 10 минут
 
@@ -212,38 +246,7 @@ function cacheInvalidateMarketing() {
 }
 
 // ── Marketing expenses — отдельный фетчер для страницы руководства ────────────
-
-const CHANNEL_LABELS = {
-  '230': 'Директ',
-  '232': 'VK Реклама',
-  '234': 'Посевы',
-  '236': 'Агентство',
-  '238': 'SEO',
-  '240': 'Другое',
-};
-
-// ── Период расхода ────────────────────────────────────────────────────────────
-// ВНИМАНИЕ: поле begindate у всех записей СП «Расходы» (импорт 07.07.2026) содержит
-// дату импорта, а не реальный период расхода — реальный месяц зашит только в title
-// («Вендор · Июль 2025», «Вендор · Апр 2026»). Парсим период оттуда; begindate — fallback
-// только для записей, где в title месяц не распознан (например, созданных вручную без даты в названии).
-const MONTH_RU = {
-  'янв': 1, 'фев': 2, 'март': 3, 'мар': 3, 'апр': 4, 'май': 5, 'июнь': 6, 'июн': 6,
-  'июль': 7, 'июл': 7, 'август': 8, 'авг': 8, 'сент': 9, 'сен': 9, 'окт': 10, 'ноя': 11, 'дек': 12,
-};
-
-function parsePeriodFromTitle(title) {
-  const m = /([А-Яа-я]+)\s+(\d{4})/.exec(title || '');
-  if (!m) return null;
-  const word = m[1].toLowerCase();
-  const year = parseInt(m[2], 10);
-  for (const key of Object.keys(MONTH_RU)) {
-    if (word.startsWith(key)) {
-      return `${year}-${String(MONTH_RU[key]).padStart(2, '0')}-01`;
-    }
-  }
-  return null;
-}
+// Источник — СП «Реестр платежей» (1080), см. константы MARKETING_CODES выше.
 
 let _rawExpCache   = null;
 let _rawExpCacheTs = 0;
@@ -251,24 +254,27 @@ let _rawExpCacheTs = 0;
 async function fetchRawExpenses() {
   if (_rawExpCache && Date.now() - _rawExpCacheTs < CACHE_TTL) return _rawExpCache;
 
-  const raw = await fetchAllItems(EXPENSE_ENTITY_TYPE_ID,
-    { ufCrm24Direction: DIRECTION_MARKETING_ID },
-    ['id', 'title', 'ufCrm24Amount', 'ufCrm24Channel', 'ufCrm24Description', 'begindate']
+  const raw = await fetchAllItems(REGISTRY_ENTITY_TYPE_ID,
+    { [CODE_FIELD]: MARKETING_CODE_IDS },
+    ['id', 'title', 'opportunity', CODE_FIELD, 'begindate']
   );
 
   _rawExpCache = raw.map(e => {
-    const chId = e.ufCrm24Channel ? String(e.ufCrm24Channel) : '240';
-    const date = parsePeriodFromTitle(e.title) || (e.begindate ? e.begindate.slice(0, 10) : null);
+    const codeId = e[CODE_FIELD] ? String(e[CODE_FIELD]) : null;
+    const meta   = codeId ? MARKETING_CODES[codeId] : null;
+    // begindate — авторитетное поле даты платежа в 1080 (НЕ closedate — оно перезаписывается
+    // текущей датой при переходе записи в SUCCESS, см. talk/CLAUDE.md, раздел «СП Реестр платежей»).
+    const date = e.begindate ? e.begindate.slice(0, 10) : null;
     return {
       id:           e.id,
       title:        e.title || '',
-      description:  e.ufCrm24Description || '',
-      amount:       parseFloat(e.ufCrm24Amount || 0),
-      channel:      chId,
-      channelLabel: CHANNEL_LABELS[chId] || 'Другое',
+      description:  '',
+      amount:       parseFloat(e.opportunity || 0),
+      channel:      meta ? meta.group : (codeId || 'other'),
+      channelLabel: meta ? meta.label : 'Другое',
       date,
       month:        date ? date.slice(0, 7) : null,
-      b24Url:       `${B24_URL}/crm/type/1070/details/${e.id}/`,
+      b24Url:       `${B24_URL}/crm/type/1080/details/${e.id}/`,
     };
   }).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   _rawExpCacheTs = Date.now();
