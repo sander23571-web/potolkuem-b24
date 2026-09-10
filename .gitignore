@@ -20,3 +20,6 @@ scripts/.existing-1080-*.json
 scripts/.excluded-income-*.json
 scripts/.excluded-dividends-*.json
 scripts/.review-near-duplicates-*.md
+scripts/.exclude-*-results.json
+scripts/.fix-*-results.json
+scripts/.*_host_ids.json
