@@ -26,6 +26,7 @@
 | `/report/expenses` | ✅ | Все расходы компании (СП «Реестр платежей» 1080, по коду расхода) — requireFinanceViewer: Анна (uid=18) + владелец (uid=134) + Basic Auth `director`/`beFPuNMl5M4FI7X2` (03.09.2026: обнаружено и исправлено — креды не были заведены в `.env` на проде, раздел был фактически недоступен никому) |
 | `/report/warehouse` | ✅ | Склад: остатки, заморозка, маржа по товарам |
 | `/report/realization` | ✅ | Реализация по складам, помесячно — live-данные через pbi.php (30.08, раньше ручной CSV) |
+| `/report/realization-legacy` | ✅ | Реализация — до склада (14.09): 4 ранние выставки + «Прочее», сделки без товарных позиций, дополняет `/report/realization` |
 | `/report/creative` | ✅ | Активность Креативного директора — СП 1100, 4 блока (30.08) |
 | `/tasks` | ✅ | Задачи команды: просроченные, зависшие, без дедлайна |
 | `/social` | ✅ | SMM: подписчики VK/TG/Дзен (LiveDune) |
@@ -40,6 +41,7 @@ scp -P 2222 -i ~/.ssh/reportapp_deploy_key \
   report-app/marketing-data.js report-app/render-marketing.js report-app/period.js \
   report-app/warehouse-data.js report-app/render-warehouse.js report-app/format.js \
   report-app/realization-data.js report-app/render-realization.js \
+  report-app/realization-legacy-data.js report-app/render-realization-legacy.js \
   report-app/activity-data.js report-app/render-activity.js \
   report-app/bx-auth.js report-app/bx-embed.js report-app/nav.js report-app/package.json \
   reportapp-deploy@155.212.143.68:/root/projects/talk-report/ && \
