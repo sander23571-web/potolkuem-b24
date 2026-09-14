@@ -18,8 +18,15 @@ const B24_URL  = 'https://potolkuem.bitrix24.ru';
 const CATALOG_ID = 24; // iblockId товарного каталога CRM
 
 // Классификация складов
-const MAIN_STORE_IDS   = new Set([4, 6, 8, 28]); // Офис, Дмитрий, WB, Выездной
-const RETAIL_STORE_IDS = new Set([10, 12, 14, 16, 18, 22, 24, 26]); // Точки продаж
+// «Розница» — не отдельный хардкод-список, а всё, что НЕ входит в MAIN_STORE_IDS.
+// До 14.09.2026 розница тоже была отдельным явным списком ID — новый склад id=30
+// «Книжная лавка писателей» появился без правки этого файла и не попал ни в один
+// из двух списков: его остатки (6 шт/12 210₽) считались в общем ИТОГО дашборда,
+// но выпадали из обеих таблиц разбивки («Основные склады»/«Розничные точки») —
+// отсюда расхождение сумм, замеченное владельцем. Инвертировали классификацию,
+// чтобы то же самое не повторилось на следующей новой точке.
+const MAIN_STORE_IDS = new Set([4, 6, 8, 28]); // Офис, Дмитрий, WB, Выездной
+const isRetailStore  = (id) => !MAIN_STORE_IDS.has(id);
 
 const CACHE_TTL = 5 * 60 * 1000;
 let _cache   = null;
@@ -119,7 +126,7 @@ async function fetchWarehouseData() {
       title:   s.title,
       address: s.address || '',
       isMain:  MAIN_STORE_IDS.has(s.id),
-      isRetail: RETAIL_STORE_IDS.has(s.id),
+      isRetail: isRetailStore(s.id),
       totalQty:   0,
       totalValue: 0,
     };
@@ -151,8 +158,8 @@ async function fetchWarehouseData() {
     byProduct[prod.id].totalValue += value;
     byProduct[prod.id].byStore[item.storeId] = (byProduct[prod.id].byStore[item.storeId] || 0) + qty;
 
-    if (MAIN_STORE_IDS.has(item.storeId))   byProduct[prod.id].mainQty   += qty;
-    if (RETAIL_STORE_IDS.has(item.storeId)) byProduct[prod.id].retailQty += qty;
+    if (MAIN_STORE_IDS.has(item.storeId)) byProduct[prod.id].mainQty   += qty;
+    else                                   byProduct[prod.id].retailQty += qty;
 
     store.totalQty   += qty;
     store.totalValue += value;
