@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { key: 'expensesAll', label: 'Все расходы', href: '/report/expenses', financeOnly: true, orange: true },
   { key: 'warehouse', label: 'Склад',     href: '/report/warehouse' },
   { key: 'realization', label: 'Реализация', href: '/report/realization' },
+  { key: 'realizationLegacy', label: 'Реализация (до склада)', href: '/report/realization-legacy' },
   { key: 'creative',  label: 'Креатив',    href: '/report/creative' },
   { key: 'tasks',     label: 'Активность', href: '/tasks' },
   { key: 'social',    label: 'SMM',       href: '/social' },

@@ -16,6 +16,8 @@ const { fetchWarehouseData, cacheInvalidateWarehouse } = require('./warehouse-da
 const { renderWarehouse } = require('./render-warehouse');
 const { fetchRealizationData, invalidateRealizationCache } = require('./realization-data');
 const { renderRealization } = require('./render-realization');
+const { fetchPreWarehouseData, invalidateRealizationLegacyCache } = require('./realization-legacy-data');
+const { renderRealizationLegacy } = require('./render-realization-legacy');
 const { fetchActivityData, cacheInvalidateActivity } = require('./activity-data');
 const { renderActivity } = require('./render-activity');
 const { renderNas } = require('./render-nas');
@@ -145,6 +147,24 @@ app.get('/report/realization', async (req, res) => {
 app.post('/report/realization/refresh', (req, res) => {
   invalidateRealizationCache();
   res.redirect(withBxt('/report/realization', req));
+});
+
+// Реализация до склада — сделки воронки 18 без товарных позиций/склада (см.
+// realization-legacy-data.js). Дополнение к /report/realization, не замена. Должно быть
+// до /report/:id.
+app.get('/report/realization-legacy', async (req, res) => {
+  try {
+    const data = await fetchPreWarehouseData();
+    res.send(renderRealizationLegacy(data, req.viewer));
+  } catch (err) {
+    console.error('[ERR] /report/realization-legacy:', err.message);
+    res.status(500).send('Внутренняя ошибка сервера');
+  }
+});
+
+app.post('/report/realization-legacy/refresh', (req, res) => {
+  invalidateRealizationLegacyCache();
+  res.redirect(withBxt('/report/realization-legacy', req));
 });
 
 // Активность Креативного директора (СП 1100). Должно быть до /report/:id.
