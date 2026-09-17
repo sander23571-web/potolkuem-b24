@@ -170,9 +170,27 @@ async function fetchPreWarehouseData() {
     const requireDash = ex.id !== 'none';
     const items = buildItemBreakdown(ex.deals, requireDash);
     const sum = ex.deals.reduce((s, d) => s + (parseFloat(d.OPPORTUNITY) || 0), 0);
+    // Помесячная разбивка — нужна для объединённого годового дашборда /report/realization-full.
+    // ⚠️ Для выставок с фиксированной датой (не "Прочее") НЕЛЬЗЯ брать DATE_CREATE сделки —
+    // все их сделки заведены в CRM одним пакетом 18.06.2026 (задним числом), DATE_CREATE
+    // показывает дату переноса в CRM, а не дату самой выставки (найдено 17.09.2026 при
+    // расхождении в /report/realization-full: февраль/март/апрель были пусты). Используем
+    // begindate самой выставки — она одна на всех её сделок. Только "Прочее" (id='none', нет
+    // привязки к конкретной выставке) реально разбросано по датам — там DATE_CREATE оставлен.
+    const byMonth = {};
+    if (ex.id !== 'none' && ex.begindate) {
+      const month = ex.begindate.slice(0, 7);
+      byMonth[month] = sum;
+    } else {
+      for (const d of ex.deals) {
+        const month = (d.DATE_CREATE || '').slice(0, 7);
+        if (!month) continue;
+        byMonth[month] = (byMonth[month] || 0) + (parseFloat(d.OPPORTUNITY) || 0);
+      }
+    }
     return {
       id: ex.id, title: ex.title, begindate: ex.begindate, closedate: ex.closedate,
-      dealCount: ex.deals.length, sum, items,
+      dealCount: ex.deals.length, sum, items, byMonth,
       overlapNote: OVERLAP_NOTE[ex.id] || null,
     };
   });

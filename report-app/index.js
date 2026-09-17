@@ -18,6 +18,8 @@ const { fetchRealizationData, invalidateRealizationCache } = require('./realizat
 const { renderRealization } = require('./render-realization');
 const { fetchPreWarehouseData, invalidateRealizationLegacyCache } = require('./realization-legacy-data');
 const { renderRealizationLegacy } = require('./render-realization-legacy');
+const { fetchCombinedRealization } = require('./realization-combined-data');
+const { renderRealizationCombined } = require('./render-realization-combined');
 const { fetchActivityData, cacheInvalidateActivity } = require('./activity-data');
 const { renderActivity } = require('./render-activity');
 const { renderNas } = require('./render-nas');
@@ -165,6 +167,19 @@ app.get('/report/realization-legacy', async (req, res) => {
 app.post('/report/realization-legacy/refresh', (req, res) => {
   invalidateRealizationLegacyCache();
   res.redirect(withBxt('/report/realization-legacy', req));
+});
+
+// Реализация — весь год: свод /report/realization (склад) + /report/realization-legacy
+// (до склада) в один месячный ряд, без пересечений (см. realization-combined-data.js).
+// Должно быть до /report/:id.
+app.get('/report/realization-full', async (req, res) => {
+  try {
+    const data = await fetchCombinedRealization();
+    res.send(renderRealizationCombined(data, req.viewer));
+  } catch (err) {
+    console.error('[ERR] /report/realization-full:', err.message);
+    res.status(500).send('Внутренняя ошибка сервера');
+  }
 });
 
 // Активность Креативного директора (СП 1100). Должно быть до /report/:id.

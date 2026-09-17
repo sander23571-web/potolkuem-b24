@@ -86,6 +86,15 @@ const BASE_CSS = `
 
   .footer { text-align: center; font-size: 12px; color: var(--muted); padding: 32px; border-top: 1px solid var(--border); margin-top: 60px; letter-spacing: 1px; }
 
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,11,46,.55); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: var(--card); border-radius: 6px; max-width: 560px; width: 100%; max-height: 80vh; overflow-y: auto; padding: 28px; position: relative; }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 20px; color: var(--muted); cursor: pointer; line-height: 1; }
+  .modal-close:hover { color: var(--text); }
+  .modal-box h2 { font-size: 20px; font-weight: 400; margin-bottom: 4px; }
+  .modal-box .modal-address { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+  .modal-box .data-table { box-shadow: none; }
+
   @media (max-width: 768px) {
     .hero { padding: 24px 20px; }
     .container { padding: 0 16px 40px; }
@@ -125,11 +134,23 @@ function renderWarehouse(data, viewer) {
     </tr>`;
   }).join('');
 
-  const storeRows = (list) => list.map(s => `<tr>
-    <td>${escHtml(s.title)}</td>
+  const storeRows = (list) => list.map(s => `<tr class="store-row" data-store-id="${s.id}" style="cursor:pointer">
+    <td>${escHtml(s.title)} <span class="ext-link" style="font-size:11px;color:var(--muted)">детали ↗</span></td>
     <td class="num" style="font-weight:600">${fmt(s.totalQty)}</td>
     <td class="num" style="color:var(--orange)">${s.totalValue ? fmtRub(s.totalValue) : '—'}</td>
   </tr>`).join('');
+
+  // Остатки по конкретным играм на каждом складе/точке — для модалки по клику. Данные уже
+  // посчитаны в warehouse-data.js (byStore на каждом товаре), просто переворачиваем в обратную
+  // сторону (склад -> список товаров), новых запросов к Б24 не требуется.
+  const storeDetails = {};
+  for (const s of stores) {
+    const items = products
+      .filter(p => (p.byStore[s.id] || 0) > 0)
+      .map(p => ({ name: shortName(p.name), qty: p.byStore[s.id], url: p.url }))
+      .sort((a, b) => b.qty - a.qty);
+    storeDetails[s.id] = { title: s.title, address: s.address, items };
+  }
 
   const storeTotals = (list) => list.reduce((acc, s) => ({
     qty: acc.qty + (s.totalQty || 0),
@@ -285,6 +306,18 @@ function renderWarehouse(data, viewer) {
 
 </div><!-- /container -->
 
+<div class="modal-overlay" id="storeModal">
+  <div class="modal-box">
+    <button class="modal-close" id="storeModalClose" aria-label="Закрыть">×</button>
+    <h2 id="storeModalTitle"></h2>
+    <div class="modal-address" id="storeModalAddress"></div>
+    <table class="data-table">
+      <thead><tr><th>Игра</th><th class="num">Остаток, шт</th></tr></thead>
+      <tbody id="storeModalBody"></tbody>
+    </table>
+  </div>
+</div>
+
 <div class="footer">Потолкуем? · Склад · БюроОБП</div>
 
 <script>
@@ -338,6 +371,30 @@ ${fmtRubClientSrc}
       }
     }
   });
+
+  // ── Модалка «остатки по конкретным играм» — по клику на склад/точку ────────────
+  const storeDetails = ${JSON.stringify(storeDetails)};
+  const modal = document.getElementById('storeModal');
+  const modalTitle = document.getElementById('storeModalTitle');
+  const modalAddress = document.getElementById('storeModalAddress');
+  const modalBody = document.getElementById('storeModalBody');
+
+  function openStoreModal(storeId) {
+    const s = storeDetails[storeId];
+    if (!s) return;
+    modalTitle.textContent = s.title;
+    modalAddress.textContent = s.address || '';
+    modalBody.innerHTML = s.items.length
+      ? s.items.map(it => '<tr><td>' + it.name.replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])) + '</td><td class="num">' + it.qty.toLocaleString('ru-RU') + '</td></tr>').join('')
+      : '<tr class="empty-row"><td colspan="2">Остатков нет</td></tr>';
+    modal.classList.add('open');
+  }
+  document.querySelectorAll('.store-row').forEach(row => {
+    row.addEventListener('click', () => openStoreModal(row.dataset.storeId));
+  });
+  document.getElementById('storeModalClose').addEventListener('click', () => modal.classList.remove('open'));
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') modal.classList.remove('open'); });
 })();
 </script>
 ${bxBootstrap(token)}

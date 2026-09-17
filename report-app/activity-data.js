@@ -14,7 +14,7 @@ const WEBHOOK = process.env.B24_WEBHOOK;
 const B24_URL = 'https://potolkuem.bitrix24.ru';
 const ENTITY_TYPE_ID = 1100;
 
-const CATEGORY = { SOCIAL: 60, JOURNAL: 62, DESIGN: 64, SHOOTS: 66 };
+const CATEGORY = { SOCIAL: 60, JOURNAL: 62, DESIGN: 64, SHOOTS: 66, TECH: 68 };
 
 // Стадии — захардкожены (созданы вручную 29.08, устойчивый список, id STATUS_ID не меняются).
 // SUCCESS/FAIL — терминальные (по ним считаем «в работе» vs «завершено»/«просрочено»).
@@ -48,11 +48,24 @@ const STAGES = {
     { id: 'DT1100_66:SUCCESS', name: 'Готово', terminal: true },
     { id: 'DT1100_66:FAIL', name: 'Отменено', terminal: true },
   ],
+  // Категория добавлена 17.09.2026 по замечанию Алёны (п.5) — техдоработки сайта/конструктора статей.
+  [CATEGORY.TECH]: [
+    { id: 'DT1100_68:NEW', name: 'Поставлена' },
+    { id: 'DT1100_68:PREPARATION', name: 'Взял в работу' },
+    { id: 'DT1100_68:CLIENT', name: 'Проверить' },
+    { id: 'DT1100_68:SUCCESS', name: 'Готово', terminal: true },
+    { id: 'DT1100_68:FAIL', name: 'Отклонена / не воспроизводится', terminal: true },
+  ],
 };
 
 // Enum-справочники полей (id варианта -> текст) — сняты при создании полей 29.08.
 const ENUM = {
   platform:    { 276: 'VK', 278: 'TG', 280: 'Дзен', 282: 'MAX', 284: 'TikTok', 286: 'Instagram', 288: 'Другое' },
+  // Новое множественное поле «Площадки» (ufCrm42SmPlatforms, id=876, создано 17.09.2026 по
+  // замечанию Алёны п.2 — одна карточка на публикацию вместо одной на площадку). Старое
+  // ufCrm42SmPlatform (одиночное, enum выше) не удалено — используется старыми записями,
+  // но помечено в форме Б24 как устаревшее и новыми записями заполняться не должно.
+  platforms:   { 332: 'VK', 334: 'TG', 336: 'Дзен', 338: 'MAX', 340: 'TikTok', 342: 'Instagram', 344: 'YouTube', 346: 'RUTUBE', 348: 'Другое' },
   contentType: { 290: 'Пост', 292: 'Сторис', 294: 'Рилс', 296: 'Карусель' },
   designType:  { 298: 'Презентация', 300: 'Выставочный материал', 302: 'Полиграфия', 304: 'Рекламный креатив',
                  306: 'Генерация изображений', 308: 'Материал для сайта', 310: 'Другое' },
@@ -106,12 +119,12 @@ const SELECT_COMMON = ['id', 'title', 'categoryId', 'stageId', 'begindate', 'clo
 async function fetchActivityData() {
   if (cache && Date.now() - cacheTs < CACHE_TTL) return cache;
 
-  const [social, journal, design, shoots, usersRes] = await Promise.all([
+  const [social, journal, design, shoots, tech, usersRes] = await Promise.all([
     fetchAllItems({ categoryId: CATEGORY.SOCIAL }, [...SELECT_COMMON,
-      'ufCrm42SmPlatform', 'ufCrm42SmPublishDate', 'ufCrm42SmContentType', 'ufCrm42SmTopic',
-      'ufCrm42SmLink', 'ufCrm42SmViews', 'ufCrm42SmReach', 'ufCrm42SmLikes', 'ufCrm42SmComments',
-      'ufCrm42SmShares', 'ufCrm42SmZenCompletion', 'ufCrm42SmZenReadTime', 'ufCrm42SmZenWatchTime',
-      'ufCrm42SmZenRetention']),
+      'ufCrm42SmPlatform', 'ufCrm42SmPlatforms', 'ufCrm42SmPublishDate', 'ufCrm42SmContentType',
+      'ufCrm42SmTopic', 'ufCrm42SmLink', 'ufCrm42SmLinks', 'ufCrm42SmViews', 'ufCrm42SmReach',
+      'ufCrm42SmLikes', 'ufCrm42SmComments', 'ufCrm42SmShares', 'ufCrm42SmZenCompletion',
+      'ufCrm42SmZenReadTime', 'ufCrm42SmZenWatchTime', 'ufCrm42SmZenRetention']),
     fetchAllItems({ categoryId: CATEGORY.JOURNAL }, [...SELECT_COMMON,
       'ufCrm42JCopywriter', 'ufCrm42JTopic', 'ufCrm42JRubric', 'ufCrm42JLink', 'ufCrm42JAuthor',
       'ufCrm42JViews', 'ufCrm42JDesktop', 'ufCrm42JMobile', 'ufCrm42JZen']),
@@ -120,6 +133,8 @@ async function fetchActivityData() {
     fetchAllItems({ categoryId: CATEGORY.SHOOTS }, [...SELECT_COMMON,
       'ufCrm42SType', 'ufCrm42SDate', 'ufCrm42SSubject', 'ufCrm42SUsage', 'ufCrm42SExecutor',
       'ufCrm42STzLink', 'ufCrm42SCost', 'ufCrm42SContract', 'ufCrm42SVolume', 'ufCrm42SSourceLink']),
+    fetchAllItems({ categoryId: CATEGORY.TECH }, [...SELECT_COMMON,
+      'ufCrm42TUrl', 'ufCrm42TDescription', 'ufCrm42TScreenshot', 'ufCrm42TDeveloper']),
     b24('user.get', { filter: {}, start: -1 }),
   ]);
 
@@ -144,6 +159,10 @@ async function fetchActivityData() {
   const data = {
     social:  decorate(social, CATEGORY.SOCIAL).map(it => ({ ...it,
       platformLabel: ENUM.platform[it.ufCrm42SmPlatform] || '—',
+      // Новое множественное поле приоритетно; старое одиночное — фолбэк для записей до 17.09.2026.
+      platformsLabels: (Array.isArray(it.ufCrm42SmPlatforms) ? it.ufCrm42SmPlatforms : [])
+        .map(v => ENUM.platforms[v] || v).filter(Boolean),
+      linksList: (Array.isArray(it.ufCrm42SmLinks) ? it.ufCrm42SmLinks : []).filter(Boolean),
       contentTypeLabel: ENUM.contentType[it.ufCrm42SmContentType] || '—',
     })),
     journal: decorate(journal, CATEGORY.JOURNAL).map(it => ({ ...it,
@@ -158,6 +177,7 @@ async function fetchActivityData() {
       usageLabel: (Array.isArray(it.ufCrm42SUsage) ? it.ufCrm42SUsage : [it.ufCrm42SUsage])
         .filter(Boolean).map(v => ENUM.usage[v] || v).join(', '),
     })),
+    tech:    decorate(tech, CATEGORY.TECH),
     employees,
     stages: STAGES,
     fetchedAt: new Date().toISOString(),

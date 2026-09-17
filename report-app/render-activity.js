@@ -28,14 +28,16 @@ const CAT_COLOR = {
   [CATEGORY.JOURNAL]: '#8e44ad',
   [CATEGORY.DESIGN]: '#e67e22',
   [CATEGORY.SHOOTS]: '#27ae60',
+  [CATEGORY.TECH]: '#16a085',
 };
 const CAT_LABEL = {
   [CATEGORY.SOCIAL]: 'Соцсети',
   [CATEGORY.JOURNAL]: 'Журнал «Потолкуем?»',
   [CATEGORY.DESIGN]: 'Дизайн',
   [CATEGORY.SHOOTS]: 'Съёмки',
+  [CATEGORY.TECH]: 'Техдоработки сайта',
 };
-const PLATFORM_COLOR = { VK: '#2787f5', TG: '#2aabee', 'Дзен': '#000000', MAX: '#8b5cf6', TikTok: '#e2266d', Instagram: '#d62976', 'Другое': '#7b79a0' };
+const PLATFORM_COLOR = { VK: '#2787f5', TG: '#2aabee', 'Дзен': '#000000', MAX: '#8b5cf6', TikTok: '#e2266d', Instagram: '#d62976', YouTube: '#ff0000', RUTUBE: '#00a8e0', 'Другое': '#7b79a0' };
 
 function b24Link(b24Url, id) {
   return `${b24Url}/crm/type/1100/details/${id}/`;
@@ -116,12 +118,13 @@ const BASE_CSS = `
 
 function renderActivity(data, viewer) {
   const { token, isDirector } = viewer || {};
-  const { social, journal, design, shoots, b24Url, fetchedAt } = data;
+  const { social, journal, design, shoots, tech, b24Url, fetchedAt } = data;
   const all = [
     ...social.map(it => ({ ...it, _cat: CATEGORY.SOCIAL })),
     ...journal.map(it => ({ ...it, _cat: CATEGORY.JOURNAL })),
     ...design.map(it => ({ ...it, _cat: CATEGORY.DESIGN })),
     ...shoots.map(it => ({ ...it, _cat: CATEGORY.SHOOTS })),
+    ...tech.map(it => ({ ...it, _cat: CATEGORY.TECH })),
   ];
 
   const today = new Date().toISOString().slice(0, 10);
@@ -231,13 +234,23 @@ function renderActivity(data, viewer) {
     </script>`;
   }
 
+  function platformBadges(it) {
+    // Новое множественное поле «Площадки» приоритетно; старое одиночное — фолбэк для записей
+    // до 17.09.2026, заведённых ещё по одной карточке на площадку.
+    const labels = it.platformsLabels.length ? it.platformsLabels : [it.platformLabel].filter(Boolean);
+    return labels.map(l => `<span class="badge stage" style="background:${PLATFORM_COLOR[l] || '#7b79a0'}22;color:${PLATFORM_COLOR[l] || '#7b79a0'}">${escHtml(l)}</span>`).join(' ');
+  }
+  function publicationLinks(it) {
+    const links = it.linksList.length ? it.linksList : [it.ufCrm42SmLink].filter(Boolean);
+    return links.map(u => ` · <a class="ext-link" href="${escHtml(u)}" target="_blank">пост ↗</a>`).join('');
+  }
   function socialTable() {
     if (!social.length) return `<tr class="empty-row"><td colspan="8">Записей пока нет</td></tr>`;
     return [...social].sort((a, b) => (b.ufCrm42SmPublishDate || '').localeCompare(a.ufCrm42SmPublishDate || '')).map(it => `<tr>
-      <td><span class="badge stage" style="background:${PLATFORM_COLOR[it.platformLabel] || '#7b79a0'}22;color:${PLATFORM_COLOR[it.platformLabel] || '#7b79a0'}">${escHtml(it.platformLabel)}</span></td>
+      <td>${platformBadges(it)}</td>
       <td>${escHtml(it.contentTypeLabel)}</td>
       <td><a class="b24-link" href="${b24Link(b24Url, it.id)}" target="_blank">${escHtml(it.ufCrm42SmTopic || it.title || '—')}</a>
-        ${it.ufCrm42SmLink ? ` · <a class="ext-link" href="${escHtml(it.ufCrm42SmLink)}" target="_blank">пост ↗</a>` : ''}</td>
+        ${publicationLinks(it)}</td>
       <td>${escHtml(fmtDate(it.ufCrm42SmPublishDate))}</td>
       <td class="num">${it.ufCrm42SmViews != null ? fmt(it.ufCrm42SmViews) : '—'}</td>
       <td class="num">${it.ufCrm42SmLikes != null ? fmt(it.ufCrm42SmLikes) : '—'}</td>
@@ -265,22 +278,42 @@ function renderActivity(data, viewer) {
     </tr>`).join('');
   }
 
-  // График публикаций — простой список ближайших незавершённых статей по плановой дате
-  // (begindate), отдельно от истории journalTable() выше (та отсортирована по убыванию
-  // и мешает и опубликованное, и запланированное вместе).
-  const journalUpcoming = journal
-    .filter(it => !it.terminal)
+  // Полный календарь статей (п.6, 17.09.2026 по замечанию Алёны) — ВСЕ статьи (не только
+  // незавершённые, как было раньше), отсортированные по плановой дате, с полным названием
+  // (Kanban-карточки Б24 обрезают длинные заголовки — ограничение виджета, не структуры СП;
+  // здесь заголовок не режется). Фактическая дата публикации показана отдельной колонкой.
+  const journalCalendar = [...journal]
     .sort((a, b) => (a.begindate || '9999').localeCompare(b.begindate || '9999'));
 
   function journalUpcomingRows() {
-    if (!journalUpcoming.length) return `<tr class="empty-row"><td colspan="4">Незавершённых статей в плане нет</td></tr>`;
-    return journalUpcoming.map(it => `<tr>
+    if (!journalCalendar.length) return `<tr class="empty-row"><td colspan="5">Статей в плане пока нет</td></tr>`;
+    return journalCalendar.map(it => `<tr>
       <td>${escHtml(fmtDate(it.begindate))}</td>
+      <td>${it.terminal ? escHtml(fmtDate(it.closedate)) : '—'}</td>
       <td><a class="b24-link" href="${b24Link(b24Url, it.id)}" target="_blank">${escHtml(it.ufCrm42JTopic || it.title || '—')}</a></td>
       <td>${escHtml(it.ufCrm42JRubric || '—')}</td>
-      <td>${escHtml(it.copywriterName || '—')} · <span class="badge stage">${escHtml(it.stageLabel)}</span></td>
+      <td>${escHtml(it.copywriterName || '—')} · <span class="badge stage${it.terminal ? (it.failed ? ' fail' : ' done') : ''}">${escHtml(it.stageLabel)}</span></td>
     </tr>`).join('');
   }
+
+  // Нагрузка по копирайтерам (п. «сколько работ у каждого») — считаем по полю «Копирайтер»
+  // (ufCrm42JCopywriter), не по общему «Ответственному»: часто это разные люди (Ответственный
+  // может быть Алёна как постановщик, Копирайтер — кто реально пишет).
+  const copywriterStats = new Map(); // name -> { total, published, inProgress }
+  for (const it of journal) {
+    const name = it.copywriterName || '—';
+    if (!copywriterStats.has(name)) copywriterStats.set(name, { total: 0, published: 0, inProgress: 0 });
+    const s = copywriterStats.get(name);
+    s.total++;
+    if (it.terminal && !it.failed) s.published++;
+    else if (!it.terminal) s.inProgress++;
+  }
+  const copywriterRows = [...copywriterStats.entries()].sort((a, b) => b[1].total - a[1].total).map(([name, s]) => `<tr>
+      <td>${escHtml(name)}</td>
+      <td class="num">${s.total}</td>
+      <td class="num">${s.published}</td>
+      <td class="num">${s.inProgress}</td>
+    </tr>`).join('') || `<tr class="empty-row"><td colspan="4">Записей пока нет</td></tr>`;
 
   function designTable() {
     if (!design.length) return `<tr class="empty-row"><td colspan="6">Записей пока нет</td></tr>`;
@@ -309,6 +342,18 @@ function renderActivity(data, viewer) {
     </tr>`).join('');
   }
 
+  function techTable() {
+    if (!tech.length) return `<tr class="empty-row"><td colspan="5">Задач пока нет</td></tr>`;
+    return [...tech].sort((a, b) => (b.begindate || b.createdTime || '').localeCompare(a.begindate || a.createdTime || '')).map(it => `<tr>
+      <td><a class="b24-link" href="${b24Link(b24Url, it.id)}" target="_blank">${escHtml(it.title || it.ufCrm42TDescription || '—')}</a>
+        ${it.ufCrm42TUrl ? ` · <a class="ext-link" href="${escHtml(it.ufCrm42TUrl)}" target="_blank">страница ↗</a>` : ''}</td>
+      <td>${escHtml(it.ufCrm42TDescription || '—')}</td>
+      <td>${escHtml(it.ufCrm42TDeveloper || '—')}</td>
+      <td>${escHtml(fmtDate(it.begindate))}</td>
+      <td><span class="badge stage${it.terminal ? (it.failed ? ' fail' : ' done') : ''}">${escHtml(it.stageLabel)}</span></td>
+    </tr>`).join('');
+  }
+
   const fetchedStr = fetchedAt
     ? new Date(fetchedAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
     : '—';
@@ -330,6 +375,7 @@ function renderActivity(data, viewer) {
   <div class="hero-sub">Соцсети · Журнал «Потолкуем?» · Дизайн · Съёмки</div>
   <nav class="hero-nav">
     ${renderNav('creative', isDirector, isFinanceViewer(viewer))}
+    <a class="nav-btn" href="#journal-calendar">📅 Полный календарь статей</a>
     <span class="fetched-at">обновлено ${fetchedStr}</span>
   </nav>
 </div>
@@ -373,12 +419,12 @@ ${overdue.length ? `
 </div>
 
 <!-- ═══ Журнал ═══ -->
-<div class="section">
+<div class="section" id="journal-calendar">
   <div class="section-title"><span class="dot" style="background:${CAT_COLOR[CATEGORY.JOURNAL]}"></span>Журнал «Потолкуем?»</div>
 
-  <h3 style="margin:4px 0 8px">График публикаций — в работе</h3>
+  <h3 style="margin:4px 0 8px">Полный календарь статей</h3>
   <div class="table-wrap"><table class="data-table">
-    <thead><tr><th>Плановая дата</th><th>Статья</th><th>Рубрика</th><th>Копирайтер / стадия</th></tr></thead>
+    <thead><tr><th>Плановая дата</th><th>Факт. дата</th><th>Статья</th><th>Рубрика</th><th>Копирайтер / стадия</th></tr></thead>
     <tbody>${journalUpcomingRows()}</tbody>
   </table></div>
 
@@ -389,6 +435,12 @@ ${overdue.length ? `
     </table></div>
     <div class="chart-card"><h3>Стадии</h3>${stageFunnelChart(CATEGORY.JOURNAL, 'chartJournalStages')}</div>
   </div>
+
+  <h3 style="margin:24px 0 8px">Нагрузка по копирайтерам</h3>
+  <div class="table-wrap"><table class="data-table">
+    <thead><tr><th>Копирайтер</th><th class="num">Всего статей</th><th class="num">Опубликовано</th><th class="num">В работе</th></tr></thead>
+    <tbody>${copywriterRows}</tbody>
+  </table></div>
 </div>
 
 <!-- ═══ Дизайн ═══ -->
@@ -412,6 +464,18 @@ ${overdue.length ? `
       <tbody>${shootsTable()}</tbody>
     </table></div>
     <div class="chart-card"><h3>Стадии</h3>${stageFunnelChart(CATEGORY.SHOOTS, 'chartShootsStages')}</div>
+  </div>
+</div>
+
+<!-- ═══ Техдоработки сайта ═══ -->
+<div class="section">
+  <div class="section-title"><span class="dot" style="background:${CAT_COLOR[CATEGORY.TECH]}"></span>Техдоработки сайта</div>
+  <div class="two-col" style="margin-top:0">
+    <div class="table-wrap"><table class="data-table">
+      <thead><tr><th>Что</th><th>Описание</th><th>Исполнитель</th><th>Дата</th><th>Стадия</th></tr></thead>
+      <tbody>${techTable()}</tbody>
+    </table></div>
+    <div class="chart-card"><h3>Стадии</h3>${stageFunnelChart(CATEGORY.TECH, 'chartTechStages')}</div>
   </div>
 </div>
 
