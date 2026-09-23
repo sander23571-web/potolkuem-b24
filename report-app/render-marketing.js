@@ -358,7 +358,7 @@ function renderMarketing(data, viewer) {
   const wbLast  = latestRecord(wbItems);
 
   // Топ органических запросов
-  const topRows = (topQueries || []).slice(0, 15);
+  const topRows = (topQueries || []).slice(0, 50);
 
   // ── HTML ──────────────────────────────────────────────────────────────────
   return `<!DOCTYPE html>
@@ -535,12 +535,12 @@ ${renderPeriodBar('/report/marketing', range)}
 
   <div class="kpi-grid kpi-grid-3">
     <div class="kpi-card">
-      <div class="kpi-label">Яндекс.Директ (посл. мес.)</div>
+      <div class="kpi-label">Яндекс.Директ (${ydLast ? fmtDate(ydLast.period) : 'посл. мес.'})</div>
       <div class="kpi-value">${ydLast ? fmtRub(ydLast.spend) : '—'}</div>
       <div class="kpi-note">${ydLast ? `${fmt(ydLast.clicks)} кликов · ${fmt(ydLast.impressions)} показов · CTR ${ydLast.impressions ? fmtFloat(ydLast.clicks / ydLast.impressions * 100) : 0}%` : 'нет данных'}${ydLast?.b24Url ? ` · <a href="${ydLast.b24Url}" target="_blank">Б24</a>` : ''}</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">VK Реклама (посл. мес.)</div>
+      <div class="kpi-label">VK Реклама (${vkAdsLast ? fmtDate(vkAdsLast.period) : 'посл. мес.'})</div>
       <div class="kpi-value">${vkAdsLast ? fmtRub(vkAdsLast.spend) : '—'}</div>
       <div class="kpi-note">${vkAdsLast ? `${fmt(vkAdsLast.clicks)} кликов · ${fmt(vkAdsLast.impressions)} показов · CTR ${vkAdsLast.impressions ? fmtFloat(vkAdsLast.clicks / vkAdsLast.impressions * 100) : 0}%` : 'нет данных'}${vkAdsLast?.b24Url ? ` · <a href="${vkAdsLast.b24Url}" target="_blank">Б24</a>` : ''}</div>
     </div>

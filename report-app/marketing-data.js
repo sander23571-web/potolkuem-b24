@@ -221,7 +221,7 @@ async function fetchMarketingData(range = {}) {
 
   const filteredSnapshots = filterByRange(snapshots, from, to, 'date');
   const snap             = filteredSnapshots[filteredSnapshots.length - 1] || null;
-  const topQueries       = snap?.webmaster?.rows?.slice(0, 20) || [];
+  const topQueries       = snap?.webmaster?.rows?.slice(0, 50) || [];
   const snapDate         = snap?.date || null;
   const wordstatHistory  = snap?.wordstat?.brand_history || [];
   const queryDynamics    = computeQueryDynamics(filteredSnapshots);
