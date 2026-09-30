@@ -111,6 +111,13 @@ function parseItem(item) {
     // только у платформы "Метрика_сайт".
     siteCart:     parseInt(item[pf('SiteCart')]) || 0,
     siteOrders:   parseInt(item[pf('SiteOrders')]) || 0,
+    // LiveDune-активность (посты/подписчики брутто/переходы по ссылкам) — заполняется
+    // еженедельным cron'ом (platform-stats-cron.py), но не всеми площадками одинаково:
+    // Posts есть у VK/TG/MAX, Gained/Lost/LinkClicks пока только у VK (см. proj log talk id=1097).
+    posts:        item[pf('Posts')] != null ? parseInt(item[pf('Posts')]) : null,
+    gained:       item[pf('Gained')] != null ? parseInt(item[pf('Gained')]) : null,
+    lost:         item[pf('Lost')] != null ? parseInt(item[pf('Lost')]) : null,
+    linkClicks:   item[pf('LinkClicks')] != null ? parseInt(item[pf('LinkClicks')]) : null,
     b24Url:       `${B24_URL}/crm/type/${ENTITY_TYPE_ID}/details/${item.id}/`,
   };
 }
@@ -203,6 +210,7 @@ async function fetchRawMarketing() {
     pf('VisitsTotal'), pf('VisitsOrganic'), pf('VisitsPaid'), pf('BounceRate'),
     pf('Clicks'), pf('Impressions'), pf('BrandDemand'), pf('Spend'),
     pf('Purchases'), pf('Revenue'), pf('SiteCart'), pf('SiteOrders'),
+    pf('Posts'), pf('Gained'), pf('Lost'), pf('LinkClicks'),
   ]);
 
   _rawCache   = { items: raw.map(parseItem), snapshots: loadSnapshotHistory() };

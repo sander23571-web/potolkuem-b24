@@ -23,3 +23,5 @@ scripts/.review-near-duplicates-*.md
 scripts/.exclude-*-results.json
 scripts/.fix-*-results.json
 scripts/.*_host_ids.json
+.venv_playwright/
+.venv_playwright_stats/

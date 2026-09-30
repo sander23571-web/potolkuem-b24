@@ -899,6 +899,14 @@ function renderSmmCard(name, cssClass, last, count) {
   const diff = last.followersDiff;
   const diffStr = diff > 0 ? `+${fmt(diff)}` : diff < 0 ? `−${fmt(Math.abs(diff))}` : '±0';
   const diffColor = diff > 0 ? 'var(--green)' : diff < 0 ? 'var(--red)' : 'var(--muted)';
+  // Posts/Gained/Lost/LinkClicks — не у всех площадок LiveDune их отдаёт (пока только
+  // Posts у VK/TG/MAX, Gained/Lost/LinkClicks только у VK) — рендерим только то, что пришло.
+  const postsStr = last.posts != null ? `${fmt(last.posts)} пост.` : null;
+  const engagementParts = [];
+  if (last.gained != null || last.lost != null) {
+    engagementParts.push(`+${fmt(last.gained || 0)}/−${fmt(last.lost || 0)} подп.`);
+  }
+  if (last.linkClicks != null) engagementParts.push(`${fmt(last.linkClicks)} переходов`);
   return `<div class="smm-card ${cssClass}">
     <div class="smm-title">${name}</div>
     <div class="smm-big">${fmt(last.followers)}</div>
@@ -906,6 +914,7 @@ function renderSmmCard(name, cssClass, last, count) {
       подписчиков · <span style="color:${diffColor}">${diffStr}</span> за мес.
       ${last.er ? ` · ER ${fmtFloat(last.er)}%` : ''}
     </div>
+    ${postsStr || engagementParts.length ? `<div class="smm-meta">${[postsStr, ...engagementParts].filter(Boolean).join(' · ')}</div>` : ''}
     <div class="smm-meta">${fmtDate(last.period)} · ${count} мес. данных</div>
     ${last.b24Url ? `<a class="smm-link" href="${last.b24Url}" target="_blank">Открыть в Б24</a>` : ''}
   </div>`;
